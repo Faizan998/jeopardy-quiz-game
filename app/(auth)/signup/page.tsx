@@ -7,6 +7,7 @@ import axios from "axios";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { FcGoogle } from "react-icons/fc";
 
+
 export default function Signup() {
   const dispatch = useDispatch();
   const { data: session } = useSession();
@@ -24,11 +25,13 @@ export default function Signup() {
       const res = await axios.post("/api/signup", formData, {
         headers: { "Content-Type": "application/json" },
       });
+      console.log("res", res);
 
       const data = res.data;
       if (res.status === 201) {
-        dispatch(setUser({ name: formData.name, email: formData.email }));
-        setMessage("Signup successful! Welcome to Jeopardy Quiz Challenge. ✅");
+        localStorage.setItem("token", data.token); // Store JWT in localStorage
+        dispatch(setUser({ name: formData.name, email: formData.email, token: data.token }));
+        setMessage("Signup successful! Welcome to Jeopardy Quiz Challenge. ");
         setMessageType("success");
         setFormData({ name: "", email: "", password: "" });
       } else {
@@ -41,11 +44,11 @@ export default function Signup() {
       setMessageType("error");
     }
   };
+  
 
   return (
     <div
       className="relative min-h-screen flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat text-white p-6 transition-all duration-500 ease-in-out"
-      
     >
       <div className="absolute inset-0 bg-black bg-opacity-60"></div>
 
@@ -60,7 +63,7 @@ export default function Signup() {
             <p className="text-lg font-bold">Signed in as {session.user?.email}</p>
             <button
               onClick={() => signOut()}
-              className="mt-4 w-full p-3 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-md transform hover:scale-105 transition-transform duration-300"
+              className="mt-4 w-full p-3 bg-red-700 hover:bg-red-600 text-white rounded-lg shadow-md transform hover:scale-105 transition-transform duration-300"
             >
               Sign Out
             </button>

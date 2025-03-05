@@ -1,21 +1,8 @@
 // This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
-}
-
-model Answer {
-  id        String   @id @default(cuid())
-  text      String
-  correct   Boolean
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 datasource db {
@@ -32,30 +19,40 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
-  password  String?
-  role      Role
+  image     String?
+  role     String  @default("USER")
+  password String  // Google users ke liye bhi password hoga
   answers   Answer[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model Category {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  questions Question[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
 
+model Question {
+  id         String   @id @default(cuid())
+  text       String
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  answers    Answer[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+model Answer {
+  id         String   @id @default(cuid())
+  text       String
+  correct    Boolean
+  userId     String
+  questionId String
+  user       User     @relation(fields: [userId], references: [id])
+  question   Question @relation(fields: [questionId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
