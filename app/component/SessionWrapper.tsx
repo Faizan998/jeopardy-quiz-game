@@ -1,4 +1,4 @@
-"use client"; // Client Component hona chahiye
+"use client";
 
 import { SessionProvider } from "next-auth/react";
 import { ReactNode } from "react";

@@ -11,39 +11,119 @@ export default function UserDashboard() {
   const router = useRouter();
   const user = useSelector((state: RootState) => state.user);
   const [loading, setLoading] = useState(true);
+  interface Category {
+    id: number;
+    name: string;
+  }
+
+  interface Question {
+    id: number;
+    question: string;
+    answer: string;
+    value: number;
+  }
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      router.push("/login"); // Redirect if not logged in
+      router.push("/login");
     } else {
       setLoading(false);
+      // Fetch categories and questions
+      fetch("/api/categories")
+        .then((res) => res.json())
+        .then((data) => setCategories(data));
+      fetch("/api/questions")
+        .then((res) => res.json())
+        .then((data) => setQuestions(data));
     }
   }, [router]);
 
   const handleLogout = () => {
-    dispatch(logoutUser()); // Redux se user hatao
-    router.push("/login"); // Redirect to login
+    dispatch(logoutUser());
+    router.push("/login");
   };
 
   if (loading) {
-    return <p className="text-center text-white text-xl">Loading...</p>;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 transition-all duration-500 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+        <div className="relative w-full max-w-md">
+          <div className="bg-gray-800 bg-opacity-80 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-full text-center border border-gray-700">
+            <div className="relative overflow-hidden inline-block">
+              <span className="text-xl text-gray-200 font-semibold relative z-10">Loading...</span>
+              <div className="absolute inset-0 h-full bg-blue-400 opacity-50 animate-loading-bar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-6">
-      <h1 className="text-4xl font-bold text-blue-500 mb-4">Welcome to User Dashboard</h1>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
-        <p className="text-xl font-semibold">Hello, {user.name}!</p>
-        <p className="text-lg text-gray-300">Email: {user.email}</p>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+      {/* Navbar */}
+      <nav className="w-full p-4 bg-gray-800 bg-opacity-80 backdrop-blur-lg border-b border-gray-700 shadow-lg">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-pulse">
+            Jeopardy Quiz
+          </h1>
+          <div className="flex items-center gap-4">
+            <p className="text-lg text-gray-200 font-semibold">Hello, {user.name}!</p>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-red-600 hover:to-red-800 transition-all duration-300 hover:scale-105"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </nav>
 
-        <button
-          onClick={handleLogout}
-          className="mt-6 px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg transition duration-300"
-        >
-          Logout
-        </button>
+      {/* Main Content */}
+      <div className="flex-1 flex p-6 max-w-7xl mx-auto w-full gap-6">
+        {/* Left Side (Leaderboard) */}
+        <div className="w-1/2 bg-gray-800 bg-opacity-80 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-gray-700">
+          <h2 className="text-2xl font-bold text-gray-200 mb-4">Leaderboard (Coming Soon)</h2>
+          <p className="text-gray-400">This space will display the leaderboard in the layout.</p>
+        </div>
+
+        {/* Right Side (Jeopardy Table) */}
+        <div className="w-1/2 bg-gray-800 bg-opacity-80 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-gray-700">
+          <h2 className="text-2xl font-bold text-gray-200 mb-4">Jeopardy Levels</h2>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            {categories.map((cat) => (
+              <div
+                key={cat.id}
+                className="p-4 bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-md"
+              >
+                <h3 className="text-lg font-semibold text-white">{cat.name}</h3>
+              </div>
+            ))}
+            {questions.map((q, index) => (
+              <div
+                key={q.id}
+                className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300"
+              >
+                <p className="text-lg font-medium">${100 * ((index % 3) + 1)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
+
+      <style jsx>{`
+        @keyframes loadingBar {
+          0% { width: 0; left: 0; }
+          50% { width: 100%; left: 0; }
+          100% { width: 0; left: 100%; }
+        }
+        .animate-loading-bar {
+          animation: loadingBar 1.5s infinite ease-in-out;
+        }
+      `}</style>
     </div>
   );
 }
