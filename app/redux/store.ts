@@ -1,8 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
-import userReducer from "./feature/userSlice";
+import questionReducer from "./feature/questionSlice";
+import userReducer from "./feature/userSlice"; // Already in your project
 
 export const store = configureStore({
   reducer: {
+    question: questionReducer,
     user: userReducer,
   },
 });
