@@ -1,41 +1,37 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-interface QuestionState {
-  selectedQuestion: {
-    question: string;
-    options: string[];
-    correctAnswer: string;
-  } | null;
-  selectedAnswer: string | null;
-  isCorrect: boolean | null;
-}
+// API Call function
+export const fetchQuestions = createAsyncThunk("questions/fetchQuestions", async () => {
+  const response = await fetch("/api/questions");
+  if (!response.ok) throw new Error("Failed to fetch questions");
 
-const initialState: QuestionState = {
-  selectedQuestion: null,
-  selectedAnswer: null,
-  isCorrect: null,
-};
+  const data = await response.json();
+  console.log("Redux Fetched Data:", data); // ✅ Debugging Redux response
+  return data.data || []; // ✅ Ensure data is always an array
+});
 
 const questionSlice = createSlice({
   name: "question",
-  initialState,
-  reducers: {
-    openQuestion: (state, action: PayloadAction<QuestionState["selectedQuestion"]>) => {
-      state.selectedQuestion = action.payload;
-      state.selectedAnswer = null;
-      state.isCorrect = null;
-    },
-    selectAnswer: (state, action: PayloadAction<string>) => {
-      state.selectedAnswer = action.payload;
-      state.isCorrect = state.selectedQuestion?.correctAnswer === action.payload;
-    },
-    closeQuestion: (state) => {
-      state.selectedQuestion = null;
-      state.selectedAnswer = null;
-      state.isCorrect = null;
-    },
+  initialState: {
+    questions: [],
+    loading: false,
+    error: null as string | null,
+  },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchQuestions.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchQuestions.fulfilled, (state, action) => {
+        state.loading = false;
+        state.questions = action.payload ?? []; // ✅ Always set an array
+      })
+      .addCase(fetchQuestions.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch questions";
+      });
   },
 });
 
-export const { openQuestion, selectAnswer, closeQuestion } = questionSlice.actions;
 export default questionSlice.reducer;

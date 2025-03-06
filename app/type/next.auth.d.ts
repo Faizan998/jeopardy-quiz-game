@@ -5,7 +5,7 @@ declare module "next-auth" {
     user: {
       name: string;
       email: string;
-      role: "ADMIN" | "USER"; // Sirf do roles allowed
+      role: "ADMIN" | "USER"; 
     };
   }
 }

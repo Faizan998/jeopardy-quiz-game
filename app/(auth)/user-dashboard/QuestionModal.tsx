@@ -1,48 +1,30 @@
 "use client";
 
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../redux/store";
-import { closeQuestion, selectAnswer } from "../../redux/feature/questionSlice";
+interface Question {
+  id: string;
+  text: string;
+  options: string[];
+  correctAnswer: string;
+}
 
-export default function QuestionModal() {
-  const dispatch = useDispatch();
-  const { selectedQuestion, selectedAnswer, isCorrect } = useSelector((state: RootState) => state.question);
+interface ModalProps {
+  question: Question;
+  onClose: () => void;
+}
 
-  if (!selectedQuestion) return null;
-
+export default function QuestionModal({ question, onClose }: ModalProps) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center">
-      <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-96">
-        <h2 className="text-lg font-bold text-white">{selectedQuestion.question}</h2>
-        <div className="mt-4 space-y-2">
-          {selectedQuestion.options.map((option, index) => (
-            <button
-              key={index}
-              onClick={() => dispatch(selectAnswer(option))}
-              className={`block w-full px-4 py-2 rounded-md transition ${
-                selectedAnswer === option
-                  ? isCorrect
-                    ? "bg-green-500 text-white"
-                    : "bg-red-500 text-white"
-                  : "bg-gray-700 text-white hover:bg-gray-600"
-              }`}
-              disabled={!!selectedAnswer}
-            >
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+        <h2 className="text-xl font-bold mb-4">{question.text}</h2>
+        <ul className="space-y-2">
+          {question.options.map((option, index) => (
+            <li key={index} className="p-2 bg-gray-200 rounded-lg">
               {option}
-            </button>
+            </li>
           ))}
-        </div>
-        
-        {selectedAnswer && (
-          <p className={`mt-4 text-center font-bold ${isCorrect ? "text-green-400" : "text-red-400"}`}>
-            {isCorrect ? "✅ Correct Answer!" : "❌ Wrong Answer!"}
-          </p>
-        )}
-
-        <button
-          onClick={() => dispatch(closeQuestion())}
-          className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 w-full"
-        >
+        </ul>
+        <button onClick={onClose} className="mt-4 bg-red-500 text-white px-4 py-2 rounded">
           Close
         </button>
       </div>

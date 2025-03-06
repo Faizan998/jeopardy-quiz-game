@@ -1,4 +1,3 @@
-// prisma/seed.ts
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -23,18 +22,38 @@ async function seed() {
 
   // Step 3: Seed Questions
   const questions = [
-    // Maths Questions
+    // Maths Questions (9)
     { text: "What is 5 + 7?", categoryId: mathsCategory.id },
     { text: "What is the value of π (pi) to two decimal places?", categoryId: mathsCategory.id },
     { text: "What is the square root of 16?", categoryId: mathsCategory.id },
-    // History Questions
+    { text: "What is 15 × 6?", categoryId: mathsCategory.id },
+    { text: "What is the perimeter of a square with side 4 cm?", categoryId: mathsCategory.id },
+    { text: "What is 100 divided by 4?", categoryId: mathsCategory.id },
+    { text: "What is 3² (3 squared)?", categoryId: mathsCategory.id },
+    { text: "If a triangle has angles 30° and 60°, what is the third angle?", categoryId: mathsCategory.id },
+    { text: "What is 2⁵ (2 raised to power 5)?", categoryId: mathsCategory.id },
+
+    // History Questions (9)
     { text: "Who was the first President of the United States?", categoryId: historyCategory.id },
     { text: "In which year did World War II end?", categoryId: historyCategory.id },
     { text: "Who discovered America in 1492?", categoryId: historyCategory.id },
-    // General Knowledge Questions
+    { text: "Which country built the Great Wall?", categoryId: historyCategory.id },
+    { text: "Who was the first man to walk on the moon?", categoryId: historyCategory.id },
+    { text: "Which year did India gain independence?", categoryId: historyCategory.id },
+    { text: "Who was the first Emperor of China?", categoryId: historyCategory.id },
+    { text: "What year did the Titanic sink?", categoryId: historyCategory.id },
+    { text: "Who was the Queen of England in 1600?", categoryId: historyCategory.id },
+
+    // General Knowledge Questions (9)
     { text: "What is the largest planet in our solar system?", categoryId: gkCategory.id },
     { text: "Which gas makes up most of Earth’s atmosphere?", categoryId: gkCategory.id },
     { text: "What is the capital city of Brazil?", categoryId: gkCategory.id },
+    { text: "Which is the longest river in the world?", categoryId: gkCategory.id },
+    { text: "How many continents are there?", categoryId: gkCategory.id },
+    { text: "Which is the tallest mountain in the world?", categoryId: gkCategory.id },
+    { text: "Who invented the telephone?", categoryId: gkCategory.id },
+    { text: "What is the chemical symbol for gold?", categoryId: gkCategory.id },
+    { text: "Which ocean is the largest?", categoryId: gkCategory.id },
   ];
 
   await prisma.question.createMany({
@@ -60,12 +79,12 @@ async function seed() {
     ],
   });
 
-  console.log("Successfully seeded database with categories, questions, and sample data!");
+  console.log("✅ Successfully seeded database with categories, questions, and sample data!");
 }
 
 seed()
   .catch((e) => {
-    console.error("Error during seeding:", e);
+    console.error("❌ Error during seeding:", e);
     process.exit(1);
   })
   .finally(async () => {
