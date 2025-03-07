@@ -1,17 +1,15 @@
-import { NextResponse } from "next/server";
-import prisma from "@/app/lib/prisma";
+import { NextResponse } from 'next/server';
+import { supabase } from '../../lib/supabase';
 
-export async function GET() {
-  try {
-    const questions = await prisma.question.findMany({
-      include: { category: true },
-    });
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const level = searchParams.get('level');
 
-    console.log("Fetched Questions:", questions); // ✅ Debugging line
+  if (!level) return NextResponse.json({ error: 'Level required' }, { status: 400 });
 
-    return NextResponse.json({ success: true, data: questions });
-  } catch (error) {
-    console.error("API Error:", error); // ✅ Debugging error
-    return NextResponse.json({ success: false, error: "Failed to fetch questions" }, { status: 500 });
-  }
+  const { data, error } = await supabase.from('questions').select('*').eq('level', level);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json(data);
 }

@@ -10,12 +10,14 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^2.2.0",
     "@prisma/client": "^6.4.1",
     "@reduxjs/toolkit": "^2.6.0",
     "@supabase/supabase-js": "^2.49.1",
     "@types/bcrypt": "^5.0.2",
     "axios": "^1.8.1",
     "bcryptjs": "^3.0.2",
+    "dotenv": "^16.4.7",
     "framer-motion": "^12.4.10",
     "jsonwebtoken": "^9.0.2",
     "next": "15.2.0",
