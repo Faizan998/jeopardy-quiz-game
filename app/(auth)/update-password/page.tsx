@@ -1,35 +1,47 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid"; // Using Heroicons for eye icons
 
 export default function UpdatePassword() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token"); // Get token from query parameters
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // State for show/hide password
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Handle redirect after successful update
+  useEffect(() => {
+    if (message.includes("success")) {
+      const timer = setTimeout(() => {
+        router.push("/login");
+      }, 1500); // Redirect after 1.5 seconds to show success message
+      return () => clearTimeout(timer); // Cleanup timeout on unmount
+    }
+  }, [message, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await fetch("/api/update-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword }),
+      const { data } = await axios.post("/api/update-password", {
+        token,
+        newPassword,
       });
-      const data = await res.json();
       setMessage(data.message);
-      if (res.ok) {
-        setTimeout(() => router.push("/login"), 2000); // Redirect to login after 2s
-      }
     } catch (error) {
       setMessage("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
   };
 
   return (
@@ -42,15 +54,30 @@ export default function UpdatePassword() {
         {token ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <p className="text-gray-300 text-lg text-center">Reset your password</p>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Enter new password"
-              required
-              disabled={isLoading}
-              className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-600 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                required
+                disabled={isLoading}
+                className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-600 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50 pr-10"
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 transition-colors duration-200"
+                disabled={isLoading}
+              >
+                {showPassword ? (
+                  <EyeIcon className="h-5 w-5" />
+                  
+                ) : (
+                  <EyeSlashIcon className="h-5 w-5" />
+                )}
+              </button>
+            </div>
             <button
               type="submit"
               disabled={isLoading}
@@ -67,11 +94,17 @@ export default function UpdatePassword() {
             </button>
           </form>
         ) : (
-          <p className="text-red-500 text-center">No token provided. Please use the reset link sent to your email.</p>
+          <p className="text-red-500 text-center">
+            No token provided. Please use the reset link sent to your email.
+          </p>
         )}
 
         {message && (
-          <p className={`text-center font-semibold ${message.includes("success") ? "text-blue-400" : "text-red-500"} transition-opacity duration-300`}>
+          <p
+            className={`text-center font-semibold ${
+              message.includes("success") ? "text-blue-400" : "text-red-500"
+            } transition-opacity duration-300`}
+          >
             {message}
           </p>
         )}
