@@ -97,13 +97,15 @@ export default function UserDashboard() {
                 onClick={() => dispatch(openQuestion(q))}
                 className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300"
               >
-                <p className="text-lg font-medium">${q.points}</p>
+                <p className="text-lg font-medium cursor-pointer">${q.points} 400</p>
               </button>
             ))}
           </div>
         </div>
       </div>
-      {selectedQuestion && <QuestionModal />}
+      {/* {selectedQuestion && <QuestionModal />} */}
+      {selectedQuestion && <QuestionModal selectedQuestion={selectedQuestion} />}
+
       <style jsx>{`
         @keyframes loadingBar {
           0% {

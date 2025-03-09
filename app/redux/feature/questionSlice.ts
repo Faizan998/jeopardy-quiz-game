@@ -20,6 +20,7 @@ const questionSlice = createSlice({
   },
   reducers: {
     openQuestion: (state, action) => {
+      console.log('action :>> ', action);
       state.selectedQuestion = action.payload;
     },
     closeQuestion: (state) => {
