@@ -3,15 +3,38 @@
 import { useState } from "react";
 import axios from "axios";
 import Link from "next/link";
+import { forgotPasswordSchema, type ForgotPasswordFormData } from "../../utils/validationSchemas";
+import { ZodError } from "zod";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
   const [loading, setLoading] = useState(false);
+  const [validationError, setValidationError] = useState("");
+
+  const validateEmail = () => {
+    try {
+      forgotPasswordSchema.parse({ email });
+      setValidationError("");
+      return true;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const errorMessage = error.errors[0]?.message || "Invalid email";
+        setValidationError(errorMessage);
+      }
+      return false;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate email before submission
+    if (!validateEmail()) {
+      return;
+    }
+    
     setLoading(true);
     setMessage("");
 
@@ -43,17 +66,26 @@ export default function ForgotPassword() {
           onSubmit={handleSubmit}
           className="bg-gray-800 bg-opacity-80 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-full space-y-6 relative border border-gray-700"
         >
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            onChange={(e) => setEmail(e.target.value)}
-            value={email}
-            required
-            disabled={loading}
-            className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-600 rounded-lg placeholder-gray-500 
-              focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50"
-          />
+          <div>
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (validationError) setValidationError("");
+              }}
+              value={email}
+              required
+              disabled={loading}
+              className={`w-full p-3 bg-gray-900 text-gray-200 border ${validationError ? 'border-red-500' : 'border-gray-600'} rounded-lg placeholder-gray-500 
+                focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50`}
+            />
+            {validationError && (
+              <p className="mt-1 text-sm text-red-500">{validationError}</p>
+            )}
+          </div>
+          
           <button
             type="submit"
             disabled={loading}

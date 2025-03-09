@@ -6,23 +6,61 @@ import { useRouter } from "next/navigation";
 import { setUser } from "../../redux/feature/userSlice";
 import axios from "axios";
 import Link from "next/link";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import { loginSchema, type LoginFormData } from "../../utils/validationSchemas";
+import { ZodError } from "zod";
 
 export default function Login() {
   const dispatch = useDispatch();
   const router = useRouter();
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState<LoginFormData>({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
   const [loading, setLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    // Clear validation error for this field when user types
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = () => {
+    try {
+      loginSchema.parse(formData);
+      setValidationErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0].toString()] = err.message;
+          }
+        });
+        setValidationErrors(newErrors);
+      }
+      return false;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
     setMessage(""); // Clear previous messages
 
@@ -87,16 +125,22 @@ export default function Login() {
           onSubmit={handleSubmit}
           className="bg-gray-800 bg-opacity-80 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-full space-y-6 relative border border-gray-700"
         >
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            onChange={handleChange}
-            value={formData.email}
-            required
-            disabled={loading}
-            className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-600 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50"
-          />
+          <div>
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              onChange={handleChange}
+              value={formData.email}
+              required
+              disabled={loading}
+              className={`w-full p-3 bg-gray-900 text-gray-200 border ${validationErrors.email ? 'border-red-500' : 'border-gray-600'} rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50`}
+            />
+            {validationErrors.email && (
+              <p className="mt-1 text-sm text-red-500">{validationErrors.email}</p>
+            )}
+          </div>
+          
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -106,7 +150,7 @@ export default function Login() {
               value={formData.password}
               required
               disabled={loading}
-              className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-600 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50 pr-10"
+              className={`w-full p-3 bg-gray-900 text-gray-200 border ${validationErrors.password ? 'border-red-500' : 'border-gray-600'} rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50 pr-10`}
             />
             <button
               type="button"
@@ -114,8 +158,15 @@ export default function Login() {
               className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 transition-colors duration-200"
               disabled={loading}
             >
-              {showPassword ? <FaEyeSlash className="h-5 w-5" /> : <FaEye className="h-5 w-5" />}
+              {showPassword ? (
+                <AiOutlineEyeInvisible className="text-xl" />
+              ) : (
+                <AiOutlineEye className="text-xl" />
+              )}
             </button>
+            {validationErrors.password && (
+              <p className="mt-1 text-sm text-red-500">{validationErrors.password}</p>
+            )}
           </div>
 
           <div className="text-right">
