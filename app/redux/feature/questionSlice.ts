@@ -1,37 +1,45 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
-// API Call function
-export const fetchQuestions = createAsyncThunk("questions/fetchQuestions", async () => {
-  const response = await fetch("/api/questions");
-  if (!response.ok) throw new Error("Failed to fetch questions");
 
-  const data = await response.json();
-  console.log("Redux Fetched Data:", data); // ✅ Debugging Redux response
-  return data.data || []; // ✅ Ensure data is always an array
+// Async function to fetch questions from API
+export const fetchQuestions = createAsyncThunk("questions/fetch", async () => {
+  const res = await axios.get("/api/questions");
+  console.log("res",res);
+  return res.data.data;
+
 });
 
 const questionSlice = createSlice({
   name: "question",
-  initialState: {
-    questions: [],
-    loading: false,
-    error: null as string | null,
+  initialState: { 
+    questions: [], 
+    selectedQuestion: null, 
+    loading: false, 
+    error: null as string | null
   },
-  reducers: {},
+  reducers: {
+    openQuestion: (state, action) => {
+      console.log('action :>> ', action);
+      state.selectedQuestion = action.payload;
+    },
+    closeQuestion: (state) => {
+      state.selectedQuestion = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchQuestions.pending, (state) => {
-        state.loading = true;
-      })
+      .addCase(fetchQuestions.pending, (state) => { state.loading = true; })
       .addCase(fetchQuestions.fulfilled, (state, action) => {
         state.loading = false;
-        state.questions = action.payload ?? []; // ✅ Always set an array
+        state.questions = action.payload;
       })
       .addCase(fetchQuestions.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to fetch questions";
+        state.error = action.error.message ?? null;
       });
   },
 });
 
+export const { openQuestion, closeQuestion } = questionSlice.actions;
 export default questionSlice.reducer;

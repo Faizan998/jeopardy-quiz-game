@@ -16,8 +16,8 @@ model User {
   updatedAt   DateTime  @updatedAt
   image       String?
   role        String    @default("USER")
-  Token       String?
-  TokenExpiry DateTime?
+  resetToken       String?
+  resetTokenExpiry DateTime?
   answers     Answer[]
 }
 

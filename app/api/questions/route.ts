@@ -1,15 +1,13 @@
-import { NextResponse } from 'next/server';
-import { supabase } from '../../lib/supabase';
+import { NextResponse } from "next/server";
+import prisma from "@/app/lib/prisma";
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const level = searchParams.get('level');
-
-  if (!level) return NextResponse.json({ error: 'Level required' }, { status: 400 });
-
-  const { data, error } = await supabase.from('questions').select('*').eq('level', level);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json(data);
+export async function GET() {
+  try {
+    const questions = await prisma.question.findMany({
+      include: { category: true, answers: true },
+    });
+    return NextResponse.json({ success: true, data: questions });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: error }, { status: 500 });
+  }
 }

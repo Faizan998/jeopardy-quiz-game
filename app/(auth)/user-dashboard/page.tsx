@@ -3,30 +3,42 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../redux/store";
+import { RootState, AppDispatch } from "../../redux/store";
 import { logoutUser } from "../../redux/feature/userSlice";
+import { fetchQuestions, openQuestion } from "../../redux/feature/questionSlice";
+import QuestionModal from "../user-dashboard/QuestionModal";
 
 export default function UserDashboard() {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const router = useRouter();
   const user = useSelector((state: RootState) => state.user);
-  const [loading, setLoading] = useState(true);
+  const { questions, selectedQuestion, loading } = useSelector((state: RootState) => state.question);
+  const [loadingPage, setLoadingPage] = useState(true);
+
+
+  const store = useSelector((state: RootState) => state);
+  console.log("Store:", store);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/login"); // Redirect if not logged in
     } else {
-      setLoading(false);
+      setLoadingPage(false);
+      dispatch(fetchQuestions());
     }
-  }, [router]);
+  }, [router, dispatch]);
+
+  useEffect(() => {
+    console.log("Questions:", questions);
+  }, [questions]);
 
   const handleLogout = () => {
     dispatch(logoutUser()); // Redux se user hatao
     router.push("/login"); // Redirect to login
   };
 
-  if (loading) {
+  if (loadingPage || loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 transition-all duration-500 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
         <div className="relative w-full max-w-md">
@@ -63,14 +75,8 @@ export default function UserDashboard() {
 
       {/* Main Content */}
       <div className="flex-1 flex p-6 max-w-7xl mx-auto w-full gap-6">
-        {/* Left Side (Reserved for Leaderboard in layout.tsx) */}
-        <div className="w-1/2 bg-gray-800 bg-opacity-80 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-200 mb-4">Leaderboard (Coming Soon)</h2>
-          <p className="text-gray-400">This space will display the leaderboard in the layout.</p>
-        </div>
-
         {/* Right Side (Jeopardy Table) */}
-        <div className="w-1/2 bg-gray-800 bg-opacity-80 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-gray-700">
+        <div className="w-full bg-gray-800 bg-opacity-80 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-gray-700">
           <h2 className="text-2xl font-bold text-gray-200 mb-4">Jeopardy Levels</h2>
           <div className="grid grid-cols-3 gap-4 text-center">
             {/* Level Headers */}
@@ -85,45 +91,20 @@ export default function UserDashboard() {
             </div>
 
             {/* Monetary Values */}
-            <div className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300">
-              <p className="text-lg font-medium">$100</p>
-            </div>
-            <div className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300">
-              <p className="text-lg font-medium">$100</p>
-            </div>
-            <div className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300">
-              <p className="text-lg font-medium">$100</p>
-            </div>
-            <div className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300">
-              <p className="text-lg font-medium">$200</p>
-            </div>
-            <div className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300">
-              <p className="text-lg font-medium">$200</p>
-            </div>
-            <div className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300">
-              <p className="text-lg font-medium">$200</p>
-            </div>
-            <div className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300">
-              <p className="text-lg font-medium">$400</p>
-            </div>
-            <div className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300">
-              <p className="text-lg font-medium">$400</p>
-            </div>
-            <div className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300">
-              <p className="text-lg font-medium">$400</p>
-            </div>
-            <div className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300">
-              <p className="text-lg font-medium">$500</p>
-            </div>
-            <div className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300">
-              <p className="text-lg font-medium">$500</p>
-            </div>
-            <div className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300">
-              <p className="text-lg font-medium">$500</p>
-            </div>
+            {questions.map((q: any, index: number) => (
+              <button
+                key={q.id}
+                onClick={() => dispatch(openQuestion(q))}
+                className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300"
+              >
+                <p className="text-lg font-medium cursor-pointer">${q.points} 400</p>
+              </button>
+            ))}
           </div>
         </div>
       </div>
+      {/* {selectedQuestion && <QuestionModal />} */}
+      {selectedQuestion && <QuestionModal selectedQuestion={selectedQuestion} />}
 
       <style jsx>{`
         @keyframes loadingBar {

@@ -4,6 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid"; // Using Heroicons for eye icons
+import { updatePasswordSchema } from "../../utils/validationSchemas";
+import { ZodError } from "zod";
 
 export default function UpdatePassword() {
   const router = useRouter();
@@ -13,6 +15,7 @@ export default function UpdatePassword() {
   const [showPassword, setShowPassword] = useState(false); // State for show/hide password
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [validationError, setValidationError] = useState("");
 
   // Handle redirect after successful update
   useEffect(() => {
@@ -24,8 +27,31 @@ export default function UpdatePassword() {
     }
   }, [message, router]);
 
+  const validatePassword = () => {
+    try {
+      updatePasswordSchema.parse({ token: token || "", newPassword });
+      setValidationError("");
+      return true;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        // Find password-related errors
+        const passwordError = error.errors.find(err => 
+          err.path.includes('newPassword')
+        );
+        setValidationError(passwordError?.message || "Invalid password");
+      }
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate password before submission
+    if (!validatePassword()) {
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const { data } = await axios.post("/api/update-password", {
@@ -58,11 +84,14 @@ export default function UpdatePassword() {
               <input
                 type={showPassword ? "text" : "password"}
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  if (validationError) setValidationError("");
+                }}
                 placeholder="Enter new password"
                 required
                 disabled={isLoading}
-                className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-600 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50 pr-10"
+                className={`w-full p-3 bg-gray-900 text-gray-200 border ${validationError ? 'border-red-500' : 'border-gray-600'} rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50 pr-10`}
               />
               <button
                 type="button"
@@ -78,6 +107,11 @@ export default function UpdatePassword() {
                 )}
               </button>
             </div>
+            
+            {validationError && (
+              <p className="text-sm text-red-500">{validationError}</p>
+            )}
+            
             <button
               type="submit"
               disabled={isLoading}

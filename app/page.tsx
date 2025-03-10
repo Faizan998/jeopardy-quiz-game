@@ -18,12 +18,17 @@ export default function Home() {
         {/* Centered Buttons */}
         <div className="flex space-x-6 mt-6 animate-fade-in">
           <Link href="/signup">
-            <button className="px-6 py-3 bg-blue-500/30 hover:bg-blue-500 text-white font-bold text-lg rounded-lg shadow-lg backdrop-blur-md transition-transform transform hover:scale-110 hover:shadow-blue-500">
+            <button className="px-6 py-3 cursor-pointer bg-blue-500/30 hover:bg-blue-500 text-white font-bold text-lg rounded-lg shadow-lg backdrop-blur-md transition-transform transform hover:scale-110 hover:shadow-blue-500">
               Signup
             </button>
           </Link>
+          <Link href="/contact">
+            <button className="px-6 py-3 cursor-pointer bg-blue-500/30 hover:bg-blue-500 text-white font-bold text-lg rounded-lg shadow-lg backdrop-blur-md transition-transform transform hover:scale-110 hover:shadow-blue-500">
+              Contact-Us
+            </button>
+          </Link>
           <Link href="/login">
-            <button className="px-6 py-3 bg-green-500/30 hover:bg-green-500 text-white font-bold text-lg rounded-lg shadow-lg backdrop-blur-md transition-transform transform hover:scale-110 hover:shadow-green-500">
+            <button className="px-6 py-3 cursor-pointer bg-green-500/30 hover:bg-green-500 text-white font-bold text-lg rounded-lg shadow-lg backdrop-blur-md transition-transform transform hover:scale-110 hover:shadow-green-500">
               Login
             </button>
           </Link>
@@ -59,3 +64,24 @@ export default function Home() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
