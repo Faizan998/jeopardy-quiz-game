@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
-import { setUser } from "../../redux/feature/userSlice";
 import axios from "axios";
 import Link from "next/link";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
@@ -11,7 +9,6 @@ import { loginSchema, type LoginFormData } from "../../utils/validationSchemas";
 import { ZodError } from "zod";
 
 export default function Login() {
-  const dispatch = useDispatch();
   const router = useRouter();
   const [formData, setFormData] = useState<LoginFormData>({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -23,8 +20,7 @@ export default function Login() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    
-    // Clear validation error for this field when user types
+
     if (validationErrors[name]) {
       setValidationErrors(prev => {
         const newErrors = { ...prev };
@@ -56,13 +52,12 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form before submission
     if (!validateForm()) {
       return;
     }
     
     setLoading(true);
-    setMessage(""); // Clear previous messages
+    setMessage("");
 
     try {
       const res = await axios.post(
@@ -73,7 +68,7 @@ export default function Login() {
         },
         {
           headers: { "Content-Type": "application/json" },
-          timeout: 10000, // Add timeout to avoid hanging
+          timeout: 10000,
         }
       );
 
@@ -81,10 +76,12 @@ export default function Login() {
 
       if (res.status === 200 && data.token) {
         localStorage.setItem("token", data.token);
-        dispatch(setUser({ name: data.name, email: formData.email, token: data.token }));
-
+        if (data.name) {
+          localStorage.setItem("userName", data.name);
+        }
         setMessage("Login successful! Redirecting... ✅");
         setMessageType("success");
+
         setTimeout(() => {
           router.push(data.role === "admin" ? "/admin-dashboard" : "/user-dashboard");
         }, 1500);
@@ -169,66 +166,43 @@ export default function Login() {
             )}
           </div>
 
+          {/* Forgot Password Link */}
           <div className="text-right">
-            <Link href="/forgot-password" className="text-blue-400 hover:text-blue-300 transition-colors duration-200 text-sm">
+            <Link href="/forgot-password" className="text-blue-400 hover:underline text-sm">
               Forgot Password?
             </Link>
           </div>
 
+          {/* Login Button with Loading */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-blue-600 hover:to-blue-800 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed hover:scale-105 relative overflow-hidden flex justify-center items-center"
+            className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg shadow-md flex justify-center items-center"
           >
-            {loading ? (
-              <>
-                <span className="relative  z-11">Logging In...</span>
-                <div className="absolute inset-0 h-full  bg-blue-400 opacity-50 animate-loading-bar"></div>
-              </>
-            ) : (
-              "Login"
+            {loading && (
+              <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5 mr-2"></span>
             )}
+            Login
           </button>
 
-          {message && (
-            <p
-              className={`mt-4 text-center font-semibold ${
-                messageType === "success"
-                  ? "text-blue-400 hover:text-blue-300 transition-colors duration-200"
-                  : "text-red-400"
-              } transition-opacity duration-300`}
-            >
-              {message}
+          {/* Back to Signup Link */}
+          <div className="text-center">
+            <p className="text-gray-400 text-sm">
+              Don't have an account?{" "}
+              <Link href="/signup" className="text-blue-400 hover:underline">
+                Sign up
+              </Link>
             </p>
-          )}
+          </div>
 
-          <p className="text-center text-gray-400">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-blue-400 hover:text-blue-300 transition-colors duration-200">
-              Signup
-            </Link>
-          </p>
+          {/* Login Message at the Bottom */}
+          {message && (
+            <div className="mt-4 text-center text-blue-400 font-semibold">
+              {message}
+            </div>
+          )}
         </form>
       </div>
-      <style jsx>{`
-        @keyframes loadingBar {
-          0% {
-            width: 0;
-            left: 0;
-          }
-          50% {
-            width: 100%;
-            left: 0;
-          }
-          100% {
-            width: 0;
-            left: 100%;
-          }
-        }
-        .animate-loading-bar {
-          animation: loadingBar 1.5s infinite ease-in-out;
-        }
-      `}</style>
     </div>
   );
 }

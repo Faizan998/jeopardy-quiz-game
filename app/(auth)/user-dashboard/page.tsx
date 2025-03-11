@@ -2,40 +2,189 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState, AppDispatch } from "../../redux/store";
-import { logoutUser } from "../../redux/feature/userSlice";
-import { fetchQuestions, openQuestion } from "../../redux/feature/questionSlice";
-import QuestionModal from "../user-dashboard/QuestionModal";
+import axios from "axios";
+import QuestionModal from "./QuestionModal";
+
+// Define Type for Jeopardy Question
+interface JeopardyQuestion {
+  id: string;
+  text: string;
+  options: string[];
+  correctAnswer: string;
+  points: number;
+  categoryId: string;
+  categoryName: string;
+  isAnswered?: boolean;
+  isCorrect?: boolean | null;
+}
+
+// Define Type for User
+interface UserType {
+  id: string;
+  name: string;
+  email: string;
+  role?: string;
+  image?: string;
+}
+
+// Define Type for Jeopardy Questions by Points
+interface JeopardyQuestionsByPoints {
+  [key: number]: JeopardyQuestion[];
+}
 
 export default function UserDashboard() {
-  const dispatch: AppDispatch = useDispatch();
   const router = useRouter();
-  const user = useSelector((state: RootState) => state.user);
-  const { questions, selectedQuestion, loading } = useSelector((state: RootState) => state.question);
+  const [user, setUser] = useState<UserType>({ id: "", name: "", email: "" });
+  const [jeopardyQuestions, setJeopardyQuestions] = useState<JeopardyQuestionsByPoints>({});
+  const [selectedQuestion, setSelectedQuestion] = useState<JeopardyQuestion | null>(null);
+  const [loading, setLoading] = useState(true);
   const [loadingPage, setLoadingPage] = useState(true);
-
-
-  const store = useSelector((state: RootState) => state);
-  console.log("Store:", store);
+  const [score, setScore] = useState(0);
+  const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, boolean>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const userName = localStorage.getItem("userName");
+    
     if (!token) {
       router.push("/login"); // Redirect if not logged in
     } else {
       setLoadingPage(false);
-      dispatch(fetchQuestions());
+      
+      // Set basic user info from localStorage while we fetch the full profile
+      if (userName) {
+        setUser(prev => ({ ...prev, name: userName }));
+      }
+      
+      fetchUserProfile(token);
+      fetchJeopardyQuestions(token);
     }
-  }, [router, dispatch]);
+  }, [router]);
 
-  useEffect(() => {
-    console.log("Questions:", questions);
-  }, [questions]);
+  const fetchUserProfile = async (token: string) => {
+    try {
+      const response = await axios.get("/api/auth/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.data.success) {
+        setUser(response.data.data);
+      } else {
+        setError("Failed to load user profile");
+      }
+    } catch (error: any) {
+      console.error("Error fetching user profile:", error);
+      // Use the name from localStorage as fallback
+      const userName = localStorage.getItem("userName");
+      if (userName) {
+        setUser(prev => ({ ...prev, name: userName }));
+      }
+    }
+  };
+
+  const fetchJeopardyQuestions = async (token: string) => {
+    try {
+      const response = await axios.get("/api/questions/jeopardy", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.data.success) {
+        const questions = response.data.data;
+        console.log("Fetched questions:", questions);
+        setJeopardyQuestions(questions);
+        
+        // Extract unique categories
+        const uniqueCategories = new Set<string>();
+        Object.values(questions).forEach((questionArray: any) => {
+          questionArray.forEach((q: JeopardyQuestion) => {
+            if (q.categoryName) {
+              uniqueCategories.add(q.categoryName);
+            }
+          });
+        });
+        setCategories(Array.from(uniqueCategories).slice(0, 3));
+        
+        // Initialize answered questions map
+        const answered: Record<string, boolean> = {};
+        
+        // Iterate through questions
+        Object.values(questions).forEach((questionArray: any) => {
+          questionArray.forEach((question: JeopardyQuestion) => {
+            if (question.isAnswered) {
+              answered[question.id] = question.isCorrect || false;
+              // Update score for previously answered questions
+              if (question.isCorrect) {
+                setScore(prev => prev + question.points);
+              }
+            }
+          });
+        });
+        
+        setAnsweredQuestions(answered);
+      } else {
+        setError("Failed to load questions");
+      }
+    } catch (error: any) {
+      console.error("Error fetching questions:", error);
+      setError("Failed to load questions. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
-    dispatch(logoutUser()); // Redux se user hatao
+    localStorage.removeItem("token"); // Remove token from storage
+    localStorage.removeItem("userName"); // Remove user name from storage
     router.push("/login"); // Redirect to login
+  };
+
+  const handleQuestionSelect = (question: JeopardyQuestion) => {
+    // Only allow selecting unanswered questions
+    if (!answeredQuestions[question.id]) {
+      console.log("Selected question:", question);
+      setSelectedQuestion(question);
+    }
+  };
+
+  const handleAnswerSubmitted = (questionId: string, isCorrect: boolean) => {
+    console.log("Answer submitted:", { questionId, isCorrect });
+    
+    // Update the answered questions map
+    setAnsweredQuestions(prev => ({
+      ...prev,
+      [questionId]: isCorrect,
+    }));
+
+    // Update the score
+    if (isCorrect) {
+      const question = Object.values(jeopardyQuestions)
+        .flat()
+        .find(q => q.id === questionId);
+      
+      if (question) {
+        const newScore = score + question.points;
+        setScore(newScore);
+      }
+    }
+
+    // Update the questions state to reflect the answered status
+    setJeopardyQuestions(prev => {
+      const updated = { ...prev };
+      Object.entries(updated).forEach(([points, questions]) => {
+        updated[parseInt(points)] = questions.map(q => 
+          q.id === questionId 
+            ? { ...q, isAnswered: true, isCorrect } 
+            : q
+        );
+      });
+      return updated;
+    });
   };
 
   if (loadingPage || loading) {
@@ -53,6 +202,25 @@ export default function UserDashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 transition-all duration-500 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+        <div className="relative w-full max-w-md">
+          <div className="bg-gray-800 bg-opacity-80 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-full text-center border border-gray-700">
+            <div className="text-red-500 text-xl font-semibold mb-4">Error</div>
+            <p className="text-white mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-800 via-gray-900 to-black">
       {/* Navbar */}
@@ -62,7 +230,10 @@ export default function UserDashboard() {
             Jeopardy Quiz
           </h1>
           <div className="flex items-center gap-4">
-            <p className="text-lg text-gray-200 font-semibold">Hello, {user.name}!</p>
+            <div className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-md">
+              <span className="font-bold">Score:</span> {score}
+            </div>
+            <p className="text-lg text-gray-200 font-semibold">Hello, {user.name || "Player"}!</p>
             <button
               onClick={handleLogout}
               className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-red-600 hover:to-red-800 transition-all duration-300 hover:scale-105"
@@ -74,36 +245,75 @@ export default function UserDashboard() {
       </nav>
 
       {/* Main Content */}
-      <div className="flex-1 flex p-6 max-w-7xl mx-auto w-full gap-6">
-        {/* Right Side (Jeopardy Table) */}
+      <div className="flex-1 flex p-6 max-w-7xl mx-auto w-full">
+        {/* Jeopardy Table */}
         <div className="w-full bg-gray-800 bg-opacity-80 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-200 mb-4">Jeopardy Levels</h2>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            {/* Level Headers */}
-            <div className="p-4 bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-white">Level 1</h3>
-            </div>
-            <div className="p-4 bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-white">Level 2</h3>
-            </div>
-            <div className="p-4 bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-white">Level 3</h3>
-            </div>
-
-            {/* Monetary Values */}
-            {questions.map((q: any, index: number) => (
-              <button
-                key={q.id}
-                onClick={() => dispatch(openQuestion(q))}
-                className="p-4 bg-gray-900 rounded-lg shadow-inner text-gray-200 hover:bg-gray-700 transition-all duration-300"
+          <h2 className="text-2xl font-bold text-gray-200 mb-6">Jeopardy Game</h2>
+          
+          {/* Categories */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            {categories.map((category, index) => (
+              <div 
+                key={index}
+                className={`p-4 rounded-lg shadow-md text-center ${
+                  index === 0 
+                    ? "bg-gradient-to-r from-blue-600 to-blue-800" 
+                    : index === 1 
+                    ? "bg-gradient-to-r from-purple-600 to-purple-800" 
+                    : "bg-gradient-to-r from-pink-600 to-pink-800"
+                }`}
               >
-                <p className="text-lg font-medium">${q.points}</p>
-              </button>
+                <h3 className="text-lg font-semibold text-white">{category}</h3>
+              </div>
             ))}
           </div>
+          
+          {/* Questions by points */}
+          {[100, 200, 300, 400, 500].map((pointValue) => {
+            // Check if we have questions for this point value
+            const hasQuestions = jeopardyQuestions[pointValue] && jeopardyQuestions[pointValue].length > 0;
+            
+            // Skip rendering if no questions for this point value
+            if (!hasQuestions) return null;
+            
+            return (
+              <div key={pointValue} className="grid grid-cols-3 gap-4 mb-4">
+                {(jeopardyQuestions[pointValue] || []).map((question, index) => {
+                  // Only show up to 3 questions per point value
+                  if (index >= 3) return null;
+                  
+                  return (
+                    <button
+                      key={question.id}
+                      onClick={() => handleQuestionSelect(question)}
+                      disabled={answeredQuestions[question.id] !== undefined}
+                      className={`p-6 rounded-lg shadow-md text-center transition-all duration-300 ${
+                        answeredQuestions[question.id] === undefined
+                          ? "bg-gray-700 hover:bg-gray-600 cursor-pointer"
+                          : answeredQuestions[question.id]
+                          ? "bg-green-600 cursor-not-allowed"
+                          : "bg-red-600 cursor-not-allowed"
+                      }`}
+                    >
+                      <p className="text-2xl font-bold text-white">${pointValue}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
       </div>
-      {selectedQuestion && <QuestionModal />}
+
+      {/* Question Modal */}
+      {selectedQuestion && (
+        <QuestionModal
+          selectedQuestion={selectedQuestion}
+          onClose={() => setSelectedQuestion(null)}
+          onAnswerSubmitted={handleAnswerSubmitted}
+        />
+      )}
+
       <style jsx>{`
         @keyframes loadingBar {
           0% {
