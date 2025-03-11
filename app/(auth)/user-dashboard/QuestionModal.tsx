@@ -1,19 +1,11 @@
 "use client";
 
-<<<<<<< HEAD
 import { useState, useEffect, useCallback, useRef } from "react";
 import axios, { AxiosError } from "axios";
 
 interface JeopardyQuestion {
   id: string;
   text: string;
-=======
-import { useState } from "react";
-
-interface Question {
-  text: string;
-  question: string;
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
   options: string[];
   correctAnswer: string;
   points: number;
@@ -22,7 +14,6 @@ interface Question {
 }
 
 interface QuestionModalProps {
-<<<<<<< HEAD
   selectedQuestion: JeopardyQuestion | null;
   onClose: () => void;
   onAnswerSubmitted: (questionId: string, isCorrect: boolean) => void;
@@ -225,14 +216,6 @@ export default function QuestionModal({
       }
     };
   }, [selectedQuestion]);
-=======
-  selectedQuestion: Question | null;
-  onClose: () => void;
-}
-
-export default function QuestionModal({ selectedQuestion, onClose }: QuestionModalProps) {
-  const [selectedAnswer, setSelectedAnswer] = useState("");
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
 
   if (!selectedQuestion) return null;
 
@@ -240,7 +223,6 @@ export default function QuestionModal({ selectedQuestion, onClose }: QuestionMod
   const displayOptions = selectedQuestion.options || [];
 
   return (
-<<<<<<< HEAD
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50">
       <div className="bg-gray-800 p-8 rounded-xl shadow-2xl max-w-2xl w-full border border-gray-700">
         {/* Timer and Points */}
@@ -310,41 +292,6 @@ export default function QuestionModal({ selectedQuestion, onClose }: QuestionMod
                   ? "bg-green-600 hover:bg-green-700"
                   : "bg-blue-600 hover:bg-blue-700"
               }`}
-=======
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
-        <h2 className="text-xl font-bold text-white">{selectedQuestion?.text}</h2>
-        <div className="mt-4 text-white">
-          {selectedQuestion?.options?.map((option, index) => (
-            <div key={index} className="flex items-center">
-              <input
-                type="radio"
-                id={option}
-                name="answer"
-                value={option}
-                onChange={(e) => setSelectedAnswer(e.target.value)}
-                className="mr-2"
-              />
-              <label htmlFor={option}>{option}</label>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 flex justify-between">
-          <button onClick={onClose} className="px-4 py-2 bg-red-600 text-white rounded-lg">
-            Close
-          </button>
-          <button
-            onClick={() => {
-              if (selectedAnswer === selectedQuestion.correctAnswer) {
-                alert("✅ Correct Answer!");
-              } else {
-                alert("❌ Wrong Answer!");
-              }
-              onClose();
-            }}
-            disabled={!selectedAnswer}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg"
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
           >
             {isSubmitting ? "Submitting..." : result ? "Submitted" : "Submit Answer"}
           </button>

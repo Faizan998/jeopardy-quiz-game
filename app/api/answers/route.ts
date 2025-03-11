@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
-<<<<<<< HEAD
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/app/lib/prisma";
+import jwt from "jsonwebtoken";
 
-const prisma = new PrismaClient();
+// Simple JWT verification function
+const verifyJwtToken = async (token: string) => {
+  try {
+    const secret = process.env.JWT_SECRET || "your-secret-key";
+    const decoded = jwt.verify(token, secret);
+    return decoded as { id: string; email: string };
+  } catch (error) {
+    console.error("JWT verification error:", error);
+    return null;
+  }
+};
 
 // GET: Fetch all answers with user & question details
 export async function GET() {
@@ -10,11 +20,10 @@ export async function GET() {
     const answers = await prisma.answer.findMany({
       include: {
         question: true, // Fetch related question
-        user: { select: { id: true, email: true, name: true } }, // Fetch user details
+        user: true, // Fetch related user
       },
     });
-
-    return NextResponse.json({ success: true, data: answers }, { status: 200 });
+    return NextResponse.json({ success: true, data: answers });
   } catch (error) {
     console.error("Error fetching answers:", error);
     return NextResponse.json({ success: false, error: "Failed to fetch answers" }, { status: 500 });
@@ -24,58 +33,76 @@ export async function GET() {
 // POST: Add a new answer
 export async function POST(req: Request) {
   try {
-    const { text, correct, userId, questionId } = await req.json();
-
-    if (!text || !userId || !questionId) {
-      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
+    // Get the token from the Authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
     }
-    
-    // Looking at your schema, the field is 'selectedIdx' not 'answer'
-    const newAnswer = await prisma.answer.create({
-      data: { 
-        selectedIdx: text, // Using 'selectedIdx' instead of 'answer'
-        isCorrect: correct, // Using 'isCorrect' instead of 'correct'
+
+    // Extract and verify the token
+    const token = authHeader.split(" ")[1];
+    const payload = await verifyJwtToken(token);
+    if (!payload) {
+      return NextResponse.json(
+        { success: false, error: "Invalid token" },
+        { status: 401 }
+      );
+    }
+
+    const userId = payload.id;
+    const { questionId, selectedAnswer, correctAnswer, points } = await req.json();
+
+    // Check if the user has already answered this question
+    const existingAnswer = await prisma.answer.findFirst({
+      where: {
         userId,
-        questionId
+        questionId,
       },
     });
 
-    return NextResponse.json({ success: true, data: newAnswer }, { status: 201 });
+    if (existingAnswer) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "You have already answered this question",
+          details: "Each question can only be answered once"
+        }, 
+        { status: 400 }
+      );
+    }
+
+    // Create the answer
+    const isCorrect = selectedAnswer === correctAnswer;
+    const answer = await prisma.answer.create({
+      data: {
+        userId,
+        questionId,
+        selectedIdx: selectedAnswer, // Using selectedIdx as per schema
+        isCorrect,
+      },
+    });
+
+    // Update user's total amount if answer is correct
+    if (isCorrect && points) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { totalAmount: { increment: points } }
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        answerId: answer.id,
+        isCorrect: answer.isCorrect,
+        points: isCorrect ? points : 0,
+      },
+    });
   } catch (error) {
     console.error("Error adding answer:", error);
     return NextResponse.json({ success: false, error: "Failed to add answer" }, { status: 500 });
-=======
-import prisma from "@/app/lib/prisma";
-
-export async function POST(req:Request) {
-  try {
-    const { questionId, selectedAnswer, userId } = await req.json();
-
-    // Validate input
-    if (!questionId || !selectedAnswer || !userId) {
-      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
-    }
-
-    // Fetch the correct answer
-    const correctAnswer = await prisma.answer.findFirst({
-      where: { questionId, correct: true },
-    });
-
-    if (!correctAnswer) {
-      return NextResponse.json({ success: false, error: "No correct answer found" }, { status: 404 });
-    }
-
-    // Compare selected answer with correct answer
-    const isCorrect = correctAnswer.text === selectedAnswer;
-
-    if (isCorrect) {
-      return NextResponse.json({ success: true, message: "✅ Correct Answer!" });
-    } else {
-      return NextResponse.json({ success: false, message: "❌ Wrong Answer!" });
-    }
-  } catch (error) {
-    console.error("Error verifying answer:", error);
-    return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
   }
 }
