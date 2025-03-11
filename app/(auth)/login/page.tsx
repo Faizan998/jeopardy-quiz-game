@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
-import { setUser } from "../../redux/feature/userSlice";
 import axios from "axios";
 import Link from "next/link";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
@@ -11,7 +9,6 @@ import { loginSchema, type LoginFormData } from "../../utils/validationSchemas";
 import { ZodError } from "zod";
 
 export default function Login() {
-  const dispatch = useDispatch();
   const router = useRouter();
   const [formData, setFormData] = useState<LoginFormData>({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -23,8 +20,6 @@ export default function Login() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    
-    // Clear validation error for this field when user types
     if (validationErrors[name]) {
       setValidationErrors(prev => {
         const newErrors = { ...prev };
@@ -42,7 +37,7 @@ export default function Login() {
     } catch (error) {
       if (error instanceof ZodError) {
         const newErrors: Record<string, string> = {};
-        error.errors.forEach((err : any) => {
+        error.errors.forEach((err: any) => {
           if (err.path[0]) {
             newErrors[err.path[0].toString()] = err.message;
           }
@@ -55,34 +50,20 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate form before submission
-    if (!validateForm()) {
-      return;
-    }
-    
+    if (!validateForm()) return;
     setLoading(true);
-    setMessage(""); // Clear previous messages
+    setMessage("");
 
     try {
       const res = await axios.post(
         "/api/login",
-        {
-          email: formData.email,
-          password: formData.password,
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-          timeout: 10000, // Add timeout to avoid hanging
-        }
+        { email: formData.email, password: formData.password },
+        { headers: { "Content-Type": "application/json" }, timeout: 10000 }
       );
 
       const data = res.data;
-
       if (res.status === 200 && data.token) {
         localStorage.setItem("token", data.token);
-        dispatch(setUser({ name: data.name, email: formData.email, token: data.token }));
-
         setMessage("Login successful! Redirecting... ✅");
         setMessageType("success");
         setTimeout(() => {
@@ -92,16 +73,7 @@ export default function Login() {
         throw new Error("Invalid response from server");
       }
     } catch (error: any) {
-      console.error("Error during login:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Login failed. Please check your credentials or try again later.";
+      const errorMessage = error.response?.data?.message || error.message || "Login failed. Please try again.";
       setMessage(errorMessage);
       setMessageType("error");
     } finally {
@@ -109,38 +81,24 @@ export default function Login() {
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
-  };
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 transition-all duration-500 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
-      <div className="relative z-10 text-center space-y-6 w-full max-w-md">
-        <h2 className="text-5xl font-extrabold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-pulse drop-shadow-lg">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+      <div className="text-center w-full max-w-md">
+        <h2 className="text-5xl font-extrabold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
           Login
         </h2>
-        <p className="text-lg text-gray-300">Welcome back to Jeopardy Quiz Challenge!</p>
-
-        <form
-          onSubmit={handleSubmit}
-          className="bg-gray-800 bg-opacity-80 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-full space-y-6 relative border border-gray-700"
-        >
-          <div>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              onChange={handleChange}
-              value={formData.email}
-              required
-              disabled={loading}
-              className={`w-full p-3 bg-gray-900 text-gray-200 border ${validationErrors.email ? 'border-red-500' : 'border-gray-600'} rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50`}
-            />
-            {validationErrors.email && (
-              <p className="mt-1 text-sm text-red-500">{validationErrors.email}</p>
-            )}
-          </div>
-          
+        <form onSubmit={handleSubmit} className="bg-gray-800 p-8 rounded-xl w-full border border-gray-700 space-y-6">
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            onChange={handleChange}
+            value={formData.email}
+            required
+            disabled={loading}
+            className="w-full p-3 bg-gray-900 text-gray-200 border rounded-lg focus:ring-2 focus:ring-blue-400"
+          />
+          {validationErrors.email && <p className="text-red-500">{validationErrors.email}</p>}
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -150,85 +108,26 @@ export default function Login() {
               value={formData.password}
               required
               disabled={loading}
-              className={`w-full p-3 bg-gray-900 text-gray-200 border ${validationErrors.password ? 'border-red-500' : 'border-gray-600'} rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50 pr-10`}
+              className="w-full p-3 bg-gray-900 text-gray-200 border rounded-lg focus:ring-2 focus:ring-blue-400 pr-10"
             />
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 transition-colors duration-200"
-              disabled={loading}
-            >
-              {showPassword ? (
-                <AiOutlineEyeInvisible className="text-xl" />
-              ) : (
-                <AiOutlineEye className="text-xl" />
-              )}
+            <button type="button" onClick={() => setShowPassword(prev => !prev)} className="absolute inset-y-0 right-0 p-3">
+              {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
             </button>
-            {validationErrors.password && (
-              <p className="mt-1 text-sm text-red-500">{validationErrors.password}</p>
-            )}
           </div>
-
-          <div className="text-right">
-            <Link href="/forgot-password" className="text-blue-400 hover:text-blue-300 transition-colors duration-200 text-sm">
-              Forgot Password?
-            </Link>
-          </div>
-
+          {validationErrors.password && <p className="text-red-500">{validationErrors.password}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-blue-600 hover:to-blue-800 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed hover:scale-105 relative overflow-hidden flex justify-center items-center"
+            className="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
-            {loading ? (
-              <>
-                <span className="relative  z-11">Logging In...</span>
-                <div className="absolute inset-0 h-full  bg-blue-400 opacity-50 animate-loading-bar"></div>
-              </>
-            ) : (
-              "Login"
-            )}
+            {loading ? "Logging In..." : "Login"}
           </button>
-
-          {message && (
-            <p
-              className={`mt-4 text-center font-semibold ${
-                messageType === "success"
-                  ? "text-blue-400 hover:text-blue-300 transition-colors duration-200"
-                  : "text-red-400"
-              } transition-opacity duration-300`}
-            >
-              {message}
-            </p>
-          )}
-
+          {message && <p className={`text-center ${messageType === "success" ? "text-blue-400" : "text-red-400"}`}>{message}</p>}
           <p className="text-center text-gray-400">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-blue-400 hover:text-blue-300 transition-colors duration-200">
-              Signup
-            </Link>
+            Don&apos;t have an account? <Link href="/signup" className="text-blue-400">Signup</Link>
           </p>
         </form>
       </div>
-      <style jsx>{`
-        @keyframes loadingBar {
-          0% {
-            width: 0;
-            left: 0;
-          }
-          50% {
-            width: 100%;
-            left: 0;
-          }
-          100% {
-            width: 0;
-            left: 100%;
-          }
-        }
-        .animate-loading-bar {
-          animation: loadingBar 1.5s infinite ease-in-out;
-        }
-      `}</style>
     </div>
   );
 }

@@ -28,9 +28,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SessionWrapper> {/* ✅ Wrap SessionProvider here */}
-          <Providers>
+          {/* <Providers> */}
             {children}
-          </Providers>
+          {/* </Providers> */}
         </SessionWrapper>
       </body>
     </html>
