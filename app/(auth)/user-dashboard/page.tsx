@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-<<<<<<< HEAD
 import axios from "axios";
 import QuestionModal from "./QuestionModal";
 
@@ -44,24 +43,12 @@ export default function UserDashboard() {
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
-=======
-import QuestionModal from "../user-dashboard/QuestionModal";
-import axios from "axios";
-
-export default function UserDashboard() {
-  const router = useRouter();
-  const [user, setUser] = useState<{ name: string } | null>(null);
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [selectedQuestion, setSelectedQuestion] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userName = localStorage.getItem("userName");
     
     if (!token) {
-<<<<<<< HEAD
       router.push("/login"); // Redirect if not logged in
     } else {
       setLoadingPage(false);
@@ -201,36 +188,16 @@ export default function UserDashboard() {
   };
 
   if (loadingPage || loading) {
-=======
-      router.push("/login");
-      return;
-    }
-    
-    const userData = JSON.parse(localStorage.getItem("user") || "null");
-    setUser(userData);
-    
-    axios.get("/api/questions", { headers: { Authorization: `Bearer ${token}` } })
-      .then(response => {
-        setQuestions(response.data);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error("Error fetching questions:", error);
-        setLoading(false);
-      });
-  }, [router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    router.push("/login");
-  };
-
-  if (loading) {
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-        <p>Loading...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 transition-all duration-500 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+        <div className="relative w-full max-w-md">
+          <div className="bg-gray-800 bg-opacity-80 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-full text-center border border-gray-700">
+            <div className="relative overflow-hidden inline-block">
+              <span className="text-xl text-gray-200 font-semibold relative z-10">Loading...</span>
+              <div className="absolute inset-0 h-full bg-blue-400 opacity-50 animate-loading-bar"></div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -255,13 +222,14 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-900 text-white">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-800 via-gray-900 to-black">
       {/* Navbar */}
-      <nav className="w-full p-4 bg-gray-800 border-b border-gray-700 shadow-lg">
+      <nav className="w-full p-4 bg-gray-800 bg-opacity-80 backdrop-blur-lg border-b border-gray-700 shadow-lg">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Jeopardy Quiz</h1>
+          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-pulse">
+            Jeopardy Quiz
+          </h1>
           <div className="flex items-center gap-4">
-<<<<<<< HEAD
             <div className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-md">
               <span className="font-bold">Score:</span> {score}
             </div>
@@ -270,10 +238,6 @@ export default function UserDashboard() {
               onClick={handleLogout}
               className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-red-600 hover:to-red-800 transition-all duration-300 hover:scale-105"
             >
-=======
-            <p className="text-lg">Hello, {user?.name}!</p>
-            <button onClick={handleLogout} className="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700">
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
               Logout
             </button>
           </div>
@@ -281,7 +245,6 @@ export default function UserDashboard() {
       </nav>
 
       {/* Main Content */}
-<<<<<<< HEAD
       <div className="flex-1 flex p-6 max-w-7xl mx-auto w-full">
         {/* Jeopardy Table */}
         <div className="w-full bg-gray-800 bg-opacity-80 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-gray-700">
@@ -299,17 +262,6 @@ export default function UserDashboard() {
                     ? "bg-gradient-to-r from-purple-600 to-purple-800" 
                     : "bg-gradient-to-r from-pink-600 to-pink-800"
                 }`}
-=======
-      <div className="flex-1 flex p-6 max-w-7xl mx-auto w-full gap-6">
-        <div className="w-full bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
-          <h2 className="text-2xl font-bold mb-4">Jeopardy Levels</h2>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            {questions.map((q, index) => (
-              <button
-                key={q.id}
-                onClick={() => setSelectedQuestion(q)}
-                className="p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-all"
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
               >
                 <h3 className="text-lg font-semibold text-white">{category}</h3>
               </div>
@@ -353,7 +305,6 @@ export default function UserDashboard() {
         </div>
       </div>
 
-<<<<<<< HEAD
       {/* Question Modal */}
       {selectedQuestion && (
         <QuestionModal
@@ -382,11 +333,6 @@ export default function UserDashboard() {
           animation: loadingBar 1.5s infinite ease-in-out;
         }
       `}</style>
-=======
-      {selectedQuestion && <QuestionModal selectedQuestion={selectedQuestion} onClose={function (): void {
-        throw new Error("Function not implemented.");
-      } } />}
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
     </div>
   );
 }
