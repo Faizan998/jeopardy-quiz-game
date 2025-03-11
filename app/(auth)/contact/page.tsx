@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ export default function ContactPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
   const [isMounted, setIsMounted] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -24,13 +26,13 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    if (!isMounted) return;
+    if (!isMounted || !recaptchaToken) return;
 
     setIsLoading(true);
     setResponseMessage("");
 
     try {
-      const res = await axios.post("/api/contact", formData, {
+      const res = await axios.post("/api/contact", { ...formData, recaptchaToken }, {
         headers: { "Content-Type": "application/json" },
         timeout: 15000,
       });
@@ -38,9 +40,9 @@ export default function ContactPage() {
       if (res.status === 200) {
         setResponseMessage("Message sent successfully! Check your email.");
         setFormData({ name: "", email: "", message: "" });
+        setRecaptchaToken(null);
       }
     } catch (error: any) {
-      // Improved error logging and display
       const errorDetails = error.response?.data || {};
       console.error("Error sending contact form:", {
         message: error.message,
@@ -54,6 +56,10 @@ export default function ContactPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRecaptchaChange = (token: string | null) => {
+    setRecaptchaToken(token);
   };
 
   if (!isMounted) {
@@ -114,9 +120,14 @@ export default function ContactPage() {
               className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
+          <ReCAPTCHA
+            // Replace with your actual reCAPTCHA Site Key from Google
+            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "your-actual-site-key-here"}
+            onChange={handleRecaptchaChange}
+          />
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !recaptchaToken}
             className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg hover:from-blue-600 hover:to-blue-800 disabled:bg-gray-600 transition-all"
           >
             {isLoading ? "Sending..." : "Send Message"}

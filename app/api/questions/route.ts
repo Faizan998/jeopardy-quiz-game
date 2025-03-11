@@ -7,10 +7,7 @@ const prisma = new PrismaClient();
 export async function GET() {
   try {
     const questions = await prisma.question.findMany({
-      include: {
-        category: true, // Fetch category details
-        Answer: true,   // Fetch answers related to question (using 'Answer' instead of 'answers')
-      },
+      include: { category: true },
     });
 
     return NextResponse.json({ success: true, data: questions }, { status: 200 });

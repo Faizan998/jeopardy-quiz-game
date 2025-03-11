@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 import quizData from "@/data/quizdata";
+=======
+
+
+import quizData from "@/data/quizInital";
+>>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -31,5 +37,9 @@ main()
   })
   .finally(() => {
     prisma.$disconnect();
+<<<<<<< HEAD
   });
 
+=======
+  });
+>>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa

@@ -27,7 +27,11 @@ model User {
   Answer      Answer[]
   image       String?
   totalAmount Int @default(0)
+<<<<<<< HEAD
   Token       Int @default(0)
+=======
+  Token       String?
+>>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
   TokenExpiry DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -42,8 +46,13 @@ model Question {
   Answer     Answer[]
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
+<<<<<<< HEAD
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+=======
+  createdAt  DateTime @default(now()) 
+  updatedAt  DateTime @updatedAt
+>>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
 }
 
 model Answer {
@@ -62,7 +71,13 @@ model Category {
   id        String     @id @default(uuid()) // UUID as Primary Key
   name      String
   questions Question[]
+<<<<<<< HEAD
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
+=======
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+>>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
