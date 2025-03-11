@@ -20,10 +20,7 @@ export default function Login() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-<<<<<<< HEAD
-
-=======
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
+    
     if (validationErrors[name]) {
       setValidationErrors(prev => {
         const newErrors = { ...prev };
@@ -54,22 +51,17 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-<<<<<<< HEAD
     
     if (!validateForm()) {
       return;
     }
     
-=======
-    if (!validateForm()) return;
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
     setLoading(true);
     setMessage("");
 
     try {
       const res = await axios.post(
         "/api/login",
-<<<<<<< HEAD
         {
           email: formData.email,
           password: formData.password,
@@ -78,21 +70,14 @@ export default function Login() {
           headers: { "Content-Type": "application/json" },
           timeout: 10000,
         }
-=======
-        { email: formData.email, password: formData.password },
-        { headers: { "Content-Type": "application/json" }, timeout: 10000 }
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
       );
 
       const data = res.data;
       if (res.status === 200 && data.token) {
         localStorage.setItem("token", data.token);
-<<<<<<< HEAD
         if (data.name) {
           localStorage.setItem("userName", data.name);
         }
-=======
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
         setMessage("Login successful! Redirecting... ✅");
         setMessageType("success");
 
@@ -144,7 +129,6 @@ export default function Login() {
               {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
             </button>
           </div>
-<<<<<<< HEAD
 
           {/* Forgot Password Link */}
           <div className="text-right">
@@ -177,24 +161,10 @@ export default function Login() {
 
           {/* Login Message at the Bottom */}
           {message && (
-            <div className="mt-4 text-center text-blue-400 font-semibold">
+            <div className={`mt-4 text-center ${messageType === "success" ? "text-green-400" : "text-red-400"} font-semibold`}>
               {message}
             </div>
           )}
-=======
-          {validationErrors.password && <p className="text-red-500">{validationErrors.password}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          >
-            {loading ? "Logging In..." : "Login"}
-          </button>
-          {message && <p className={`text-center ${messageType === "success" ? "text-blue-400" : "text-red-400"}`}>{message}</p>}
-          <p className="text-center text-gray-400">
-            Don&apos;t have an account? <Link href="/signup" className="text-blue-400">Signup</Link>
-          </p>
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
         </form>
       </div>
     </div>
