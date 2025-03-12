@@ -10,9 +10,13 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+<<<<<<< HEAD
+    "@getbrevo/brevo": "^1.0.1",
+=======
     "@babel/plugin-transform-runtime": "^7.26.10",
     "@babel/runtime": "^7.26.10",
     "@getbrevo/brevo": "^2.2.0",
+>>>>>>> d40e17ea11ac14c8f6660b5d78da4e09b5e52af1
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^6.4.1",
     "@reduxjs/toolkit": "^2.6.0",
