@@ -20,6 +20,7 @@ export default function Login() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    
     if (validationErrors[name]) {
       setValidationErrors(prev => {
         const newErrors = { ...prev };
@@ -50,22 +51,36 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
     setMessage("");
 
     try {
       const res = await axios.post(
         "/api/login",
-        { email: formData.email, password: formData.password },
-        { headers: { "Content-Type": "application/json" }, timeout: 10000 }
+        {
+          email: formData.email,
+          password: formData.password,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+          timeout: 10000,
+        }
       );
 
       const data = res.data;
       if (res.status === 200 && data.token) {
         localStorage.setItem("token", data.token);
+        if (data.name) {
+          localStorage.setItem("userName", data.name);
+        }
         setMessage("Login successful! Redirecting... ✅");
         setMessageType("success");
+
         setTimeout(() => {
           router.push(data.role === "admin" ? "/admin-dashboard" : "/user-dashboard");
         }, 1500);
@@ -114,18 +129,42 @@ export default function Login() {
               {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
             </button>
           </div>
-          {validationErrors.password && <p className="text-red-500">{validationErrors.password}</p>}
+
+          {/* Forgot Password Link */}
+          <div className="text-right">
+            <Link href="/forgot-password" className="text-blue-400 hover:underline text-sm">
+              Forgot Password?
+            </Link>
+          </div>
+
+          {/* Login Button with Loading */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg shadow-md flex justify-center items-center"
           >
-            {loading ? "Logging In..." : "Login"}
+            {loading && (
+              <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5 mr-2"></span>
+            )}
+            Login
           </button>
-          {message && <p className={`text-center ${messageType === "success" ? "text-blue-400" : "text-red-400"}`}>{message}</p>}
-          <p className="text-center text-gray-400">
-            Don&apos;t have an account? <Link href="/signup" className="text-blue-400">Signup</Link>
-          </p>
+
+          {/* Back to Signup Link */}
+          <div className="text-center">
+            <p className="text-gray-400 text-sm">
+              Don't have an account?{" "}
+              <Link href="/signup" className="text-blue-400 hover:underline">
+                Sign up
+              </Link>
+            </p>
+          </div>
+
+          {/* Login Message at the Bottom */}
+          {message && (
+            <div className={`mt-4 text-center ${messageType === "success" ? "text-green-400" : "text-red-400"} font-semibold`}>
+              {message}
+            </div>
+          )}
         </form>
       </div>
     </div>
