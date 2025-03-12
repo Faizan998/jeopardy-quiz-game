@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     console.log("User Found:", { id: user.id, email: user.email, role: user.role });
 
     // Check if password is correct
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password as string);
     
     console.log("Password Match Result:", isMatch);
 

@@ -10,12 +10,13 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@getbrevo/brevo": "^1.0.1",
+    "@babel/plugin-transform-runtime": "^7.26.10",
+    "@babel/runtime": "^7.26.10",
+    "@getbrevo/brevo": "^2.2.0",
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^6.4.1",
     "@reduxjs/toolkit": "^2.6.0",
     "@supabase/supabase-js": "^2.49.1",
-    "@tailwindcss/oxide-win32-x64-msvc": "^4.0.13",
     "@types/bcrypt": "^5.0.2",
     "autoprefixer": "^10.4.21",
     "axios": "^1.8.1",

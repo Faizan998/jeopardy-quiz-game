@@ -289,7 +289,7 @@ export default function QuestionModal({
               isSubmitting || !!result
                 ? "bg-gray-600 cursor-not-allowed"
                 : selectedAnswer
-                  ? "bg-green-600 hover:bg-green-700"
+                  ? "bg-blue-800 hover:bg-blue-700"
                   : "bg-blue-600 hover:bg-blue-700"
               }`}
           >

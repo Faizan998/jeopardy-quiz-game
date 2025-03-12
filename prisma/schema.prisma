@@ -19,22 +19,18 @@ enum Role {
 }
 
 model User {
-  id          String   @id @default(uuid()) // UUID as Primary Key
+  id          String    @id @default(uuid()) // UUID as Primary Key
   name        String
-  email       String   @unique
+  email       String    @unique
   password    String?
   role        Role
   Answer      Answer[]
   image       String?
-  totalAmount Int @default(0)
-<<<<<<< HEAD
-  Token       Int @default(0)
-=======
-  Token       String?
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
-  TokenExpiry DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  totalAmount Int       @default(0)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
 }
 
 model Question {
@@ -46,13 +42,8 @@ model Question {
   Answer     Answer[]
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
-<<<<<<< HEAD
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-=======
-  createdAt  DateTime @default(now()) 
-  updatedAt  DateTime @updatedAt
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model Answer {
@@ -62,22 +53,15 @@ model Answer {
   questionId  String
   question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade) //? Not sure if ans should del if ques is del but for now it will del
   selectedIdx String //selected option index of a question
-  isCorrect     Boolean
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isCorrect   Boolean
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 }
 
 model Category {
-  id        String     @id @default(uuid()) // UUID as Primary Key
-  name      String
-  questions Question[]
-<<<<<<< HEAD
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String     @id @default(uuid()) // UUID as Primary Key
+  name       String
+  questions  Question[]
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
 }
-
-=======
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-}
->>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa

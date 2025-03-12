@@ -1,47 +1,56 @@
-import { NextResponse } from "next/server";
-import prisma from "@/app/lib/prisma";
+// import { NextResponse } from "next/server";
+// import prisma from "@/app/lib/prisma";
 
-export async function POST(req: Request) {
-  try {
-    const { questionId, selectedAnswerId, userId } = await req.json();
+// export async function POST(req: Request) {
+//   try {
+//     // Define expected request body structure
+//     const { questionId, selectedAnswerId, userId }: { questionId: string; selectedAnswerId: string; userId: string } =
+//       await req.json();
 
-    if (!questionId || !selectedAnswerId || !userId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
+//     if (!questionId || !selectedAnswerId || !userId) {
+//       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+//     }
 
-    const correctAnswer = await prisma.answer.findFirst({
-      where: { questionId, correct: true, userId: null }, // Pre-defined correct answer
-    });
+//     // Find the correct answer
+//     const correctAnswer = await prisma.answer.findFirst({
+//       where: {
+//         questionId,
+//         correct: true,
+//         userId: null, // Ensure it is a predefined correct answer
+//       },
+//     });
 
-    if (!correctAnswer) {
-      return NextResponse.json({ error: "No correct answer found" }, { status: 404 });
-    }
+//     if (!correctAnswer) {
+//       return NextResponse.json({ error: "No correct answer found" }, { status: 404 });
+//     }
 
-    const isCorrect = correctAnswer.id === selectedAnswerId;
+//     const isCorrect: boolean = correctAnswer.id === selectedAnswerId;
 
-    await prisma.answer.create({
-      data: {
-        text: selectedAnswerId, // Store the selected answer ID
-        correct: isCorrect,
-        userId,
-        questionId,
-      },
-    });
+//     // Create a new answer record for the user (Assuming there is a valid field to store it)
+//     await prisma.answer.create({
+//       data: {
+//         questionId,
+//         userId, // Ensures proper user assignment
+//         correct: isCorrect,
+//         selectedAnswerId, // Store selected answer separately if text doesn't exist
+//       },
+//     });
 
-    if (isCorrect) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { totalScore: { increment: 10 } },
-      });
-    }
+//     // Update user score if the answer is correct
+//     if (isCorrect) {
+//       await prisma.user.update({
+//         where: { id: userId },
+//         data: { totalScore: { increment: 10 } },
+//       });
+//     }
 
-    return NextResponse.json({
-      isCorrect,
-      message: isCorrect ? "✅ Correct Answer!" : "❌ Wrong Answer!",
-      correctAnswer: correctAnswer.text,
-    });
-  } catch (error) {
-    console.error("Error submitting answer:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
+//     return NextResponse.json({
+//       isCorrect,
+//       message: isCorrect ? "✅ Correct Answer!" : "❌ Wrong Answer!",
+//       correctAnswer: correctAnswer.text, // Ensure `text` exists in the database schema
+//     });
+//   } catch (error: any) {
+//     console.error("Error submitting answer:", error);
+//     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+//   }
+// }
