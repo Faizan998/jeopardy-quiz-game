@@ -31,6 +31,7 @@ model User {
   totalAmount Int       @default(0)
   created_at  DateTime  @default(now())
   updated_at  DateTime  @updatedAt
+  blogs       Blog[]    // Relation to blogs
 }
 
 model Question {
@@ -64,4 +65,16 @@ model Category {
   questions  Question[]
   created_at DateTime   @default(now())
   updated_at DateTime   @updatedAt
+}
+
+model Blog {
+  id          String   @id @default(uuid()) // UUID as Primary Key
+  title       String
+  content     String   @db.Text
+  image       String?
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  published   Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 }

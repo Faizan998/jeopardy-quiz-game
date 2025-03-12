@@ -1,19 +1,66 @@
-
 import GoogleProvider from "next-auth/providers/google";
-import { PrismaClient } from "@prisma/client";
+import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient();
+import prisma from "./prisma"; // Use the global Prisma instance
 
 export const authOptions = {
-  
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            return null;
+          }
+
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email },
+          });
+
+          if (!user || !user.password) {
+            return null;
+          }
+
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            image: user.image,
+          };
+        } catch (error) {
+          console.error("Authorization error:", error);
+          return null;
+        }
+      },
+    }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
   callbacks: {
     async signIn({ user }: { user: any }) {
       try {
@@ -35,6 +82,8 @@ export const authOptions = {
               role: userRole === "ADMIN" ? "ADMIN" : "USER",
               password: hashedPassword,
               image: user.image ? user.image : null,
+              resetToken: null,
+              resetTokenExpiry: null,
             },
           });
         } else {
@@ -53,20 +102,35 @@ export const authOptions = {
       }
     },
 
-    async jwt({ token, account }: { token: any; account?: any }) {
-      if (account) {
-        token.accessToken = account.access_token;
+    async jwt({ token, account, user }: { token: any; account?: any; user?: any }) {
+      try {
+        if (account) {
+          token.accessToken = account.access_token;
+        }
+        if (user) {
+          token.role = user.role;
+          token.id = user.id;
+        }
+        return token;
+      } catch (error) {
+        console.error("JWT callback error:", error);
+        return token;
       }
-      return token;
     },
 
     async session({ session, token }: { session: any; token: any }) {
-      const user = await prisma.user.findUnique({ where: { email: session.user?.email } });
-      if (user) {
-        session.user.role = user.role; // ✅ Role store kar diya session me
+      try {
+        if (session.user) {
+          session.user.role = token.role;
+          session.user.id = token.id;
+        }
+        session.accessToken = token.accessToken;
+        return session;
+      } catch (error) {
+        console.error("Session callback error:", error);
+        return session;
       }
-      session.accessToken = token.accessToken;
-      return session;
     },
   },
+  debug: process.env.NODE_ENV === "development",
 };

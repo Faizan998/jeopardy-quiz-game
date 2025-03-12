@@ -14,7 +14,7 @@ interface JeopardyQuestion {
 }
 
 interface QuestionModalProps {
-  selectedQuestion: JeopardyQuestion | null;
+  question: JeopardyQuestion;
   onClose: () => void;
   onAnswerSubmitted: (questionId: string, isCorrect: boolean) => void;
 }
@@ -31,7 +31,7 @@ interface SubmissionResult {
 }
 
 export default function QuestionModal({
-  selectedQuestion,
+  question,
   onClose,
   onAnswerSubmitted
 }: QuestionModalProps) {
@@ -44,7 +44,7 @@ export default function QuestionModal({
 
   // Initialize timer only once when component mounts
   useEffect(() => {
-    if (!selectedQuestion || timerInitialized.current) return;
+    if (!question || timerInitialized.current) return;
     
     // Set initial timer
     setTimeLeft(30);
@@ -81,7 +81,7 @@ export default function QuestionModal({
         clearInterval(timerRef.current);
       }
     };
-  }, [selectedQuestion, result, selectedAnswer]);
+  }, [question, result, selectedAnswer]);
 
   // Auto-close after showing result
   useEffect(() => {
@@ -103,7 +103,7 @@ export default function QuestionModal({
 
   // Handle answer submission
   const handleSubmit = useCallback(async () => {
-    if (!selectedQuestion || isSubmitting || result) return;
+    if (!question || isSubmitting || result) return;
 
     // Allow submission even if no answer is selected
     if (!selectedAnswer) {
@@ -123,20 +123,20 @@ export default function QuestionModal({
       }
 
       console.log("Submitting answer:", {
-        questionId: selectedQuestion.id,
+        questionId: question.id,
         selectedAnswer,
-        correctAnswer: selectedQuestion.correctAnswer,
-        points: selectedQuestion.points,
+        correctAnswer: question.correctAnswer,
+        points: question.points,
       });
 
       // First, submit to the answer API
       const response = await axios.post<SubmissionResult>(
         "/api/answers/submit",
         {
-          questionId: selectedQuestion.id,
+          questionId: question.id,
           selectedAnswer,
-          correctAnswer: selectedQuestion.correctAnswer,
-          points: selectedQuestion.points,
+          correctAnswer: question.correctAnswer,
+          points: question.points,
         },
         {
           headers: {
@@ -155,7 +155,7 @@ export default function QuestionModal({
         await axios.post(
           "/api/questions/jeopardy",
           {
-            questionId: selectedQuestion.id,
+            questionId: question.id,
             isCorrect
           },
           {
@@ -169,12 +169,12 @@ export default function QuestionModal({
         setResult({
           isCorrect,
           message: isCorrect
-            ? `✅ Correct! You earned ${selectedQuestion.points} points.`
-            : `❌ Wrong! The correct answer was: ${selectedQuestion.correctAnswer}`,
+            ? `✅ Correct! You earned ${question.points} points.`
+            : `❌ Wrong! The correct answer was: ${question.correctAnswer}`,
         });
 
         // Notify parent component about the result
-        onAnswerSubmitted(selectedQuestion.id, isCorrect);
+        onAnswerSubmitted(question.id, isCorrect);
       } else {
         throw new Error(response.data.error || "Failed to submit answer");
       }
@@ -193,19 +193,19 @@ export default function QuestionModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedQuestion, selectedAnswer, onAnswerSubmitted, isSubmitting, result]);
+  }, [question, selectedAnswer, onAnswerSubmitted, isSubmitting, result]);
 
   // Reset component state when question changes
   useEffect(() => {
-    if (selectedQuestion) {
+    if (question) {
       // Reset state but don't restart timer
       setSelectedAnswer(null);
       setResult(null);
       setIsSubmitting(false);
       
       // Log the question data for debugging
-      console.log("Question data:", selectedQuestion);
-      console.log("Options:", selectedQuestion.options);
+      console.log("Question data:", question);
+      console.log("Options:", question.options);
     }
     
     return () => {
@@ -215,12 +215,12 @@ export default function QuestionModal({
         clearInterval(timerRef.current);
       }
     };
-  }, [selectedQuestion]);
+  }, [question]);
 
-  if (!selectedQuestion) return null;
+  if (!question) return null;
 
   // Use the options directly from the question
-  const displayOptions = selectedQuestion.options || [];
+  const displayOptions = question.options || [];
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50">
@@ -229,10 +229,10 @@ export default function QuestionModal({
         <div className="mb-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="text-lg font-bold text-gray-200">
-              Category: {selectedQuestion.categoryName}
+              Category: {question.categoryName}
             </div>
             <div className="px-3 py-1 bg-blue-600 rounded-full text-white font-bold">
-              ${selectedQuestion.points}
+              ${question.points}
             </div>
           </div>
           <div className={`text-lg font-bold ${timeLeft <= 10 ? "text-red-500 animate-pulse" : "text-gray-200"}`}>
@@ -241,7 +241,7 @@ export default function QuestionModal({
         </div>
 
         {/* Question */}
-        <h2 className="text-2xl font-bold text-white mb-6">{selectedQuestion.text}</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">{question.text}</h2>
 
         {/* Result message */}
         {result && (
@@ -259,9 +259,9 @@ export default function QuestionModal({
               disabled={!!result}
               className={`p-4 rounded-lg text-white text-left transition-all duration-300 ${
                 result
-                  ? option === selectedQuestion.correctAnswer
+                  ? option === question.correctAnswer
                     ? "bg-green-600"
-                    : option === selectedAnswer && option !== selectedQuestion.correctAnswer
+                    : option === selectedAnswer && option !== question.correctAnswer
                       ? "bg-red-600"
                       : "bg-gray-700 opacity-70"
                   : selectedAnswer === option

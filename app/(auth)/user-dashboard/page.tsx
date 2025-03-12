@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import QuestionModal from "./QuestionModal";
+import Leaderboard from "./Leaderboard";
 
 // Define Type for Jeopardy Question
 interface JeopardyQuestion {
@@ -43,21 +44,15 @@ export default function UserDashboard() {
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userName = localStorage.getItem("userName");
     
     if (!token) {
-      router.push("/login"); // Redirect if not logged in
+      router.push("/login");
     } else {
-      setLoadingPage(false);
-      
-      // Set basic user info from localStorage while we fetch the full profile
-      if (userName) {
-        setUser(prev => ({ ...prev, name: userName }));
-      }
-      
       fetchUserProfile(token);
       fetchJeopardyQuestions(token);
     }
@@ -65,277 +60,203 @@ export default function UserDashboard() {
 
   const fetchUserProfile = async (token: string) => {
     try {
-      const response = await axios.get("/api/auth/profile", {
+      const res = await axios.get("/api/auth/profile", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      
-      if (response.data.success) {
-        setUser(response.data.data);
+
+      if (res.status === 200) {
+        setUser(res.data);
+        // Store user ID in localStorage for leaderboard
+        localStorage.setItem("userId", res.data.id);
+        setScore(res.data.totalAmount || 0);
       } else {
-        setError("Failed to load user profile");
+        throw new Error("Failed to fetch user profile");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching user profile:", error);
-      // Use the name from localStorage as fallback
-      const userName = localStorage.getItem("userName");
-      if (userName) {
-        setUser(prev => ({ ...prev, name: userName }));
-      }
+      setError("Failed to load user profile. Please try again later.");
+    } finally {
+      setLoadingPage(false);
     }
   };
 
   const fetchJeopardyQuestions = async (token: string) => {
     try {
-      const response = await axios.get("/api/questions/jeopardy", {
+      setLoading(true);
+      const res = await axios.get("/api/questions", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      
-      if (response.data.success) {
-        const questions = response.data.data;
-        console.log("Fetched questions:", questions);
-        setJeopardyQuestions(questions);
-        
-        // Extract unique categories
+
+      if (res.status === 200) {
+        const questions = res.data;
+        const questionsByPoints: JeopardyQuestionsByPoints = {};
         const uniqueCategories = new Set<string>();
-        Object.values(questions).forEach((questionArray: any) => {
-          questionArray.forEach((q: JeopardyQuestion) => {
-            if (q.categoryName) {
-              uniqueCategories.add(q.categoryName);
-            }
-          });
+        const answeredQuestionsMap: Record<string, boolean> = {};
+
+        questions.forEach((question: JeopardyQuestion) => {
+          const points = question.points;
+          if (!questionsByPoints[points]) {
+            questionsByPoints[points] = [];
+          }
+          questionsByPoints[points].push(question);
+          uniqueCategories.add(question.categoryName);
+
+          // Check if question has been answered
+          if (question.isAnswered) {
+            answeredQuestionsMap[question.id] = true;
+          }
         });
-        setCategories(Array.from(uniqueCategories).slice(0, 3));
-        
-        // Initialize answered questions map
-        const answered: Record<string, boolean> = {};
-        
-        // Iterate through questions
-        Object.values(questions).forEach((questionArray: any) => {
-          questionArray.forEach((question: JeopardyQuestion) => {
-            if (question.isAnswered) {
-              answered[question.id] = question.isCorrect || false;
-              // Update score for previously answered questions
-              if (question.isCorrect) {
-                setScore(prev => prev + question.points);
-              }
-            }
-          });
-        });
-        
-        setAnsweredQuestions(answered);
+
+        setJeopardyQuestions(questionsByPoints);
+        setCategories(Array.from(uniqueCategories));
+        setAnsweredQuestions(answeredQuestionsMap);
       } else {
-        setError("Failed to load questions");
+        throw new Error("Failed to fetch questions");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching questions:", error);
-      setError("Failed to load questions. Please try again.");
+      setError("Failed to load questions. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Remove token from storage
-    localStorage.removeItem("userName"); // Remove user name from storage
-    router.push("/login"); // Redirect to login
+    localStorage.removeItem("token");
+    localStorage.removeItem("userName");
+    router.push("/login");
   };
 
   const handleQuestionSelect = (question: JeopardyQuestion) => {
-    // Only allow selecting unanswered questions
     if (!answeredQuestions[question.id]) {
-      console.log("Selected question:", question);
       setSelectedQuestion(question);
     }
   };
 
   const handleAnswerSubmitted = (questionId: string, isCorrect: boolean) => {
-    console.log("Answer submitted:", { questionId, isCorrect });
+    setSelectedQuestion(null);
     
-    // Update the answered questions map
+    // Update answered questions
     setAnsweredQuestions(prev => ({
       ...prev,
-      [questionId]: isCorrect,
+      [questionId]: true
     }));
-
-    // Update the score
+    
+    // Update score if answer is correct
     if (isCorrect) {
       const question = Object.values(jeopardyQuestions)
         .flat()
         .find(q => q.id === questionId);
-      
+        
       if (question) {
-        const newScore = score + question.points;
-        setScore(newScore);
+        setScore(prev => prev + question.points);
       }
     }
-
-    // Update the questions state to reflect the answered status
-    setJeopardyQuestions(prev => {
-      const updated = { ...prev };
-      Object.entries(updated).forEach(([points, questions]) => {
-        updated[parseInt(points)] = questions.map(q => 
-          q.id === questionId 
-            ? { ...q, isAnswered: true, isCorrect } 
-            : q
-        );
-      });
-      return updated;
-    });
   };
 
-  if (loadingPage || loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 transition-all duration-500 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
-        <div className="relative w-full max-w-md">
-          <div className="bg-gray-800 bg-opacity-80 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-full text-center border border-gray-700">
-            <div className="relative overflow-hidden inline-block">
-              <span className="text-xl text-gray-200 font-semibold relative z-10">Loading...</span>
-              <div className="absolute inset-0 h-full bg-blue-400 opacity-50 animate-loading-bar"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const toggleLeaderboard = () => {
+    setShowLeaderboard(!showLeaderboard);
+  };
 
-  if (error) {
+  if (loadingPage) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 transition-all duration-500 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
-        <div className="relative w-full max-w-md">
-          <div className="bg-gray-800 bg-opacity-80 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-full text-center border border-gray-700">
-            <div className="text-red-500 text-xl font-semibold mb-4">Error</div>
-            <p className="text-white mb-4">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-800 via-gray-900 to-black">
-      {/* Navbar */}
-      <nav className="w-full p-4 bg-gray-800 bg-opacity-80 backdrop-blur-lg border-b border-gray-700 shadow-lg">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-pulse">
-            Jeopardy Quiz
-          </h1>
-          <div className="flex items-center gap-4">
-          <div className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-md">
-              <span className="font-bold">Score:</span> Leaderboard
-            </div>
-            <div className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-md">
-              <span className="font-bold">Score:</span> {score}
-            </div>
-            <p className="text-lg text-gray-200 font-semibold">Hello, {user.name || "Player"}!</p>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-red-600 hover:to-red-800 transition-all duration-300 hover:scale-105"
-            >
-              Logout
-            </button>
-          </div>
+    <div className="min-h-screen bg-gray-900 text-white p-4">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">Jeopardy Quiz Game</h1>
+          <p className="text-gray-400">Welcome, {user.name}</p>
         </div>
-      </nav>
+        <div className="flex items-center space-x-4">
+          <div className="bg-blue-900 px-4 py-2 rounded-lg">
+            <span className="font-bold">Score:</span> {score}
+          </div>
+          <button
+            onClick={toggleLeaderboard}
+            className="bg-purple-700 hover:bg-purple-800 px-4 py-2 rounded-lg transition duration-300"
+          >
+            {showLeaderboard ? "Hide Leaderboard" : "Show Leaderboard"}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition duration-300"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-900 text-white p-4 rounded-lg mb-6">
+          {error}
+        </div>
+      )}
 
       {/* Main Content */}
-      <div className="flex-1 flex p-6 max-w-7xl mx-auto w-full">
-        {/* Jeopardy Table */}
-        <div className="w-full bg-gray-800 bg-opacity-80 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-200 mb-6">Jeopardy Game</h2>
-          
-          {/* Categories */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            {categories.map((category, index) => (
-              <div 
-                key={index}
-                className={`p-4 rounded-lg shadow-md text-center ${
-                  index === 0 
-                    ? "bg-gradient-to-r from-blue-600 to-blue-800" 
-                    : index === 1 
-                    ? "bg-gradient-to-r from-purple-600 to-purple-800" 
-                    : "bg-gradient-to-r from-pink-600 to-pink-800"
-                }`}
-              >
-                <h3 className="text-lg font-semibold text-white">{category}</h3>
+      <div className="container mx-auto">
+        {showLeaderboard ? (
+          <Leaderboard />
+        ) : (
+          <>
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
               </div>
-            ))}
-          </div>
-          
-          {/* Questions by points */}
-          {[100, 200, 300, 400, 500].map((pointValue) => {
-            // Check if we have questions for this point value
-            const hasQuestions = jeopardyQuestions[pointValue] && jeopardyQuestions[pointValue].length > 0;
-            
-            // Skip rendering if no questions for this point value
-            if (!hasQuestions) return null;
-            
-            return (
-              <div key={pointValue} className="grid grid-cols-3 gap-4 mb-4">
-                {(jeopardyQuestions[pointValue] || []).map((question, index) => {
-                  // Only show up to 3 questions per point value
-                  if (index >= 3) return null;
-                  
-                  return (
-                    <button
-                      key={question.id}
-                      onClick={() => handleQuestionSelect(question)}
-                      disabled={answeredQuestions[question.id] !== undefined}
-                      className={`p-6 rounded-lg shadow-md text-center transition-all duration-300 ${
-                        answeredQuestions[question.id] === undefined
-                          ? "bg-gray-700 hover:bg-gray-600 cursor-pointer"
-                          : answeredQuestions[question.id]
-                          ? "bg-green-600 cursor-not-allowed"
-                          : "bg-red-600 cursor-not-allowed"
-                      }`}
-                    >
-                      <p className="text-2xl font-bold text-white">${pointValue}</p>
-                    </button>
-                  );
-                })}
+            ) : (
+              <div className="grid grid-cols-1 gap-6">
+                {Object.keys(jeopardyQuestions)
+                  .sort((a, b) => Number(a) - Number(b))
+                  .map((pointValue) => (
+                    <div key={pointValue} className="bg-gray-800 rounded-lg p-4">
+                      <h2 className="text-xl font-bold mb-4">{pointValue} Points</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {jeopardyQuestions[Number(pointValue)].map((question) => (
+                          <div
+                            key={question.id}
+                            onClick={() => handleQuestionSelect(question)}
+                            className={`p-4 rounded-lg cursor-pointer transition duration-300 ${
+                              answeredQuestions[question.id]
+                                ? "bg-gray-700 opacity-50 cursor-not-allowed"
+                                : "bg-blue-800 hover:bg-blue-700"
+                            }`}
+                          >
+                            <p className="font-bold mb-2">{question.categoryName}</p>
+                            <p className="text-sm">{question.text}</p>
+                            {answeredQuestions[question.id] && (
+                              <span className="text-xs mt-2 inline-block bg-gray-600 px-2 py-1 rounded">
+                                Answered
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
               </div>
-            );
-          })}
-        </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Question Modal */}
       {selectedQuestion && (
         <QuestionModal
-          selectedQuestion={selectedQuestion}
+          question={selectedQuestion}
           onClose={() => setSelectedQuestion(null)}
           onAnswerSubmitted={handleAnswerSubmitted}
         />
       )}
-
-      <style jsx>{`
-        @keyframes loadingBar {
-          0% {
-            width: 0;
-            left: 0;
-          }
-          50% {
-            width: 100%;
-            left: 0;
-          }
-          100% {
-            width: 0;
-            left: 100%;
-          }
-        }
-        .animate-loading-bar {
-          animation: loadingBar 1.5s infinite ease-in-out;
-        }
-      `}</style>
     </div>
   );
 }

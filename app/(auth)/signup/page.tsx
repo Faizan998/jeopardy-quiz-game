@@ -50,18 +50,49 @@ export default function Signup() {
     setMessage("");
 
     try {
+      // Validate form data
       signupSchema.parse(formData);
 
-      const res = await axios.post("/api/signup", formData, {
-        headers: { "Content-Type": "application/json" },
-      });
+      try {
+        const res = await axios.post("/api/signup", formData, {
+          headers: { "Content-Type": "application/json" },
+        });
 
-      if (res.status === 201) {
-        setMessage("Signup successful! You can now log in.");
-        setMessageType("success");
-        setFormData({ name: "", email: "", password: "" });
-      } else {
-        setMessage(res.data.message || "Unexpected error occurred.");
+        if (res.status === 201) {
+          setMessage("Signup successful! You can now log in.");
+          setMessageType("success");
+          setFormData({ name: "", email: "", password: "" });
+          
+          // Redirect to login page after successful signup
+          setTimeout(() => {
+            router.push("/login");
+          }, 2000);
+        } else {
+          setMessage(res.data.message || "Unexpected error occurred.");
+          setMessageType("error");
+        }
+      } catch (axiosError: any) {
+        console.error("Axios Error:", axiosError);
+        
+        // Handle specific error responses from the server
+        if (axiosError.response) {
+          const errorMessage = axiosError.response.data?.message || "Signup failed. Please try again.";
+          setMessage(errorMessage);
+          
+          // If the error is that the user already exists, highlight the email field
+          if (errorMessage.includes("already exists")) {
+            setValidationErrors({
+              ...validationErrors,
+              email: "This email is already registered"
+            });
+          }
+        } else if (axiosError.request) {
+          // The request was made but no response was received
+          setMessage("Network error. Please check your connection and try again.");
+        } else {
+          setMessage("An unexpected error occurred. Please try again.");
+        }
+        
         setMessageType("error");
       }
     } catch (error: any) {
@@ -74,8 +105,8 @@ export default function Signup() {
         });
         setValidationErrors(errors);
       } else {
-        console.error("Signup Error:", error.response?.data || error);
-        setMessage(error.response?.data?.message || "Signup failed. Try again.");
+        console.error("Signup Error:", error);
+        setMessage("Validation failed. Please check your inputs and try again.");
         setMessageType("error");
       }
     } finally {
@@ -150,6 +181,7 @@ export default function Signup() {
           {isLoading ? "Signing up..." : "Signup"}
         </button>
         <button
+          type="button"
           onClick={() => signIn("google", {
             callbackUrl: "/admin-dashboard",
             redirect: false,
