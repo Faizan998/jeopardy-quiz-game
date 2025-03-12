@@ -10,7 +10,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@getbrevo/brevo": "^2.2.0",
+    "@getbrevo/brevo": "^1.0.1",
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^6.4.1",
     "@reduxjs/toolkit": "^2.6.0",
