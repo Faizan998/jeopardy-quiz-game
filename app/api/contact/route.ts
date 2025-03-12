@@ -12,10 +12,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const apiKey = process.env.BERVO_API_KEY;
+    const apiKey = process.env.BREVO_API_KEY;
     const adminEmail = process.env.ADMIN_EMAIL;
-    const senderEmail = process.env.BERVO_EMAIL_SENDER;
-    const senderName = process.env.BERVO_NAME_SENDER;
+    const senderEmail = process.env.BREVO_SENDER_EMAIL;
+    const senderName = process.env.BREVO_SENDER_NAME;
 
     // Debug log to check env vars
     console.log("Loaded environment variables:", {

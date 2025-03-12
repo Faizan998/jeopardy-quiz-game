@@ -6,5 +6,6 @@ declare module '@getbrevo/brevo' {
         };
       };
       sendTransacEmail: (emailContent: any) => Promise<any>;
+      authentications: any;
     }
   }
