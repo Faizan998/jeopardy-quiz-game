@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,51 +13,55 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  resetToken String?
-  resetTokenExpiry DateTime?
-  image     String?
-  role      String   @default("USER")
-  answers   Answer[]
+enum Role {
+  ADMIN
+  USER
 }
 
-model Category {
-  id        String     @id @default(cuid())
-  name      String     @unique
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  questions Question[]
+model User {
+  id          String    @id @default(uuid()) // UUID as Primary Key
+  name        String
+  email       String    @unique
+  password    String?
+  role        Role
+  Answer      Answer[]
+  image       String?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  totalAmount Int       @default(0)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
 }
 
 model Question {
-  id         String   @id @default(cuid())
-  text       String
+  id         String   @id @default(uuid()) // UUID as Primary Key
+  value      String
+  options    String[]
+  amount     Int
+  CorrectIdx Int
+  Answer     Answer[]
   categoryId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  answers    Answer[]
   category   Category @relation(fields: [categoryId], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model Answer {
-  id         String   @id @default(cuid())
-  text       String
-  correct    Boolean
-  userId     String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  questionId String
-  question   Question @relation(fields: [questionId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  id          String   @id @default(uuid()) // UUID as Primary Key
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade) //? Not sure if ans should del if ques is del but for now it will del
+  selectedIdx String //selected option index of a question
+  isCorrect   Boolean
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 }
 
-enum Role {
-  USER
-  ADMIN
+model Category {
+  id         String     @id @default(uuid()) // UUID as Primary Key
+  name       String
+  questions  Question[]
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
 }
