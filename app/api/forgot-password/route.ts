@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import prisma from "../../lib/prisma"; // Ensure Prisma is correctly set up
+import prisma from "../../lib/prisma";
 import crypto from "crypto";
-import * as Brevo from "@getbrevo/brevo"; // Use * as Brevo to import all exports
+import * as Brevo from "@getbrevo/brevo";
+
 
 export async function POST(req: Request) {
   try {
@@ -10,33 +11,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Email is required." }, { status: 400 });
     }
 
-    // Check if the user exists
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return NextResponse.json({ message: "User not found." }, { status: 404 });
     }
 
-    // Generate password reset token
     const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1-hour expiration
+    const resetTokenExpiry = new Date(Date.now() + 3600000);
 
-    // Store token in the database
     await prisma.user.update({
       where: { email },
       data: { resetToken, resetTokenExpiry },
     });
 
-    // ✅ Fix: Initialize Brevo API correctly
-    const apiInstance = new Brevo.TransactionalEmailsApi(); // Direct instantiation
-    apiInstance.setApiKey(
-      Brevo.TransactionalEmailsApiApiKeys.apiKey, // Use the correct enum for the API key type
-      process.env.BREVO_API_KEY! // Set API key from environment variable
-    );
+    if (!process.env.BREVO_API_KEY) {
+      return NextResponse.json({ message: "Missing Brevo API Key" }, { status: 500 });
+    }
 
-    // Email details
+    const apiInstance = new Brevo.TransactionalEmailsApi();
+    apiInstance.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY!;
+
     const resetLink = `${process.env.NEXTAUTH_URL}/update-password?token=${resetToken}`;
     const emailContent = {
-      sender: { email: process.env.BREVO_SENDER_EMAIL!, name: process.env.BREVO_SENDER_NAME! },
+      sender: { email: process.env.BREVO_SENDER_EMAIL!, name: process.env.BREVO_NAME_SENDER! },
       to: [{ email }],
       subject: "Password Reset Request",
       htmlContent: `
@@ -47,12 +44,11 @@ export async function POST(req: Request) {
       `,
     };
 
-    // Send email
     await apiInstance.sendTransacEmail(emailContent);
 
     return NextResponse.json({ message: "Password reset link sent!" }, { status: 200 });
   } catch (error: any) {
-    console.error("Brevo Error:", error);
-    return NextResponse.json({ message: "Failed to send reset link." }, { status: 500 });
+    console.error("Backend Error:", error);
+    return NextResponse.json({ message: error.message || "Failed to send reset link." }, { status: 500 });
   }
 }

@@ -1,37 +1,88 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+// <<<<<<< HEAD
+// // import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+// // import axios from "axios";
+// =======
+// import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+// >>>>>>> f36b59a92228e1c92da773728ba55f9e12a14bfa
 
-// API Call function
-export const fetchQuestions = createAsyncThunk("questions/fetchQuestions", async () => {
-  const response = await fetch("/api/questions");
-  if (!response.ok) throw new Error("Failed to fetch questions");
+// interface Answer {
+//   id: string;
+//   text: string;
+//   correct: boolean;
+// }
 
-  const data = await response.json();
-  console.log("Redux Fetched Data:", data); // ✅ Debugging Redux response
-  return data.data || []; // ✅ Ensure data is always an array
-});
+// interface Question {
+//   id: string;
+//   text: string;
+//   answers: Answer[];
+//   points?: number; // Added dynamically
+// }
 
-const questionSlice = createSlice({
-  name: "question",
-  initialState: {
-    questions: [],
-    loading: false,
-    error: null as string | null,
-  },
-  reducers: {},
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchQuestions.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(fetchQuestions.fulfilled, (state, action) => {
-        state.loading = false;
-        state.questions = action.payload ?? []; // ✅ Always set an array
-      })
-      .addCase(fetchQuestions.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || "Failed to fetch questions";
-      });
-  },
-});
+// interface QuestionState {
+//   questions: Question[];
+//   selectedQuestionId: string | null;
+//   loading: boolean;
+//   score: number;
+// }
 
-export default questionSlice.reducer;
+// const initialState: QuestionState = {
+//   questions: [],
+//   selectedQuestionId: null,
+//   loading: false,
+//   score: 0,
+// };
+
+// export const fetchQuestions = createAsyncThunk<Question[], void, { rejectValue: string }>(
+//   "questions/fetchQuestions",
+//   async (_, { rejectWithValue }) => {
+//     try {
+//       const response = await fetch("/api/questions", {
+//         method: "GET",
+//         headers: { "Content-Type": "application/json" },
+//       });
+
+//       if (!response.ok) {
+//         throw new Error("Failed to fetch questions");
+//       }
+
+//       const data = await response.json();
+//       return Array.isArray(data) ? data : data.data; // Adjust based on API response
+//     } catch (error) {
+//       return rejectWithValue(error instanceof Error ? error.message : "Unknown error");
+//     }
+//   }
+// );
+
+// const questionSlice = createSlice({
+//   name: "question",
+//   initialState,
+//   reducers: {
+//     openQuestion: (state, action) => {
+//       state.selectedQuestionId = action.payload.id;
+//     },
+//     closeQuestion: (state) => {
+//       state.selectedQuestionId = null;
+//     },
+//     updateScore: (state, action) => {
+//       state.score += action.payload;
+//     },
+//   },
+//   extraReducers: (builder) => {
+//     builder
+//       .addCase(fetchQuestions.pending, (state) => {
+//         state.loading = true;
+//       })
+//       .addCase(fetchQuestions.fulfilled, (state, action) => {
+//         state.loading = false;
+//         state.questions = action.payload;
+//       })
+//       .addCase(fetchQuestions.rejected, (state, action) => {
+//         state.loading = false;
+//         console.error("Fetch questions failed:", action.payload);
+//         state.questions = []; // Ensure it stays an array
+//       });
+//   },
+// });
+
+// export const { openQuestion, closeQuestion, updateScore } = questionSlice.actions;
+// export default questionSlice.reducer;

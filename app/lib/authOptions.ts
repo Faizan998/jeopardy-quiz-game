@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 export const authOptions = {
-  debug: true,
+  
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -32,7 +32,7 @@ export const authOptions = {
             data: {
               name: user.name,
               email: user.email,
-              role: userRole === "ADMIN" ? "admin" : "user",
+              role: userRole === "ADMIN" ? "ADMIN" : "USER",
               password: hashedPassword,
               image: user.image ? user.image : null,
             },

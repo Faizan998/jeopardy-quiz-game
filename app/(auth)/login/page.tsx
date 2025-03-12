@@ -1,105 +1,108 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { FcGoogle } from "react-icons/fc";
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // Importing eye icons from react-icons
 import Link from "next/link";
+import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import { loginSchema, type LoginFormData } from "../../utils/validationSchemas";
+import { ZodError } from "zod";
 
-export default function Signup() {
-  const { data: session, status } = useSession();
+export default function Login() {
   const router = useRouter();
-
-  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
-  const [showPassword, setShowPassword] = useState(false); // State for show/hide password
+  const [formData, setFormData] = useState<LoginFormData>({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
-  const [isLoading, setIsLoading] = useState(false); // For form submission
-  const [googleLoading, setGoogleLoading] = useState(false); // For Google sign-in
-
-  useEffect(() => {
-    if (status === "loading") return;
-    if (session?.user?.role === "ADMIN") {
-      router.push("/admin-dashboard");
-    } else if (session?.user?.role === "USER") {
-      router.push("/user-dashboard");
-    }
-  }, [session, status, router]);
+  const [loading, setLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = () => {
+    try {
+      loginSchema.parse(formData);
+      setValidationErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err: any) => {
+          if (err.path[0]) {
+            newErrors[err.path[0].toString()] = err.message;
+          }
+        });
+        setValidationErrors(newErrors);
+      }
+      return false;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    try {
-      const res = await axios.post("/api/signup", formData, {
-        headers: { "Content-Type": "application/json" },
-      });
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setLoading(true);
+    setMessage("");
 
-      if (res.status === 201) {
-        setMessage("Signup successful! You can now log in.");
+    try {
+      const res = await axios.post(
+        "/api/login",
+        {
+          email: formData.email,
+          password: formData.password,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+          timeout: 10000,
+        }
+      );
+
+      const data = res.data;
+      if (res.status === 200 && data.token) {
+        localStorage.setItem("token", data.token);
+        if (data.name) {
+          localStorage.setItem("userName", data.name);
+        }
+        setMessage("Login successful! Redirecting... ✅");
         setMessageType("success");
-        setFormData({ name: "", email: "", password: "" }); // Reset form
+
+        setTimeout(() => {
+          router.push(data.role === "admin" ? "/admin-dashboard" : "/user-dashboard");
+        }, 1500);
       } else {
-        setMessage(res.data.message || "Unexpected error occurred.");
-        setMessageType("error");
+        throw new Error("Invalid response from server");
       }
     } catch (error: any) {
-      console.error("Signup Error:", error.response?.data || error);
-      setMessage(error.response?.data?.message || "Signup failed. Try again.");
+      const errorMessage = error.response?.data?.message || error.message || "Login failed. Please try again.";
+      setMessage(errorMessage);
       setMessageType("error");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = () => {
-    setGoogleLoading(true);
-    signIn("google").then(() => {
-      router.refresh();
-      setGoogleLoading(false);
-    });
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
-  };
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 transition-all duration-500 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
-      <h2 className="text-5xl font-extrabold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-pulse drop-shadow-lg">
-        Signup
-      </h2>
-
-      {session ? (
-        <div className="bg-gray-800 bg-opacity-80 backdrop-blur-lg p-6 rounded-xl shadow-2xl w-full max-w-md text-center border border-gray-700">
-          <p className="text-lg text-gray-300">Signed in as {session.user?.email}</p>
-          <button
-            onClick={() => signOut()}
-            className="mt-4 w-full p-3 bg-gradient-to-r from-red-5 00 to-red-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-red-600 hover:to-red-800 transition-all duration-300"
-          >
-            Sign Out
-          </button>
-        </div>
-      ) : (
-        <form
-          onSubmit={handleSubmit}
-          className="bg-gray-800 bg-opacity-80 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-full max-w-md space-y-6 border border-gray-700"
-        >
-          <input
-            type="text"
-            name="name"
-            placeholder="Name"
-            onChange={handleChange}
-            value={formData.name}
-            required
-            disabled={isLoading}
-            className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-600 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50"
-          />
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+      <div className="text-center w-full max-w-md">
+        <h2 className="text-5xl font-extrabold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
+          Login
+        </h2>
+        <form onSubmit={handleSubmit} className="bg-gray-800 p-8 rounded-xl w-full border border-gray-700 space-y-6">
           <input
             type="email"
             name="email"
@@ -107,9 +110,10 @@ export default function Signup() {
             onChange={handleChange}
             value={formData.email}
             required
-            disabled={isLoading}
-            className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-600 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50"
+            disabled={loading}
+            className="w-full p-3 bg-gray-900 text-gray-200 border rounded-lg focus:ring-2 focus:ring-blue-400"
           />
+          {validationErrors.email && <p className="text-red-500">{validationErrors.email}</p>}
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -118,95 +122,51 @@ export default function Signup() {
               onChange={handleChange}
               value={formData.password}
               required
-              disabled={isLoading}
-              className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-600 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 disabled:opacity-50 pr-10"
+              disabled={loading}
+              className="w-full p-3 bg-gray-900 text-gray-200 border rounded-lg focus:ring-2 focus:ring-blue-400 pr-10"
             />
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 transition-colors duration-200"
-              disabled={isLoading}
-            >
-              {showPassword ? (
-                <FaEye className="h-5 w-5" />
-              ) : (
-                <FaEyeSlash className="h-5 w-5" />
-              )}
+            <button type="button" onClick={() => setShowPassword(prev => !prev)} className="absolute inset-y-0 right-0 p-3">
+              {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
             </button>
           </div>
 
+          {/* Forgot Password Link */}
+          <div className="text-right">
+            <Link href="/forgot-password" className="text-blue-400 hover:underline text-sm">
+              Forgot Password?
+            </Link>
+          </div>
+
+          {/* Login Button with Loading */}
           <button
             type="submit"
-            disabled={isLoading}
-            className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-blue-600 hover:to-blue-800 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed hover:scale-105 relative overflow-hidden"
+            disabled={loading}
+            className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg shadow-md flex justify-center items-center"
           >
-            {isLoading ? (
-              <>
-                <span className="relative z-10">Signing Up...</span>
-                <div className="absolute inset-0 h-full bg-blue-400 opacity-50 animate-loading-bar"></div>
-              </>
-            ) : (
-              "Signup"
+            {loading && (
+              <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5 mr-2"></span>
             )}
+            Login
           </button>
 
-          <p className="text-center text-gray-400 font-medium">OR</p>
-
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={googleLoading}
-            className="flex items-center justify-center gap-3 w-full p-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed hover:scale-105 relative overflow-hidden"
-          >
-            {googleLoading ? (
-              <>
-                <span className="relative z-10">Processing...</span>
-                <div className="absolute inset-0 h-full bg-indigo-400 opacity-50 animate-loading-bar"></div>
-              </>
-            ) : (
-              <>
-                <FcGoogle className="text-2xl" />
-                Sign in with Google
-              </>
-            )}
-          </button>
-
-          {message && (
-            <p
-              className={`mt-4 text-center font-semibold ${
-                messageType === "success" ? "text-blue-400 hover:text-blue-300 transition-colors duration-200" : "text-red-700"
-              } transition-opacity duration-300`}
-            >
-              {message}
+          {/* Back to Signup Link */}
+          <div className="text-center">
+            <p className="text-gray-400 text-sm">
+              Don't have an account?{" "}
+              <Link href="/signup" className="text-blue-400 hover:underline">
+                Sign up
+              </Link>
             </p>
-          )}
+          </div>
 
-          <p className="text-center text-gray-400">
-            Already have an account?{" "}
-            <Link href="/login" className="text-blue-400 hover:text-blue-300 transition-colors duration-200">
-              Login
-            </Link>
-          </p>
+          {/* Login Message at the Bottom */}
+          {message && (
+            <div className={`mt-4 text-center ${messageType === "success" ? "text-green-400" : "text-red-400"} font-semibold`}>
+              {message}
+            </div>
+          )}
         </form>
-      )}
-      <style jsx>{`
-        @keyframes loadingBar {
-          0% {
-            width: 0;
-            left: 0;
-          }
-          50% {
-            width: 100%;
-            left: 0;
-          }
-          100% {
-            width: 0;
-            left: 100%;
-          }
-        }
-        .animate-loading-bar {
-          animation: loadingBar 1.5s infinite ease-in-out;
-        }
-      `}</style>
+      </div>
     </div>
   );
 }
