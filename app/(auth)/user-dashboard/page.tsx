@@ -230,6 +230,9 @@ export default function UserDashboard() {
             Jeopardy Quiz
           </h1>
           <div className="flex items-center gap-4">
+          <div className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-md">
+              <span className="font-bold">Score:</span> Leaderboard
+            </div>
             <div className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-md">
               <span className="font-bold">Score:</span> {score}
             </div>

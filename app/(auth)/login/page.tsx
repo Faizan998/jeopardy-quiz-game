@@ -35,7 +35,7 @@ export default function Login() {
       loginSchema.parse(formData);
       setValidationErrors({});
       return true;
-    } catch (error) {
+    } catch (error:any) {
       if (error instanceof ZodError) {
         const newErrors: Record<string, string> = {};
         error.errors.forEach((err: any) => {

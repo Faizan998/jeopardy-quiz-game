@@ -8,6 +8,7 @@ interface AnswerSubmission {
   selectedAnswer: string;
   correctAnswer: string;
   points: number;
+  isCorrect: boolean;
 }
 
 // POST: Submit an answer for a Jeopardy question

@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import prisma from "@/app/lib/prisma";
 import jwt from "jsonwebtoken";
 
+interface answer {
+  selectedIdx: string;
+  isCorrect: boolean;
+  totalAmount: number;
+}
+
 // Simple JWT verification function
 const verifyJwtToken = async (token: string) => {
   try {
