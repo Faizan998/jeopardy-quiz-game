@@ -10,7 +10,7 @@ import { ZodError } from "zod";
 export default function UpdatePassword() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token"); // Get token from query parameters
+  const token = searchParams ? searchParams.get("token") : null;
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false); // State for show/hide password
   const [message, setMessage] = useState("");
