@@ -46,15 +46,119 @@ export async function POST(request: Request) {
       to: [{ email: adminEmail }],
       subject: "New Contact Form Submission",
       htmlContent: `
-        <html>
-          <body>
-            <h1>New Contact Form Submission</h1>
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Message:</strong> ${message}</p>
-          </body>
-        </html>
-      `,
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>📩 New Contact Form Submission</title>
+        <style>
+          body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f8fc;
+            margin: 0;
+            padding: 20px;
+          }
+          .container {
+            max-width: 600px;
+            background: #ffffff;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.15);
+            margin: 40px auto;
+            border-left: 6px solid #007bff;
+            transition: all 0.3s ease-in-out;
+            text-align: center;
+          }
+          .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 12px 30px rgba(0, 0, 0, 0.2);
+          }
+          h1 {
+            color: #222;
+            font-size: 26px;
+            margin-bottom: 20px;
+          }
+          p {
+            color: #555;
+            font-size: 16px;
+            line-height: 1.6;
+            text-align: left;
+          }
+          .highlight {
+            font-weight: bold;
+            color: #007bff;
+          }
+          .message-box {
+            background: #f1f8ff;
+            padding: 15px;
+            border-radius: 8px;
+            font-style: italic;
+            color: #333;
+            box-shadow: inset 0px 0px 12px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+          }
+          .footer {
+            font-size: 14px;
+            color: #777;
+            margin-top: 25px;
+            border-top: 1px solid #ddd;
+            padding-top: 12px;
+            text-align: center;
+          }
+          .footer a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+          }
+          .footer a:hover {
+            text-decoration: underline;
+          }
+          .logo {
+            width: 120px;
+            display: block;
+            margin: 0 auto 20px;
+          }
+          .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: #ffffff;
+            padding: 14px 24px;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 6px;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0px 4px 10px rgba(0, 123, 255, 0.3);
+          }
+          .button:hover {
+            background: linear-gradient(135deg, #0056b3, #003f7f);
+            transform: scale(1.07);
+            box-shadow: 0px 6px 14px rgba(0, 123, 255, 0.4);
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>📬 New Contact Form Submission</h1>
+          <p><span class="highlight">👤 Name:</span> ${name}</p>
+          <p><span class="highlight">📧 Email:</span> ${email}</p>
+          <p><span class="highlight">💬 Message:</span></p>
+          <div class="message-box">
+            <p>${message}</p>
+          </div>
+          <div style="text-align: center; margin-top: 25px;">
+            <a href="mailto:${email}" class="button">📧 Reply to ${name}</a>
+          </div>
+          <div class="footer">
+            <p>Need help? <a href="mailto:alifaizan15245@gmail.com">Contact Support</a></p>
+            <p>&copy; 2025 Jeopardy Quiz. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+    
+
+    ,
     };
 
     const userEmailData = {
@@ -62,16 +166,87 @@ export async function POST(request: Request) {
       to: [{ email }],
       subject: "Thank You for Contacting Us!",
       htmlContent: `
-        <html>
-          <body>
-            <h1>Thank You, ${name}!</h1>
-            <p>We’ve received your message:</p>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>🙏 Thank You, ${name}!</title>
+        <style>
+          body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+          }
+          .container {
+            max-width: 550px;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            margin: 40px auto;
+            border-left: 6px solid #28a745;
+          }
+          h1 {
+            color: #222;
+            font-size: 24px;
+            margin-bottom: 15px;
+          }
+          p {
+            color: #555;
+            font-size: 16px;
+            line-height: 1.7;
+            text-align: left;
+          }
+          .highlight {
+            font-weight: bold;
+            color: #28a745;
+          }
+          .message-box {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            font-style: italic;
+            color: #333;
+            box-shadow: inset 0px 0px 8px rgba(0, 0, 0, 0.05);
+          }
+          .footer {
+            font-size: 13px;
+            color: #777;
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+          }
+          .footer a {
+            color: #28a745;
+            text-decoration: none;
+            font-weight: bold;
+          }
+          .logo {
+            width: 100px;
+            margin-bottom: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🙏 Thank You, ${name}!</h1>
+          <p>We’ve received your message:</p>
+          <div class="message-box">
             <p><strong>Your Message:</strong> ${message}</p>
-            <p>Our team will get back to you soon.</p>
-            <p>Best regards,<br/>${senderName} Team</p>
-          </body>
-        </html>
-      `,
+          </div>
+          <p>Our team will get back to you as soon as possible.</p>
+          <p>Best regards,</p>
+          <p><strong>${senderName} Team</strong></p>
+          <div class="footer">
+            <p>Need further assistance? <a href="alifaizan15245@gmail.com">Contact Support</a></p>
+            <p>&copy; 2025 ${senderName}. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+    ,
     };
 
     const axiosConfig = {
