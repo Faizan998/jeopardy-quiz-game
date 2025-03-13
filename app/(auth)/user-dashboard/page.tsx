@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import QuestionModal from "./QuestionModal";
+import Link from "next/link";
 
 // Define Type for Jeopardy Question
 interface JeopardyQuestion {
@@ -224,25 +225,33 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-800 via-gray-900 to-black">
       {/* Navbar */}
-      <nav className="w-full p-4 bg-gray-800 bg-opacity-80 backdrop-blur-lg border-b border-gray-700 shadow-lg">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-pulse">
-            Jeopardy Quiz
-          </h1>
-          <div className="flex items-center gap-4">
-            <div className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-md">
-              <span className="font-bold">Score:</span> {score}
-            </div>
-            <p className="text-lg text-gray-200 font-semibold">Hello, {user.name || "Player"}!</p>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-red-600 hover:to-red-800 transition-all duration-300 hover:scale-105"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </nav>
+      {/* Navbar */}
+<nav className="w-full p-4 bg-gray-800 bg-opacity-80 backdrop-blur-lg border-b border-gray-700 shadow-lg">
+  <div className="max-w-7xl mx-auto flex justify-between items-center">
+    <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-pulse">
+      Jeopardy Quiz
+    </h1>
+    <div className="flex items-center gap-4">
+      <div className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-md">
+        <span className="font-bold">Score:</span> {score}
+      </div>
+      <Link 
+        href="/leaderboard" 
+        className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-yellow-600 hover:to-yellow-800 transition-all duration-300 hover:scale-105"
+      >
+        Leaderboard
+      </Link>
+      <p className="text-lg text-gray-200 font-semibold">Hello, {user.name || "Player"}!</p>
+      <button
+        onClick={handleLogout}
+        className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-red-600 hover:to-red-800 transition-all duration-300 hover:scale-105"
+      >
+        Logout
+      </button>
+    </div>
+  </div>
+</nav>
+
 
       {/* Main Content */}
       <div className="flex-1 flex p-6 max-w-7xl mx-auto w-full">

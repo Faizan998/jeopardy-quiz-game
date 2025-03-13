@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
     if (!user) {
       console.error("User not found:", email);
-      return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json({ message: "Invalid email " }, { status: 401 });
     }
 
     console.log("User Found:", { id: user.id, email: user.email, role: user.role });
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
     if (!isMatch) {
       console.error("Invalid password for:", email);
-      return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json({ message: "Invalid password" }, { status: 401 });
     }
 
     // Generate JWT token
