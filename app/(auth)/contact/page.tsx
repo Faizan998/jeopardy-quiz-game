@@ -35,16 +35,9 @@ export default function ContactPage() {
   const handleCaptchaChange = async (token: string | null) => {
     if (token) {
       try {
-        const response = await fetch("/api/verify-captcha", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ token }),
-        });
-
-        const data = await response.json();
-        if (data.success) {
+        const response = await axios.post("/api/verify-captcha", { token });
+  
+        if (response.data.success) {
           setIsVerified(true);
         } else {
           setIsVerified(false);
@@ -58,6 +51,7 @@ export default function ContactPage() {
       setIsVerified(false);
     }
   };
+  
 
   const onSubmit = async (data: ContactFormData) => {
     if (!isVerified) {
