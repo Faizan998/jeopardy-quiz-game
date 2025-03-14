@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     const apiInstance = new Brevo.TransactionalEmailsApi();
     apiInstance.authentications.apiKey.apiKey = process.env.BREVO_API_KEY!;
 
-    const resetLink = `${process.env.NEXTAUTH_URL}/?token=${resetToken}`;
+    const resetLink = `${process.env.NEXTAUTH_URL}/update-password?token=${resetToken}`;
     const emailContent = {
       sender: { email: process.env.BREVO_SENDER_EMAIL!, name: process.env.BREVO_SENDER_NAME! },
       to: [{ email }],

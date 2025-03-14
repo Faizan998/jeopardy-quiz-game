@@ -77,7 +77,6 @@ export default function ContactPage() {
       if (res.status === 200) {
         setResponseMessage("Message sent successfully! Check your email.");
         reset();
-        // Reset reCAPTCHA after successful submission
         if (recaptchaRef.current) {
           recaptchaRef.current.reset();
         }
@@ -92,7 +91,6 @@ export default function ContactPage() {
     }
   };
 
-  // Get the reCAPTCHA site key from environment variables
   const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
   if (!recaptchaSiteKey) {
