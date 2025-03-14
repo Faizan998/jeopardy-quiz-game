@@ -1,31 +1,34 @@
-"use client";
+"use client"; // Ensure full client-side rendering
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid"; // Using Heroicons for eye icons
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid"; // Eye icons for password visibility
 import { updatePasswordSchema } from "../../utils/validationSchemas";
 import { ZodError } from "zod";
 
 export default function UpdatePassword() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams ? searchParams.get("token") : null;
+  
+  // Ensure token is always a string to avoid hydration issues
+  const [token, setToken] = useState<string | null>(null);
+  const [clientReady, setClientReady] = useState(false); // Prevent hydration mismatch
+  
   const [newPassword, setNewPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // State for show/hide password
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [validationError, setValidationError] = useState("");
 
-  // Handle redirect after successful update
+  // ✅ Fix: Ensure token is only set after client mounts
   useEffect(() => {
-    if (message.includes("success")) {
-      const timer = setTimeout(() => {
-        router.push("/login");
-      }, 1500); // Redirect after 1.5 seconds to show success message
-      return () => clearTimeout(timer); // Cleanup timeout on unmount
-    }
-  }, [message, router]);
+    setToken(searchParams?.get("token") ?? "");
+    setClientReady(true);
+  }, [searchParams]);
+
+  // ✅ Fix: Ensure no SSR-dependent rendering
+  if (!clientReady) return null;
 
   const validatePassword = () => {
     try {
@@ -34,10 +37,7 @@ export default function UpdatePassword() {
       return true;
     } catch (error) {
       if (error instanceof ZodError) {
-        // Find password-related errors
-        const passwordError = error.errors.find(err => 
-          err.path.includes('newPassword')
-        );
+        const passwordError = error.errors.find(err => err.path.includes('newPassword'));
         setValidationError(passwordError?.message || "Invalid password");
       }
       return false;
@@ -46,28 +46,22 @@ export default function UpdatePassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate password before submission
-    if (!validatePassword()) {
-      return;
-    }
-    
+
+    if (!validatePassword()) return;
+
     setIsLoading(true);
     try {
-      const { data } = await axios.post("/api/update-password", {
-        token,
-        newPassword,
-      });
+      const { data } = await axios.post("/api/update-password", { token, newPassword });
       setMessage(data.message);
+      
+      if (data.message.includes("success")) {
+        setTimeout(() => router.push("/login"), 1500);
+      }
     } catch (error) {
       setMessage("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
   };
 
   return (
@@ -80,6 +74,7 @@ export default function UpdatePassword() {
         {token ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <p className="text-gray-300 text-lg text-center">Reset your password</p>
+
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -95,36 +90,22 @@ export default function UpdatePassword() {
               />
               <button
                 type="button"
-                onClick={togglePasswordVisibility}
+                onClick={() => setShowPassword((prev) => !prev)}
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 transition-colors duration-200"
                 disabled={isLoading}
               >
-                {showPassword ? (
-                  <EyeIcon className="h-5 w-5" />
-                  
-                ) : (
-                  <EyeSlashIcon className="h-5 w-5" />
-                )}
+                {showPassword ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
               </button>
             </div>
-            
-            {validationError && (
-              <p className="text-sm text-red-500">{validationError}</p>
-            )}
-            
+
+            {validationError && <p className="text-sm text-red-500">{validationError}</p>}
+
             <button
               type="submit"
               disabled={isLoading}
               className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-blue-600 hover:to-blue-800 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed hover:scale-105 relative overflow-hidden"
             >
-              {isLoading ? (
-                <>
-                  <span className="relative z-10">Updating...</span>
-                  <div className="absolute inset-0 h-full bg-blue-400 opacity-50 animate-loading-bar"></div>
-                </>
-              ) : (
-                "Update Password"
-              )}
+              {isLoading ? "Updating..." : "Update Password"}
             </button>
           </form>
         ) : (
@@ -134,35 +115,11 @@ export default function UpdatePassword() {
         )}
 
         {message && (
-          <p
-            className={`text-center font-semibold ${
-              message.includes("success") ? "text-blue-400" : "text-red-500"
-            } transition-opacity duration-300`}
-          >
+          <p className={`text-center font-semibold ${message.includes("success") ? "text-blue-400" : "text-red-500"} transition-opacity duration-300`}>
             {message}
           </p>
         )}
       </div>
-
-      <style jsx>{`
-        @keyframes loadingBar {
-          0% {
-            width: 0;
-            left: 0;
-          }
-          50% {
-            width: 100%;
-            left: 0;
-          }
-          100% {
-            width: 0;
-            left: 100%;
-          }
-        }
-        .animate-loading-bar {
-          animation: loadingBar 1.5s infinite ease-in-out;
-        }
-      `}</style>
     </div>
   );
 }

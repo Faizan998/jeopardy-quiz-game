@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
@@ -15,6 +15,11 @@ export default function Login() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
   const [loading, setLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false); // Fix hydration issue
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const {
     register,
@@ -28,7 +33,7 @@ export default function Login() {
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
     setMessage("");
-    
+
     try {
       const res = await axios.post("/api/login", data, {
         headers: { "Content-Type": "application/json" },
@@ -36,13 +41,15 @@ export default function Login() {
       });
 
       if (res.status === 200 && res.data.token) {
-        localStorage.setItem("token", res.data.token);
-        if (res.data.name) {
-          localStorage.setItem("userName", res.data.name);
+        if (isClient) {
+          localStorage.setItem("token", res.data.token);
+          if (res.data.name) {
+            localStorage.setItem("userName", res.data.name);
+          }
         }
         setMessage("Login successful! Redirecting... ✅");
         setMessageType("success");
-        
+
         setTimeout(() => {
           router.push(res.data.role === "admin" ? "/admin-dashboard" : "/user-dashboard");
         }, 1500);
@@ -56,6 +63,8 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  if (!isClient) return null; // Prevent hydration error
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
@@ -72,7 +81,7 @@ export default function Login() {
             className="w-full p-3 bg-gray-900 text-gray-200 border rounded-lg focus:ring-2 focus:ring-blue-400"
           />
           {errors.email && <p className="text-red-500">{errors.email.message}</p>}
-          
+
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -112,12 +121,12 @@ export default function Login() {
               </Link>
             </p>
             <p className="text-center text-gray-400 mt-4">
-        <Link href="/" className="text-blue-400 hover:text-blue-300">← Back to Home</Link>
-      </p>
+              <Link href="/" className="text-blue-400 hover:text-blue-300">← Back to Home</Link>
+            </p>
           </div>
 
           {message && (
-            <div className={`mt-4 text-center ${messageType === "success" ? "text-green-400" : "text-red-400"} font-semibold`}>
+            <div className={`mt-4 text-center ${messageType === "success" ? "text-blue-600" : "text-red-400"} font-semibold`}>
               {message}
             </div>
           )}
