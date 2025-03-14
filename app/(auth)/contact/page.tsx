@@ -12,6 +12,7 @@ const contactSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   message: z.string().min(10, "Message must be at least 10 characters"),
+  recaptcha: z.string().min(1, "Please verify the reCAPTCHA"),
 });
 
 type ContactFormData = z.infer<typeof contactSchema>;
@@ -32,58 +33,59 @@ export default function ContactPage() {
     resolver: zodResolver(contactSchema),
   });
 
-  const handleCaptchaChange = async (token: string | null) => {
-    if (token) {
-      try {
-        const response = await axios.post("/api/verify-captcha", { token });
-  
-        if (response.data.success) {
-          setIsVerified(true);
-        } else {
-          setIsVerified(false);
-          setResponseMessage("reCAPTCHA verification failed. Please try again.");
-        }
-      } catch (error) {
-        setIsVerified(false);
-        setResponseMessage("Error verifying reCAPTCHA. Please try again.");
-      }
-    } else {
-      setIsVerified(false);
-    }
-  };
-  
-
-  const onSubmit = async (data: ContactFormData) => {
-    if (!isVerified) {
-      setResponseMessage("Please complete the reCAPTCHA verification.");
-      return;
-    }
-
-    setIsLoading(true);
-    setResponseMessage("");
-
+ const handleCaptchaChange = async (token: string | null) => {
+  if (token) {
     try {
-      const res = await axios.post("/api/contact", data, {
-        headers: { "Content-Type": "application/json" },
-        timeout: 15000,
-      });
+      const response = await axios.post("/api/verify-captcha", { token });
 
-      if (res.status === 200) {
-        setResponseMessage("Message sent successfully! Check your email.");
-        reset();
-        if (recaptchaRef.current) {
-          recaptchaRef.current.reset();
-        }
+      if (response.data.success) {
+        setIsVerified(true);
+      } else {
         setIsVerified(false);
-        setFormKey(prev => prev + 1);
+        setResponseMessage("reCAPTCHA verification failed. Please try again.");
       }
-    } catch (error: any) {
-      console.error("Error sending contact form:", error.response?.data || error.message);
-      setResponseMessage(error.response?.data?.message || "Failed to send message. Please try again.");
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      setIsVerified(false);
+      setResponseMessage("Error verifying reCAPTCHA. Please try again.");
     }
-  };
+  } else {
+    setIsVerified(false);
+  }
+};
+
+
+const onSubmit = async (data: ContactFormData) => {
+  if (!isVerified) {
+    setResponseMessage("Please complete the reCAPTCHA verification.");
+    return;
+  }
+
+  setIsLoading(true);
+  setResponseMessage("");
+
+  try {
+    const res = await axios.post("/api/contact", data, {
+      headers: { "Content-Type": "application/json" },
+      timeout: 15000,
+    });
+
+    if (res.status === 200) {
+      setResponseMessage("Message sent successfully! Check your email.");
+      reset();
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+      setIsVerified(false);
+      setFormKey((prev) => prev + 1);
+    }
+  } catch (error: any) {
+    console.error("Error sending contact form:", error.response?.data || error.message);
+    setResponseMessage(error.response?.data?.message || "Failed to send message. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 

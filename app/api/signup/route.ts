@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import prisma from "../../lib/prisma"; // Ensure Prisma is set up properly
+import prisma from "@/app/lib/prisma"; // ✅ Ensure correct import
 
 export async function POST(req: Request) {
   try {
@@ -22,12 +22,11 @@ export async function POST(req: Request) {
         name, 
         email, 
         password: hashedPassword, 
-        role: "USER",
-        resetToken: ""  // Ensure token is handled correctly
+        role: "USER"
       },
     });
 
-    return NextResponse.json({ message: "Signup successful", user: newUser }, { status: 201 });
+    return NextResponse.json({ message: "Signup successful" }, { status: 201 });
   } catch (error: any) {
     console.error("Signup error:", error);
     return NextResponse.json({ message: "Internal Server Error", error: error.message }, { status: 500 });
