@@ -13,9 +13,9 @@ const Navbar = () => {
   };
 
   const navItems = [
-    { name: 'Update Blog', href: '/admin/blog' },
-    { name: 'Users', href: '/admin/users' },
-    { name: 'Q&A Update', href: '/admin/qa' },
+    { name: 'Update Blog', href: '/admin-dashboard' },
+    { name: 'Users', href: '/admin-dashboard/users' },
+    { name: 'Q&A Update', href: '/admin-dashboard/qa' },
   ];
 
   return (

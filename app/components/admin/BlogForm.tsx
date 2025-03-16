@@ -60,13 +60,15 @@ const BlogForm = () => {
     setError('');
 
     try {
+      if (!formData.image) {
+        throw new Error('Please select an image');
+      }
+
       const formDataToSend = new FormData();
       formDataToSend.append('title', formData.title);
       formDataToSend.append('content', formData.content);
       formDataToSend.append('category', formData.category);
-      if (formData.image) {
-        formDataToSend.append('image', formData.image);
-      }
+      formDataToSend.append('image', formData.image);
 
       const response = await fetch('/api/admin/blog', {
         method: 'POST',
@@ -76,7 +78,7 @@ const BlogForm = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to create blog post');
+        throw new Error(data.message || data.error || 'Failed to create blog post');
       }
 
       // Reset form
@@ -87,7 +89,13 @@ const BlogForm = () => {
         image: null,
       });
       setPreview('');
-      router.refresh(); // Refresh the page to show the new blog post
+      
+      // Show success message
+      alert('Blog post created successfully!');
+      
+      // Redirect to blogs page
+     
+      router.refresh();
     } catch (error: any) {
       console.error('Error creating blog post:', error);
       setError(error.message || 'Failed to create blog post');
