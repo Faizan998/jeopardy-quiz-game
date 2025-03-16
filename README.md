@@ -89,3 +89,4 @@ If you encounter database connection issues:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 "# jeopardy-quiz" 
+"# jeopardy-quiz-game" 
