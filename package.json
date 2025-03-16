@@ -7,6 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "seed": "tsx prisma/seed.ts",
+    "db:migrate": "prisma migrate dev",
+    "db:reset": "prisma migrate reset --force",
+    "db:setup": "prisma migrate dev && prisma db seed",
+    "db:studio": "prisma studio",
+    "setup": "node setup.js"
+  },
+  "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
@@ -50,6 +58,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.2.0",
     "prisma": "^6.4.1",
+    "ts-node": "^10.9.2",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   }

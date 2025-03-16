@@ -1,347 +1,215 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import QuestionModal from "./QuestionModal";
 import Link from "next/link";
-
-// Define Type for Jeopardy Question
-interface JeopardyQuestion {
-  id: string;
-  text: string;
-  options: string[];
-  correctAnswer: string;
-  points: number;
-  categoryId: string;
-  categoryName: string;
-  isAnswered?: boolean;
-  isCorrect?: boolean | null;
-}
-
-// Define Type for User
-interface UserType {
-  id: string;
-  name: string;
-  email: string;
-  role?: string;
-  image?: string;
-}
-
-// Define Type for Jeopardy Questions by Points
-interface JeopardyQuestionsByPoints {
-  [key: number]: JeopardyQuestion[];
-}
+import { motion } from "framer-motion";
+import JeopardyBoard from "./components/JeopardyBoard";
+import UserScore from "./components/UserScore";
 
 export default function UserDashboard() {
   const router = useRouter();
-  const [user, setUser] = useState<UserType>({ id: "", name: "", email: "" });
-  const [jeopardyQuestions, setJeopardyQuestions] = useState<JeopardyQuestionsByPoints>({});
-  const [selectedQuestion, setSelectedQuestion] = useState<JeopardyQuestion | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingPage, setLoadingPage] = useState(true);
-  const [score, setScore] = useState(0);
-  const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, boolean>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [userData, setUserData] = useState<any>(null);
+  const [categories, setCategories] = useState([]);
+  const [error, setError] = useState("");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Function to refresh user data
+  const refreshUserData = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userName = localStorage.getItem("userName");
-    
-    if (!token) {
-      router.push("/login"); // Redirect if not logged in
-    } else {
-      setLoadingPage(false);
-      
-      // Set basic user info from localStorage while we fetch the full profile
-      if (userName) {
-        setUser(prev => ({ ...prev, name: userName }));
-      }
-      
-      fetchUserProfile(token);
-      fetchJeopardyQuestions(token);
-    }
-  }, [router]);
+    const fetchUserData = async () => {
+      try {
+        // Check for token in localStorage
+        const token = localStorage.getItem("token");
+        if (!token) {
+          router.push("/login");
+          return;
+        }
 
-  const fetchUserProfile = async (token: string) => {
-    try {
-      const response = await axios.get("/api/auth/profile", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
-      if (response.data.success) {
-        setUser(response.data.data);
-      } else {
-        setError("Failed to load user profile");
-      }
-    } catch (error: any) {
-      console.error("Error fetching user profile:", error);
-      // Use the name from localStorage as fallback
-      const userName = localStorage.getItem("userName");
-      if (userName) {
-        setUser(prev => ({ ...prev, name: userName }));
-      }
-    }
-  };
+        console.log("Token found:", token.substring(0, 20) + "..."); // Log partial token for debugging
 
-  const fetchJeopardyQuestions = async (token: string) => {
-    try {
-      const response = await axios.get("/api/questions/jeopardy", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
-      if (response.data.success) {
-        const questions = response.data.data;
-        console.log("Fetched questions:", questions);
-        setJeopardyQuestions(questions);
-        
-        // Extract unique categories
-        const uniqueCategories = new Set<string>();
-        Object.values(questions).forEach((questionArray: any) => {
-          questionArray.forEach((q: JeopardyQuestion) => {
-            if (q.categoryName) {
-              uniqueCategories.add(q.categoryName);
-            }
-          });
-        });
-        setCategories(Array.from(uniqueCategories).slice(0, 3));
-        
-        // Initialize answered questions map
-        const answered: Record<string, boolean> = {};
-        
-        // Iterate through questions
-        Object.values(questions).forEach((questionArray: any) => {
-          questionArray.forEach((question: JeopardyQuestion) => {
-            if (question.isAnswered) {
-              answered[question.id] = question.isCorrect || false;
-              // Update score for previously answered questions
-              if (question.isCorrect) {
-                setScore(prev => prev + question.points);
-              }
-            }
-          });
+        // Fetch user data
+        const userResponse = await axios.get("/api/user/profile", {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
         });
         
-        setAnsweredQuestions(answered);
-      } else {
-        setError("Failed to load questions");
+        console.log("User data received:", userResponse.data);
+        setUserData(userResponse.data);
+
+        // Fetch categories and questions for the Jeopardy board
+        const categoriesResponse = await axios.get("/api/user/categories", {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+        });
+        
+        console.log("Categories received:", categoriesResponse.data.length);
+        setCategories(categoriesResponse.data);
+        setLoading(false);
+      } catch (error: any) {
+        console.error("Error fetching data:", error);
+        
+        // If token is invalid, redirect to login
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token"); // Clear invalid token
+          setError("Your session has expired. Please log in again.");
+          setTimeout(() => {
+            router.push("/login");
+          }, 2000);
+        } else {
+          setError(error.response?.data?.message || "Failed to load dashboard data");
+        }
+        
+        setLoading(false);
       }
-    } catch (error: any) {
-      console.error("Error fetching questions:", error);
-      setError("Failed to load questions. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token"); // Remove token from storage
-    localStorage.removeItem("userName"); // Remove user name from storage
-    router.push("/login"); // Redirect to login
-  };
+    fetchUserData();
+  }, [router, refreshTrigger]); // Add refreshTrigger to dependencies
 
-  const handleQuestionSelect = (question: JeopardyQuestion) => {
-    // Only allow selecting unanswered questions
-    if (!answeredQuestions[question.id]) {
-      console.log("Selected question:", question);
-      setSelectedQuestion(question);
-    }
-  };
+  // Function to handle answer submission
+  const handleAnswerSubmitted = useCallback(() => {
+    // Refresh user data to update score
+    refreshUserData();
+  }, [refreshUserData]);
 
-  const handleAnswerSubmitted = (questionId: string, isCorrect: boolean) => {
-    console.log("Answer submitted:", { questionId, isCorrect });
-    
-    // Update the answered questions map
-    setAnsweredQuestions(prev => ({
-      ...prev,
-      [questionId]: isCorrect,
-    }));
-
-    // Update the score
-    if (isCorrect) {
-      const question = Object.values(jeopardyQuestions)
-        .flat()
-        .find(q => q.id === questionId);
-      
-      if (question) {
-        const newScore = score + question.points;
-        setScore(newScore);
-      }
-    }
-
-    // Update the questions state to reflect the answered status
-    setJeopardyQuestions(prev => {
-      const updated = { ...prev };
-      Object.entries(updated).forEach(([points, questions]) => {
-        updated[parseInt(points)] = questions.map(q => 
-          q.id === questionId 
-            ? { ...q, isAnswered: true, isCorrect } 
-            : q
-        );
-      });
-      return updated;
-    });
-  };
-
-  if (loadingPage || loading) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 transition-all duration-500 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
-        <div className="relative w-full max-w-md">
-          <div className="bg-gray-800 bg-opacity-80 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-full text-center border border-gray-700">
-            <div className="relative overflow-hidden inline-block">
-              <span className="text-xl text-gray-200 font-semibold relative z-10">Loading...</span>
-              <div className="absolute inset-0 h-full bg-blue-400 opacity-50 animate-loading-bar"></div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-950">
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            rotate: [0, 0, 270, 270, 0],
+          }}
+          transition={{ 
+            duration: 2,
+            repeat: Infinity,
+            repeatType: "loop"
+          }}
+          className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
+        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="ml-4 text-white text-2xl font-bold"
+        >
+          Loading...
+        </motion.div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 transition-all duration-500 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
-        <div className="relative w-full max-w-md">
-          <div className="bg-gray-800 bg-opacity-80 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-full text-center border border-gray-700">
-            <div className="text-red-500 text-xl font-semibold mb-4">Error</div>
-            <p className="text-white mb-4">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-950">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-600 text-white p-6 rounded-lg shadow-2xl max-w-md w-full mx-4"
+        >
+          <motion.div
+            animate={{ x: [0, -5, 5, -5, 5, 0] }}
+            transition={{ duration: 0.5 }}
+            className="text-3xl mb-2"
+          >
+            ⚠️
+          </motion.div>
+          <h2 className="text-2xl font-bold mb-4">Error</h2>
+          <p className="text-xl mb-6">{error}</p>
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.push("/login")}
+            className="w-full bg-white text-red-600 px-4 py-3 rounded-md font-bold text-lg hover:bg-gray-100 transition-colors"
+          >
+            Back to Login
+          </motion.button>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-800 via-gray-900 to-black">
-      {/* Navbar */}
-      {/* Navbar */}
-<nav className="w-full p-4 bg-gray-800 bg-opacity-80 backdrop-blur-lg border-b border-gray-700 shadow-lg">
-  <div className="max-w-7xl mx-auto flex justify-between items-center">
-    <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-pulse">
-      Jeopardy Quiz
-    </h1>
-    <div className="flex items-center gap-4">
-      <div className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-md">
-        <span className="font-bold">Score:</span> {score}
-      </div>
-      <Link 
-        href="/leaderboard" 
-        className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-yellow-600 hover:to-yellow-800 transition-all duration-300 hover:scale-105"
-      >
-        Leaderboard
-      </Link>
-      <p className="text-lg text-gray-200 font-semibold">Hello, {user.name || "Player"}!</p>
-      <button
-        onClick={handleLogout}
-        className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-red-600 hover:to-red-800 transition-all duration-300 hover:scale-105"
-      >
-        Logout
-      </button>
-    </div>
-  </div>
-</nav>
-
-
-      {/* Main Content */}
-      <div className="flex-1 flex p-6 max-w-7xl mx-auto w-full">
-        {/* Jeopardy Table */}
-        <div className="w-full bg-gray-800 bg-opacity-80 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-200 mb-6">Jeopardy Game</h2>
-          
-          {/* Categories */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            {categories.map((category, index) => (
-              <div 
-                key={index}
-                className={`p-4 rounded-lg shadow-md text-center ${
-                  index === 0 
-                    ? "bg-gradient-to-r from-blue-600 to-blue-800" 
-                    : index === 1 
-                    ? "bg-gradient-to-r from-purple-600 to-purple-800" 
-                    : "bg-gradient-to-r from-pink-600 to-pink-800"
-                }`}
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-950 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4"
+        >
+          <motion.h1 
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-3xl md:text-4xl font-bold text-white"
+          >
+            <span className="text-yellow-400">Jeopardy</span> Game Dashboard
+          </motion.h1>
+          <div className="flex space-x-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Link 
+                href="/leaderboard" 
+                className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-blue-900 font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-300 flex items-center"
               >
-                <h3 className="text-lg font-semibold text-white">{category}</h3>
-              </div>
-            ))}
+                <span className="mr-2">🏆</span>
+                Leaderboard
+              </Link>
+            </motion.div>
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                localStorage.removeItem("token");
+                router.push("/login");
+              }}
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-300 flex items-center"
+            >
+              <span className="mr-2">👋</span>
+              Logout
+            </motion.button>
           </div>
-          
-          {/* Questions by points */}
-          {[100, 200, 300, 400, 500].map((pointValue) => {
-            // Check if we have questions for this point value
-            const hasQuestions = jeopardyQuestions[pointValue] && jeopardyQuestions[pointValue].length > 0;
-            
-            // Skip rendering if no questions for this point value
-            if (!hasQuestions) return null;
-            
-            return (
-              <div key={pointValue} className="grid grid-cols-3 gap-4 mb-4">
-                {(jeopardyQuestions[pointValue] || []).map((question, index) => {
-                  // Only show up to 3 questions per point value
-                  if (index >= 3) return null;
-                  
-                  return (
-                    <button
-                      key={question.id}
-                      onClick={() => handleQuestionSelect(question)}
-                      disabled={answeredQuestions[question.id] !== undefined}
-                      className={`p-6 rounded-lg shadow-md text-center transition-all duration-300 ${
-                        answeredQuestions[question.id] === undefined
-                          ? "bg-gray-700 hover:bg-gray-600 cursor-pointer"
-                          : answeredQuestions[question.id]
-                          ? "bg-green-600 cursor-not-allowed"
-                          : "bg-red-600 cursor-not-allowed"
-                      }`}
-                    >
-                      <p className="text-2xl font-bold text-white">${pointValue}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })}
+        </motion.div>
+
+        {userData && (
+          <UserScore 
+            name={userData.name} 
+            score={userData.totalAmount} 
+          />
+        )}
+
+        <div className="mt-8">
+          <JeopardyBoard 
+            categories={categories} 
+            onAnswerSubmitted={handleAnswerSubmitted}
+          />
         </div>
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+          className="mt-8 text-center text-blue-300 text-sm"
+        >
+          <p>© 2023 Jeopardy Quiz Game. All rights reserved.</p>
+        </motion.div>
       </div>
-
-      {/* Question Modal */}
-      {selectedQuestion && (
-        <QuestionModal
-          selectedQuestion={selectedQuestion}
-          onClose={() => setSelectedQuestion(null)}
-          onAnswerSubmitted={handleAnswerSubmitted}
-        />
-      )}
-
-      <style jsx>{`
-        @keyframes loadingBar {
-          0% {
-            width: 0;
-            left: 0;
-          }
-          50% {
-            width: 100%;
-            left: 0;
-          }
-          100% {
-            width: 0;
-            left: 100%;
-          }
-        }
-        .animate-loading-bar {
-          animation: loadingBar 1.5s infinite ease-in-out;
-        }
-      `}</style>
     </div>
   );
 }

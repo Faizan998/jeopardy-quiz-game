@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Jeopardy Quiz Game
 
-## Getting Started
+A full-featured Jeopardy-style quiz game built with Next.js, Prisma, and Tailwind CSS.
 
-First, run the development server:
+## Features
+
+- User authentication (login, signup, password reset)
+- Interactive quiz game with categories and questions
+- Leaderboard to track top players
+- Admin dashboard for managing questions and categories
+- Responsive design with animations
+
+## Prerequisites
+
+- Node.js 18+ and npm
+- Git
+
+## Setup Instructions
+
+1. **Clone the repository**
+
+```bash
+git clone <repository-url>
+cd jeopardy-quiz-game
+```
+
+2. **Install dependencies**
+
+```bash
+npm install
+```
+
+3. **Set up the database**
+
+The project uses SQLite for local development by default. To set up the database:
+
+```bash
+# Initialize the database with migrations
+npm run db:migrate
+
+# Seed the database with test data
+npm run seed
+```
+
+4. **Start the development server**
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application will be available at http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Test Accounts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+For testing purposes, the following accounts are available after seeding:
 
-## Learn More
+- **Regular User**:
+  - Email: test@example.com
+  - Password: password123
 
-To learn more about Next.js, take a look at the following resources:
+- **Admin User**:
+  - Email: admin@example.com
+  - Password: password123
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Database Management
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Reset the database**: `npm run db:reset`
+- **View the database**: `npm run db:studio`
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+For production deployment, update the `.env` file to use a PostgreSQL database:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Uncomment the PostgreSQL connection string in `.env`
+2. Comment out the SQLite connection string
+3. Update the database provider in `prisma/schema.prisma` from `sqlite` to `postgresql`
+4. Run migrations for production: `npx prisma migrate deploy`
+
+## Troubleshooting
+
+If you encounter database connection issues:
+
+1. Make sure your database is running and accessible
+2. Check the connection string in `.env`
+3. Try using the SQLite database for local development
+4. Reset the database with `npm run db:reset`
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
