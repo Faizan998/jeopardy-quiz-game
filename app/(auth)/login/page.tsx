@@ -1,256 +1,212 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import Link from "next/link";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import { FcGoogle } from "react-icons/fc";
+import { signIn, useSession } from "next-auth/react";
 import { loginSchema, type LoginFormData } from "../../utils/validationSchemas";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
+import { ZodError } from "zod";
+import { useEffect } from "react";
 
 export default function Login() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+  
+  const [formData, setFormData] = useState<LoginFormData>({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
   const [loading, setLoading] = useState(false);
-  const [isClient, setIsClient] = useState(false); // Fix hydration issue
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
+  // Redirect if already logged in
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    if (status === "loading") return;
+    
+    if (session) {
+      if (session.user.role === "ADMIN") {
+        router.push("/admin-dashboard");
+      } else {
+        router.push("/user-dashboard");
+      }
+    }
+  }, [session, status, router]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-  });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
 
-  const onSubmit = async (data: LoginFormData) => {
+  const validateForm = () => {
+    try {
+      loginSchema.parse(formData);
+      setValidationErrors({});
+      return true;
+    } catch (error:any) {
+      if (error instanceof ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err: any) => {
+          if (err.path[0]) {
+            newErrors[err.path[0].toString()] = err.message;
+          }
+        });
+        setValidationErrors(newErrors);
+      }
+      return false;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
     setMessage("");
 
     try {
-      const res = await axios.post("/api/login", data, {
-        headers: { "Content-Type": "application/json" },
-        timeout: 10000,
+      const result = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
       });
 
-      if (res.status === 200 && res.data.token) {
-        if (isClient) {
-          localStorage.setItem("token", res.data.token);
-          if (res.data.name) {
-            localStorage.setItem("userName", res.data.name);
-          }
-        }
-        setMessage("Login successful! Redirecting... ✅");
-        setMessageType("success");
-
-        setTimeout(() => {
-          router.push(res.data.role === "admin" ? "/admin-dashboard" : "/user-dashboard");
-        }, 1500);
+      if (result?.error) {
+        setMessage(result.error === "CredentialsSignin" 
+          ? "Invalid email or password" 
+          : result.error);
+        setMessageType("error");
       } else {
-        throw new Error("Invalid response from server");
+        setMessage("Login successful! Redirecting...");
+        setMessageType("success");
+        
+        // The session will be updated automatically by NextAuth
+        // and the useEffect above will handle the redirect
       }
     } catch (error: any) {
-      setMessage(error.response?.data?.message || "Login failed. Please try again.");
+      console.error("Login error:", error);
+      setMessage("An unexpected error occurred. Please try again.");
       setMessageType("error");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!isClient) return null; // Prevent hydration error
+  const handleGoogleSignIn = async () => {
+    try {
+      await signIn("google", { callbackUrl: "/user-dashboard" });
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      setMessage("Failed to sign in with Google. Please try again.");
+      setMessageType("error");
+    }
+  };
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-gray-800 via-gray-900 to-black overflow-hidden">
-      {/* Background animated elements */}
-      <motion.div 
-        className="absolute inset-0 pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.5 }}
-        transition={{ duration: 1 }}
-      >
-        {[...Array(5)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full bg-blue-500 opacity-20 blur-3xl"
-            initial={{ 
-              x: Math.random() * 100 - 50 + "%", 
-              y: Math.random() * 100 - 50 + "%",
-              width: Math.random() * 300 + 100,
-              height: Math.random() * 300 + 100,
-            }}
-            animate={{ 
-              x: [
-                Math.random() * 100 - 50 + "%", 
-                Math.random() * 100 - 50 + "%", 
-                Math.random() * 100 - 50 + "%"
-              ],
-              y: [
-                Math.random() * 100 - 50 + "%", 
-                Math.random() * 100 - 50 + "%", 
-                Math.random() * 100 - 50 + "%"
-              ],
-            }}
-            transition={{ 
-              repeat: Infinity, 
-              repeatType: "reverse", 
-              duration: 15 + i * 5,
-              ease: "easeInOut"
-            }}
-          />
-        ))}
-      </motion.div>
-
-      <motion.div 
-        className="text-center w-full max-w-md z-10"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <motion.h2 
-          className="text-5xl font-extrabold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400"
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-        >
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+      <div className="text-center w-full max-w-md">
+        <h2 className="text-5xl font-extrabold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
           Login
-        </motion.h2>
-        <motion.form 
-          onSubmit={handleSubmit(onSubmit)} 
-          className="bg-gray-800/80 backdrop-blur-sm p-8 rounded-xl w-full border border-gray-700 space-y-6 shadow-2xl"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <motion.div
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            <input
-              type="email"
-              {...register("email")}
-              placeholder="Email"
-              disabled={isSubmitting}
-              className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-400 transition-all duration-300"
-            />
-            {errors.email && (
-              <motion.p 
-                className="text-red-500 mt-1"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                {errors.email.message}
-              </motion.p>
-            )}
-          </motion.div>
-
-          <motion.div 
-            className="relative"
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
+        </h2>
+        <form onSubmit={handleSubmit} className="bg-gray-800 p-8 rounded-xl w-full border border-gray-700 space-y-6">
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            onChange={handleChange}
+            value={formData.email}
+            required
+            disabled={loading}
+            className="w-full p-3 bg-gray-900 text-gray-200 border rounded-lg focus:ring-2 focus:ring-blue-400"
+          />
+          {validationErrors.email && <p className="text-red-500 text-sm">{validationErrors.email}</p>}
+          <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
-              {...register("password")}
+              name="password"
               placeholder="Password"
-              disabled={isSubmitting}
-              className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-400 pr-10 transition-all duration-300"
+              onChange={handleChange}
+              value={formData.password}
+              required
+              disabled={loading}
+              className="w-full p-3 bg-gray-900 text-gray-200 border rounded-lg focus:ring-2 focus:ring-blue-400 pr-10"
             />
-            <motion.button 
+            <button 
               type="button" 
               onClick={() => setShowPassword(prev => !prev)} 
-              className="absolute inset-y-0 right-0 p-3 text-gray-400 hover:text-white transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              className="absolute inset-y-0 right-0 p-3 text-gray-400"
             >
               {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
-            </motion.button>
-            {errors.password && (
-              <motion.p 
-                className="text-red-500 mt-1"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                {errors.password.message}
-              </motion.p>
-            )}
-          </motion.div>
+            </button>
+          </div>
+          {validationErrors.password && <p className="text-red-500 text-sm">{validationErrors.password}</p>}
 
-          <motion.div 
-            className="text-right"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-          >
-            <Link href="/forgot-password" className="text-blue-400 hover:text-blue-300 hover:underline text-sm transition-colors">
+          {/* Forgot Password Link */}
+          <div className="text-right">
+            <Link href="/forgot-password" className="text-blue-400 hover:underline text-sm">
               Forgot Password?
             </Link>
-          </motion.div>
+          </div>
 
-          <motion.button
+          {/* Login Button with Loading */}
+          <button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white rounded-lg shadow-lg transition-all duration-300"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            disabled={loading}
+            className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg shadow-md flex justify-center items-center"
           >
-            {isSubmitting ? (
-              <span className="flex justify-center items-center">
-                <motion.span 
-                  className="border-2 border-white border-t-transparent rounded-full w-5 h-5 mr-2"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                />
-                Logging in...
-              </span>
-            ) : (
-              "Login"
+            {loading && (
+              <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5 mr-2"></span>
             )}
-          </motion.button>
-
-          <motion.div 
-            className="text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
+            Login
+          </button>
+          
+          {/* Google Sign In */}
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            className="w-full p-3 bg-gray-700 text-white rounded-lg shadow-md flex justify-center items-center mt-4"
           >
+            <FcGoogle className="text-2xl mr-2" /> Sign in with Google
+          </button>
+
+          {/* Back to Signup Link */}
+          <div className="text-center">
             <p className="text-gray-400 text-sm">
               Don't have an account?{" "}
-              <Link href="/signup" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
+              <Link href="/signup" className="text-blue-400 hover:underline">
                 Sign up
               </Link>
             </p>
-            <p className="text-center text-gray-400 mt-4">
-              <Link href="/" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
-                ← Back to Home
-              </Link>
-            </p>
-          </motion.div>
+          </div>
 
+          {/* Login Message at the Bottom */}
           {message && (
-            <motion.div 
-              className={`mt-4 text-center ${messageType === "success" ? "text-green-400" : "text-red-400"} font-semibold`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            >
+            <div className={`mt-4 text-center ${messageType === "success" ? "text-green-400" : "text-red-400"} font-semibold`}>
               {message}
-            </motion.div>
+            </div>
           )}
-        </motion.form>
-      </motion.div>
+        </form>
+      </div>
     </div>
   );
 }

@@ -9,25 +9,27 @@ export default withAuth(
 
     // If user is not an admin and trying to access admin routes
     if (isAdminRoute && token?.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/login', req.url));
-    }
-
-    // If admin is trying to access login page, redirect to admin dashboard
-    if (isLoginPage && token?.role === 'ADMIN') {
-      return NextResponse.redirect(new URL('/admin/blog', req.url));
-    }
-
-    // If authenticated user tries to access login page
-    if (isLoginPage && token) {
-      if (token.role === 'ADMIN') {
-        return NextResponse.redirect(new URL('/admin/blog', req.url));
-      }
       return NextResponse.redirect(new URL('/', req.url));
     }
 
+    // // If admin is trying to access login page, redirect to admin dashboard
+    // if (isLoginPage && token?.role === 'ADMIN') {
+    //   return NextResponse.redirect(new URL('/login', req.url));
+    // }
+
+    // // If authenticated user tries to access login page
+    // if (isLoginPage && token) {
+    //   if (token.role === 'ADMIN') {
+    //     return NextResponse.redirect(new URL('/', req.url));
+    //   }
+    //   return NextResponse.redirect(new URL('/', req.url));
+    // }
+
     return NextResponse.next();
   },
-  {
+  {pages: {
+    signIn: "/login"
+  },
     callbacks: {
       authorized: ({ token, req }) => {
         const isAdminRoute = req.nextUrl.pathname.startsWith('/admin');

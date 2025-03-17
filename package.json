@@ -13,6 +13,7 @@
     "db:setup": "prisma migrate dev && prisma db seed",
     "db:studio": "prisma studio",
     "setup": "node setup.js"
+    
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

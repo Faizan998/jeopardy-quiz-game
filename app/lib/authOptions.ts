@@ -1,153 +1,115 @@
-import { NextAuthOptions } from 'next-auth';
-import { PrismaAdapter } from '@auth/prisma-adapter';
-import GoogleProvider from 'next-auth/providers/google';
-import prisma from './prisma';
+import { PrismaClient } from "@prisma/client";
+import { AuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcrypt";
 
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      role: "ADMIN" | "USER";
-    }
-  }
-  interface User {
-    role: "ADMIN" | "USER";
-  }
-}
+const prisma = new PrismaClient();
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    role: "ADMIN" | "USER";
-    id: string;
-  }
-}
-
-export const authOptions: NextAuthOptions = {
+export const authOptions: AuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-  ],
-  callbacks: {
-    async signIn({ user, account }) {
-      try {
-        if (account?.provider === 'google') {
-          const existingUser = await prisma.user.findUnique({
-            where: { email: user.email! },
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        try {
+          console.log("credentials", credentials);
+          const user = await prisma.user.findUnique({
+            where: { email: credentials?.email },
           });
 
-          if (!existingUser) {
-            const isAdmin = user.email === process.env.ADMIN_EMAIL;
-            await prisma.user.create({
-              data: {
-                email: user.email!,
-                name: user.name!,
-                role: isAdmin ? "ADMIN" : "USER",
-              },
-            });
+          if (!user) {
+            throw new Error("No user found");
           }
+
+          if (!credentials?.password) {
+            throw new Error("Password is required");
+          }
+
+          const isValid = await bcrypt.compare(credentials.password, user.password!);
+          if (!isValid) {
+            throw new Error("Password is incorrect");
+          }
+
+          console.log("login done");
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: "USER",
+          };
+        } catch (error) {
+          console.log("error", error);
+          if (error instanceof Error) {
+            throw new Error(error.message);
+          }
+          throw new Error("Something went wrong");
         }
+      },
+    }),
+  ],
+  callbacks: {
+    async signIn({ user }) {
+      console.log("signIn", user);
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email! },
+        });
+
+        console.log("user exists info", dbUser);
+
+        if (!dbUser) {
+          const role = user.email === process.env.ADMIN_EMAIL ? "ADMIN" : "USER";
+          console.log(role);
+
+          const createdUser = await prisma.user.create({
+            data: {
+              role: role,
+              email: user.email!,
+              name: user.name!,
+              image: user.image ? user.image : "",
+            },
+          });
+
+          console.log("user created info", createdUser);
+          user.role = createdUser.role;
+          user.id = createdUser.id;
+        } else {
+          user.role = dbUser.role;
+          user.id = dbUser.id;
+        }
+
         return true;
       } catch (error) {
-        console.error('SignIn error:', error);
+        console.error("Error saving user:", error);
         return false;
       }
     },
-    async jwt({ token, user, trigger }) {
-      try {
-        if (trigger === "signIn" || trigger === "signUp" || !token.role) {
-          const dbUser = await prisma.user.findUnique({
-            where: { email: token.email! },
-          });
-          
-          if (dbUser) {
-            token.role = dbUser.role;
-            token.id = dbUser.id;
-          }
-        }
-        return token;
-      } catch (error) {
-        console.error('JWT error:', error);
-        return token;
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role;
+        token.id = user.id;
       }
+      return token;
     },
     async session({ session, token }) {
-      try {
-        if (session?.user) {
-          session.user.role = token.role;
-          session.user.id = token.id;
-        }
-        return session;
-      } catch (error) {
-        console.error('Session error:', error);
-        return session;
+      if (session.user) {
+        console.log("token.role", token.role);
+        session.user.role = token.role;
+        session.user.id = token.id;
       }
-    },
-    async redirect({ url, baseUrl }) {
-      try {
-        // For OAuth sign-in callbacks
-        if (url.includes('/api/auth/callback')) {
-          const userEmail = url.includes('user_email=') 
-            ? decodeURIComponent(url.split('user_email=')[1].split('&')[0])
-            : null;
-
-          // Check if the user is an admin
-          if (userEmail === process.env.ADMIN_EMAIL) {
-            return `${baseUrl}/admin-dashboard`;
-          }
-          return baseUrl;
-        }
-
-        // For sign-in page
-        if (url === `${baseUrl}/login`) {
-          return baseUrl;
-        }
-
-        // For admin routes
-        if (url.includes('/admin-dashboard')) {
-          return `${baseUrl}/admin-dashboard`;
-        }
-
-        // Default cases
-        if (url.startsWith(baseUrl)) return url;
-        if (url.startsWith('/')) return `${baseUrl}${url}`;
-        return baseUrl;
-      } catch (error) {
-        console.error('Redirect error:', error);
-        return baseUrl;
-      }
-    }
-  },
-  events: {
-    async signIn({ user }) {
-      try {
-        if (user.email === process.env.ADMIN_EMAIL) {
-          const dbUser = await prisma.user.findUnique({
-            where: { email: user.email },
-          });
-          
-          if (dbUser && dbUser.role !== 'ADMIN') {
-            await prisma.user.update({
-              where: { email: user.email },
-              data: { role: 'ADMIN' },
-            });
-          }
-        }
-      } catch (error) {
-        console.error('SignIn event error:', error);
-      }
+      return session;
     },
   },
   pages: {
-    signIn: '/login',
-    error: '/login',
+    signIn: "/login",
   },
-  session: {
-    strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  debug: process.env.NODE_ENV === 'development',
+  secret: process.env.NEXTAUTH_SECRET,
 };

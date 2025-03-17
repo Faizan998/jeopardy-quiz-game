@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { signOut } from 'next-auth/react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -102,7 +103,7 @@ const Navbar = () => {
               </Link>
             ))}
             <button
-              onClick={handleLogout}
+              onClick={()=>signOut()}
               className="text-white hover:text-red-200 transition-colors duration-200 px-3 py-2 rounded-md hover:bg-red-500 text-left"
             >
               Logout
