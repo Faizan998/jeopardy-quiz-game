@@ -8,50 +8,68 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  resetToken String?
+  id               String    @id @default(uuid())
+  name             String
+  email            String    @unique
+  password         String?
+  role             Role
+  image            String?
+  resetToken       String?
   resetTokenExpiry DateTime?
-  image     String?
-  role      String   @default("USER")
-  answers   Answer[]
-}
-
-model Category {
-  id        String     @id @default(cuid())
-  name      String     @unique
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  questions Question[]
+  totalAmount      Int       @default(0)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+  Answer           Answer[]
+  blogs            Blog[]
 }
 
 model Question {
-  id         String   @id @default(cuid())
-  text       String
+  id         String   @id @default(uuid())
+  value      String
+  options    Json
+  amount     Int
+  CorrectIdx Int
   categoryId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  answers    Answer[]
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  Answer     Answer[]
   category   Category @relation(fields: [categoryId], references: [id])
 }
 
 model Answer {
-  id         String   @id @default(cuid())
-  text       String
-  correct    Boolean
-  userId     String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  questionId String
-  question   Question @relation(fields: [questionId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  id           String   @id @default(uuid())
+  userId       String
+  questionId   String
+  selectedIdx  String
+  isCorrect    Boolean
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now()) @updatedAt
+  pointsEarned Int      @default(0)
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id         String     @id @default(uuid())
+  name       String
+  created_at DateTime   @default(now())
+  updated_at DateTime   @default(now()) @updatedAt
+  questions  Question[]
+}
+
+model Blog {
+  id         String   @id @default(uuid())
+  title      String
+  content    String
+  imageUrl   String
+  category   String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
 }
 
 enum Role {
-  USER
   ADMIN
+  USER
 }

@@ -32,7 +32,7 @@ export const authOptions = {
             data: {
               name: user.name,
               email: user.email,
-              role: userRole === "ADMIN" ? "admin" : "user",
+              role: userRole,
               password: hashedPassword,
               image: user.image ? user.image : null,
             },
