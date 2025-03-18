@@ -22,6 +22,16 @@ export default function Home() {
               Signup
             </button>
           </Link>
+          <Link href="/contact">
+            <button className="px-6 py-3 bg-green-500/30 hover:bg-green-500 text-white font-bold text-lg rounded-lg shadow-lg backdrop-blur-md transition-transform transform hover:scale-110 hover:shadow-green-500">
+              Contact
+            </button>
+          </Link>
+          <Link href="/blog">
+            <button className="px-6 py-3 bg-green-500/30 hover:bg-green-500 text-white font-bold text-lg rounded-lg shadow-lg backdrop-blur-md transition-transform transform hover:scale-110 hover:shadow-green-500">
+              Blog
+            </button>
+          </Link>
           <Link href="/login">
             <button className="px-6 py-3 bg-green-500/30 hover:bg-green-500 text-white font-bold text-lg rounded-lg shadow-lg backdrop-blur-md transition-transform transform hover:scale-110 hover:shadow-green-500">
               Login
