@@ -205,4 +205,10 @@ const quizData = {
     ],
   };
   
+<<<<<<< HEAD
   export default quizData;
+=======
+  export default quizData;
+  
+  
+>>>>>>> 2e8e39ec365a9e42612c4ae7cf8ecb7a958c8be0

@@ -26,7 +26,11 @@ model User {
 model Question {
   id         String   @id @default(uuid())
   value      String
+<<<<<<< HEAD
   options    Json
+=======
+  options    String   // Comma-separated list of options
+>>>>>>> 2e8e39ec365a9e42612c4ae7cf8ecb7a958c8be0
   amount     Int
   CorrectIdx Int
   categoryId String
@@ -58,6 +62,7 @@ model Category {
 }
 
 model Blog {
+<<<<<<< HEAD
   id         String   @id @default(uuid())
   title      String
   content    String
@@ -67,6 +72,17 @@ model Blog {
   updated_at DateTime @default(now()) @updatedAt
   authorId   String
   author     User     @relation(fields: [authorId], references: [id])
+=======
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  imageUrl    String
+  category    String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+  author      User     @relation(fields: [authorId], references: [id])
+  authorId    String
+>>>>>>> 2e8e39ec365a9e42612c4ae7cf8ecb7a958c8be0
 }
 
 enum Role {

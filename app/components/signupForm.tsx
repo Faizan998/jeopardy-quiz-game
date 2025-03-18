@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { FcGoogle } from "react-icons/fc";
 import Link from "next/link";
-import { signupSchema, type SignupFormData } from "@/app/utils/validationSchema";
+import { signupSchema, type SignupFormData } from "@/app/utils/validationSchemas";
 import { motion } from "framer-motion";
 
 export default function Signup() {

@@ -21,3 +21,10 @@ export default function Dashboard() {
 
   return <p className="text-center text-white text-xl">Redirecting...</p>;
 }
+
+
+
+
+
+
+

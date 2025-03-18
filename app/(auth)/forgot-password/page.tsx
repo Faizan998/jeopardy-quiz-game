@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import Link from "next/link";
 
@@ -9,6 +9,11 @@ export default function ForgotPassword() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
   const [loading, setLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false); // ✅ Fix for hydration mismatch
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +36,8 @@ export default function ForgotPassword() {
     }
   };
 
+  if (!isClient) return null; // ✅ Prevents hydration issues
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 transition-all duration-500 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
       <div className="relative z-10 text-center space-y-6 w-full max-w-md">
@@ -48,7 +55,7 @@ export default function ForgotPassword() {
             name="email"
             placeholder="Email"
             onChange={(e) => setEmail(e.target.value)}
-            value={email}
+            value={isClient ? email : ""} // ✅ Fix: Ensure same value on server & client
             required
             disabled={loading}
             className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-600 rounded-lg placeholder-gray-500 

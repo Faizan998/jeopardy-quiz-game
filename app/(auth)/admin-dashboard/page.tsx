@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 "use client";
 import { motion } from 'framer-motion';
 import { signOut } from 'next-auth/react'; 
@@ -27,3 +28,16 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+=======
+import React from 'react'
+import Blog from "@/app/(auth)/admin-dashboard/components/Blog"
+function page() {
+  return (
+  <>
+  <Blog/>
+  </>
+  )
+}
+
+export default page
+>>>>>>> 2e8e39ec365a9e42612c4ae7cf8ecb7a958c8be0

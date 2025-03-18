@@ -5,8 +5,13 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
 import { motion } from "framer-motion";
+<<<<<<< HEAD
 import JeopardyBoard from "@/app/components/JeopardyBoard";
 import UserScore from "@/app/components/UserScore";
+=======
+import JeopardyBoard from "./components/JeopardyBoard";
+import UserScore from "./components/UserScore";
+>>>>>>> 2e8e39ec365a9e42612c4ae7cf8ecb7a958c8be0
 
 export default function UserDashboard() {
   const router = useRouter();
