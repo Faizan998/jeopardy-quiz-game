@@ -52,7 +52,11 @@ export default function Login() {
         setMessageType("success");
 
         setTimeout(() => {
-          router.push(res.data.role === "admin" ? "/admin-dashboard" : "/user-dashboard");
+          if (res.data.role === "admin") {
+            router.push("/admin-dashboard");
+          } else {
+            router.push("/user-dashboard");
+          }
         }, 1500);
       } else {
         throw new Error("Invalid response from server");

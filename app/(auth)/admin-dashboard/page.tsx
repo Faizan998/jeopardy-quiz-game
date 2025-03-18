@@ -1,9 +1,29 @@
-import React from 'react'
+"use client";
+import { motion } from 'framer-motion';
+import { signOut } from 'next-auth/react'; 
+import { useRouter } from 'next/navigation'; // Import signOut from next-auth/react
 
-function AdminDashboard() {
+const AdminDashboard = () => {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    // Sign the user out and redirect to the login page
+    await signOut({ callbackUrl: '/login' });
+  };
+
   return (
-    <div>AdminDashboard</div>
-  )
-}
+    <nav className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 shadow-lg">
+      {/* Your existing admin dashboard code here */}
 
-export default AdminDashboard
+      {/* Logout button */}
+      <motion.button
+        onClick={handleLogout} // Trigger logout
+        className="text-white hover:text-red-200 transition-colors duration-200 px-3 py-2 rounded-md hover:bg-red-500"
+      >
+        Logout
+      </motion.button>
+    </nav>
+  );
+};
+
+export default AdminDashboard;
