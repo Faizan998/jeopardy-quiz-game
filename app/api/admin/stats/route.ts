@@ -7,22 +7,25 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user) {
+    if (!session?.user || session.user.role !== 'ADMIN') {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const questions = await prisma.question.findMany({
-      include: {
-        category: true,
-      },
-      orderBy: {
-        amount: 'asc',
-      },
-    });
+    const [totalUsers, totalQuestions, totalCategories, totalAnswers] = await Promise.all([
+      prisma.user.count(),
+      prisma.question.count(),
+      prisma.category.count(),
+      prisma.answer.count(),
+    ]);
 
-    return NextResponse.json(questions);
+    return NextResponse.json({
+      totalUsers,
+      totalQuestions,
+      totalCategories,
+      totalAnswers,
+    });
   } catch (error) {
-    console.error('Error fetching questions:', error);
+    console.error('Error fetching admin stats:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-}
+} 

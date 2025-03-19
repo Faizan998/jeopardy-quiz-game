@@ -11,18 +11,20 @@ export async function GET() {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const questions = await prisma.question.findMany({
-      include: {
-        category: true,
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        totalAmount: true,
       },
       orderBy: {
-        amount: 'asc',
+        totalAmount: 'desc',
       },
     });
 
-    return NextResponse.json(questions);
+    return NextResponse.json(users);
   } catch (error) {
-    console.error('Error fetching questions:', error);
+    console.error('Error fetching leaderboard:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-}
+} 
