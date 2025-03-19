@@ -6,6 +6,19 @@ import { NextAuthOptions } from "next-auth";
 
 const prisma = new PrismaClient();
 
+// Extend the built-in session types
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      totalAmount: number;
+    }
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -108,6 +121,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        console.log("JWT Callback - User Role:", user.role); // Debugging
         token.totalAmount = user.totalAmount;
       }
       return token;

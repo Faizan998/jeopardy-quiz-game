@@ -14,13 +14,13 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (req.nextUrl.pathname.startsWith("/admindashboard") && token.role !== "ADMIN") {
-    return NextResponse.redirect(new URL("/userdashboard", req.url));
+  if (req.nextUrl.pathname.startsWith("/admin-dashboard") && token.role !== "ADMIN") {
+    return NextResponse.redirect(new URL("/game", req.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/userdashboard", "/admindashboard"],
+  matcher: ["/game", "/admin-dashboard"],
 };
