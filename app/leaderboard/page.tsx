@@ -8,6 +8,7 @@ interface LeaderboardUser {
   id: string;
   name: string;
   totalAmount: number;
+  role: string;
 }
 
 export default function LeaderboardPage() {
@@ -30,9 +31,7 @@ export default function LeaderboardPage() {
     try {
       const response = await fetch('/api/leaderboard');
       const data = await response.json();
-      // Filter out admin users from the leaderboard
-      const filteredUsers = data.filter((user: LeaderboardUser) => user.name.toLowerCase() !== 'admin');
-      setUsers(filteredUsers);
+      setUsers(data); // API already filters for USER role
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
     } finally {

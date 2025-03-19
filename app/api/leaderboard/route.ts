@@ -12,13 +12,17 @@ export async function GET() {
     }
 
     const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        totalAmount: true,
-      },
-      orderBy: {
-        totalAmount: 'desc',
+        where: {
+            role: 'USER'  // Only fetch users with role 'USER'
+          },
+          select: {
+            id: true,
+            name: true,
+            totalAmount: true,
+            role: true,
+          },
+          orderBy: {
+            totalAmount: 'desc',
       },
     });
 
