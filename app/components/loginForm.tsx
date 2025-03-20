@@ -21,7 +21,7 @@ export default function LoginPage() {
 
   const { data: session, status } = useSession();  // Using useSession hook to check the session
   useEffect(() => {
-    console.log("session",session);
+    
     if (status === "loading") return; // Wait until session is loaded
 
     // Redirect user based on their role once the session is loaded
@@ -136,7 +136,7 @@ export default function LoginPage() {
 
           {/* Message */}
           {message && (
-            <p className={`mt-4 text-center ${messageType === "success" ? "text-green-400" : "text-red-400"}`}>
+            <p className={`mt-4 text-center ${messageType === "success" ? "text-blue-400" : "text-red-400"}`}>
               {message}
             </p>
           )}

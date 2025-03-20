@@ -9,7 +9,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { FcGoogle } from "react-icons/fc";
 import Link from "next/link";
-import { signupSchema, type SignupFormData } from "@/app/utils/validationSchema";
+import {
+  signupSchema,
+  type SignupFormData,
+} from "@/app/utils/validationSchema";
 import { motion } from "framer-motion";
 
 export default function Signup() {
@@ -17,7 +20,9 @@ export default function Signup() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error">("success");
+  const [messageType, setMessageType] = useState<"success" | "error">(
+    "success"
+  );
 
   const {
     register,
@@ -67,7 +72,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-gray-800 via-gray-900 to-black overflow-hidden">
       {/* Background animated elements */}
-      <motion.div 
+      <motion.div
         className="absolute inset-0 pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.5 }}
@@ -77,35 +82,35 @@ export default function Signup() {
           <motion.div
             key={i}
             className="absolute rounded-full bg-blue-500 opacity-20 blur-3xl"
-            initial={{ 
-              x: Math.random() * 100 - 50 + "%", 
+            initial={{
+              x: Math.random() * 100 - 50 + "%",
               y: Math.random() * 100 - 50 + "%",
               width: Math.random() * 300 + 100,
               height: Math.random() * 300 + 100,
             }}
-            animate={{ 
+            animate={{
               x: [
-                Math.random() * 100 - 50 + "%", 
-                Math.random() * 100 - 50 + "%", 
-                Math.random() * 100 - 50 + "%"
+                Math.random() * 100 - 50 + "%",
+                Math.random() * 100 - 50 + "%",
+                Math.random() * 100 - 50 + "%",
               ],
               y: [
-                Math.random() * 100 - 50 + "%", 
-                Math.random() * 100 - 50 + "%", 
-                Math.random() * 100 - 50 + "%"
+                Math.random() * 100 - 50 + "%",
+                Math.random() * 100 - 50 + "%",
+                Math.random() * 100 - 50 + "%",
               ],
             }}
-            transition={{ 
-              repeat: Infinity, 
-              repeatType: "reverse", 
+            transition={{
+              repeat: Infinity,
+              repeatType: "reverse",
               duration: 15 + i * 5,
-              ease: "easeInOut"
+              ease: "easeInOut",
             }}
           />
         ))}
       </motion.div>
 
-      <motion.h2 
+      <motion.h2
         className="text-5xl font-extrabold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -122,7 +127,7 @@ export default function Signup() {
         transition={{ delay: 0.2 }}
       >
         {/* Name Field */}
-        <motion.div 
+        <motion.div
           className="mb-4"
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -135,7 +140,7 @@ export default function Signup() {
             className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
           />
           {errors.name && (
-            <motion.p 
+            <motion.p
               className="text-red-500 text-sm mt-1"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -146,7 +151,7 @@ export default function Signup() {
         </motion.div>
 
         {/* Email Field */}
-        <motion.div 
+        <motion.div
           className="mb-4"
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -159,7 +164,7 @@ export default function Signup() {
             className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
           />
           {errors.email && (
-            <motion.p 
+            <motion.p
               className="text-red-500 text-sm mt-1"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -170,7 +175,7 @@ export default function Signup() {
         </motion.div>
 
         {/* Password Field */}
-        <motion.div 
+        <motion.div
           className="mb-6 relative"
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -192,7 +197,7 @@ export default function Signup() {
             {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
           </motion.button>
           {errors.password && (
-            <motion.p 
+            <motion.p
               className="text-red-500 text-sm mt-1"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -215,7 +220,7 @@ export default function Signup() {
         >
           {isSubmitting ? (
             <span className="flex justify-center items-center">
-              <motion.span 
+              <motion.span
                 className="border-2 border-white border-t-transparent rounded-full w-5 h-5 mr-2"
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -227,22 +232,6 @@ export default function Signup() {
           )}
         </motion.button>
 
-        {/* Google Signup Button */}
-        <motion.button
-          onClick={() =>
-            signIn("google", {
-              callbackUrl: "/admin-dashboard",
-              redirect: false,
-            })
-          }
-          type="button"
-          className="mt-4 w-full p-3 flex items-center justify-center bg-white text-gray-800 rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-300 font-bold"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-        > {/* Google Signup Button */}
         <motion.button
           onClick={() =>
             signIn("google", {
@@ -260,16 +249,17 @@ export default function Signup() {
         >
           <FcGoogle className="text-2xl mr-2" /> Sign up with Google
         </motion.button>
-          <FcGoogle className="text-2xl mr-2" /> Sign up with Google
-        </motion.button>
-        
-        <motion.p 
+
+        <motion.p
           className="text-center text-gray-400 mt-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
         >
-          <Link href="/" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
+          <Link
+            href="/"
+            className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+          >
             ← Back to Home
           </Link>
         </motion.p>
@@ -277,8 +267,10 @@ export default function Signup() {
 
       {/* Success/Error Message */}
       {message && (
-        <motion.p 
-          className={`text-center mt-4 ${messageType === "success" ? "text-green-400" : "text-red-400"} font-semibold`}
+        <motion.p
+          className={`text-center mt-4 ${
+            messageType === "success" ? "text-blue-400" : "text-red-400"
+          } font-semibold`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 500, damping: 30 }}
@@ -288,14 +280,17 @@ export default function Signup() {
       )}
 
       {/* Redirect to Login */}
-      <motion.p 
+      <motion.p
         className="text-center text-gray-400 mt-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.9 }}
       >
         Already have an account?{" "}
-        <Link href="/login" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
+        <Link
+          href="/login"
+          className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+        >
           Login
         </Link>
       </motion.p>
