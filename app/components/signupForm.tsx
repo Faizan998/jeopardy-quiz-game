@@ -242,7 +242,24 @@ export default function Signup() {
           transition={{ delay: 0.7 }}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
+        > {/* Google Signup Button */}
+        <motion.button
+          onClick={() =>
+            signIn("google", {
+              callbackUrl: "/admin-dashboard",
+              redirect: false,
+            })
+          }
+          type="button"
+          className="mt-4 w-full p-3 flex items-center justify-center bg-white text-gray-800 rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-300 font-bold"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
         >
+          <FcGoogle className="text-2xl mr-2" /> Sign up with Google
+        </motion.button>
           <FcGoogle className="text-2xl mr-2" /> Sign up with Google
         </motion.button>
         

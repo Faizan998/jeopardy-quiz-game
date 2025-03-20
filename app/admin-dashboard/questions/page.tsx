@@ -25,7 +25,7 @@ export default function AdminQuestions() {
     if (status === 'unauthenticated') {
       router.push('/login');
     } else if (session?.user?.role !== 'ADMIN') {
-      router.push('/user-dashboard');
+      router.push('/admin-dashboard/questions');
     } else {
       fetchQuestions();
       fetchCategories();

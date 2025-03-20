@@ -20,7 +20,7 @@ model User {
   created_at       DateTime  @default(now())
   updated_at       DateTime  @default(now()) @updatedAt
   Answer           Answer[]
-  blogs            Blog[]
+
 }
 
 model Question {
@@ -63,10 +63,10 @@ model Blog {
   content    String
   imageUrl   String
   category   String
+  categoryId String
   created_at DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
-  authorId   String
-  author     User     @relation(fields: [authorId], references: [id])
+
 }
 
 enum Role {

@@ -14,7 +14,7 @@ export default function AdminNavigation() {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/admin-dashboard" className="text-xl font-bold text-blue-600">
-                Admin Dashboard
+                Hello! Sayyad Faizan Ali 
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -53,7 +53,7 @@ export default function AdminNavigation() {
           </div>
           <div className="flex items-center">
             <button
-              onClick={() => signOut()}
+              onClick={() => signOut({callbackUrl: '/'})}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Sign out

@@ -93,7 +93,7 @@ export const authOptions: NextAuthOptions = {
           const randomPassword = Math.random().toString(36).slice(-8);
           const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-          await prisma.user.create({
+        const createdUser =   await prisma.user.create({
             data: {
               name: user.name,
               email: user.email,
@@ -103,11 +103,18 @@ export const authOptions: NextAuthOptions = {
               totalAmount: 0,
             },
           });
-        } else if (existingUser.role !== userRole) {
-          await prisma.user.update({
+          console.log("user created info", createdUser);
+          user.role = createdUser.role;
+          user.id = createdUser.id;
+        // } else if (existingUser.role !== userRole) {
+        } else  {
+
+          const updateUser = await prisma.user.update({
             where: { email: user.email },
-            data: { role: userRole },
+            data: { image: user.image || null },
           });
+          user.role = updateUser.role;
+          user.id = updateUser.id;
         }
 
         return true;

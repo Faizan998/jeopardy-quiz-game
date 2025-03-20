@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";  // Import the useSession hook
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { loginSchema, type LoginFormData } from "@/app/utils/validationSchema";
+import { FcGoogle } from "react-icons/fc";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,15 +19,25 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [isClient, setIsClient] = useState(false); // Prevents hydration error
 
+  const { data: session, status } = useSession();  // Using useSession hook to check the session
   useEffect(() => {
+    console.log("session",session);
+    if (status === "loading") return; // Wait until session is loaded
+
+    // Redirect user based on their role once the session is loaded
+    if (session?.user?.role === "ADMIN") {
+      router.push("/admin-dashboard");
+    } else if (session?.user?.role === "USER") {
+      router.push("/game");
+    }
+
     setIsClient(true);
-  }, []);
+  }, [session, status, router]);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    reset,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
@@ -39,7 +50,7 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
-        redirect: false,
+        redirect: false, // Prevent automatic redirect, we want to handle it manually
       });
 
       if (result?.error) {
@@ -49,6 +60,7 @@ export default function LoginPage() {
       setMessage("Login successful! Redirecting... ✅");
       setMessageType("success");
 
+      // Wait for the session to be updated, then redirect to the game page
       setTimeout(() => {
         router.push("/game");
       }, 1500);
@@ -129,6 +141,25 @@ export default function LoginPage() {
             </p>
           )}
         </form>
+
+        {/* Google Signup Button */}
+        <motion.button
+          onClick={() =>
+            signIn("google", {
+              callbackUrl: "/login ",
+              redirect: false,
+            })
+          }
+          type="button"
+          className="mt-4 w-full p-3 flex items-center justify-center bg-white text-gray-800 rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-300 font-bold"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <FcGoogle className="text-2xl mr-2" /> Sign up with Google
+        </motion.button>
 
         {/* Signup & Home Links */}
         <div className="text-center text-gray-400 mt-4">
