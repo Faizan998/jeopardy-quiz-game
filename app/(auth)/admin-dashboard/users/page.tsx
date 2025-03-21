@@ -77,12 +77,12 @@ export default function UserList() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-r from-indigo-600 to-purple-600 dark:bg-gray-800 text-white transition-all duration-300 ease-in-out">
+    <div className="flex flex-col h-screen bg-gradient-to-r from-blue-900 to-blue-600 dark:bg-blue-500 text-white transition-all duration-300 ease-in-out">
       {/* Users Table */}
-      <div className="p-4 sm:p-6 lg:p-8 xl:p-10 rounded-lg border-2 border-white/40 shadow-lg shadow-white bg-opacity-70 overflow-x-auto">
+      <div className="p-4 sm:p-6 lg:p-8 xl:p-10 rounded-lg border-2 border-white/40 shadow-lg shadow-white bg-opacity-70 overflow-auto">
         <table className="w-full border-collapse table-auto">
           <thead>
-            <tr className="bg-gradient-to-r from-blue-600 to-indigo-800 text-white text-center transition-all duration-300 ease-in-out">
+            <tr className="bg-gradient-to-r from-blue-600 to-blue-800 text-white text-center transition-all duration-300 ease-in-out">
               <th className="py-3 px-4 text-left">ID</th>
               <th className="py-3 px-4 text-left">Name</th>
               <th className="py-3 px-4 text-left">Email</th>
@@ -101,7 +101,7 @@ export default function UserList() {
               users.map((user, index) => (
                 <tr
                   key={user.id}
-                  className="border-b text-white bg-blue-400/50 hover:bg-blue-500/70 transition-all duration-300 ease-in-out transform hover:scale-105"
+                  className="border-b text-white bg-blue-400/50 hover:bg-blue-500/70 transition-all duration-300 ease-in-out transform hover:scale-z-105"
                 >
                   <td className="py-3 px-4">{index + 1}</td>
                   <td className="py-3 px-4">{user.name}</td>

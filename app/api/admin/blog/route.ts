@@ -1,93 +1,262 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient, Blog } from '@prisma/client';
+import { writeFile } from 'fs/promises';
+import multer from 'multer';
+import path from 'path';
+import prisma from '@/app/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/authOptions';
 
-const prisma = new PrismaClient();
-
-// Type definition for the expected request body for POST and PUT
-interface BlogRequest {
-    id: string;
+// Define the types for the blog data
+type BlogData = {
   title: string;
   content: string;
-  imageUrl: string;
-  categoryId: string;
-}
+  categoryId: string;  // Changed to categoryId
+  filepath: string;
+};
 
-// Create a blog (POST)
-export async function POST(req: Request): Promise<NextResponse> {
-  try {
-    const { title, content, imageUrl,categoryId }: BlogRequest = await req.json();
-    
-    const newBlog: Blog = await prisma.blog.create({
-      data: { title, content, imageUrl,categoryId },
-    });
+// Define the type for incoming form data (multipart/form-data)
+type FormData = {
+  title: string;
+  content: string;
+  category: string;  // The category name from the form
+  image?: Express.Multer.File; // Multer file upload
+};
 
-    return NextResponse.json(newBlog, { status: 200 });
-  } catch (error) {
-    console.error('Error creating blog:', error);
-    return NextResponse.json({ error: 'Failed to create blog' }, { status: 500 });
-  }
-}
-
-// Fetch blogs or a single blog by ID (GET)
-export async function GET(req: Request): Promise<NextResponse> {
-  try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
-
-    if (id) {
-      // If your blog id is numeric, uncomment the next line
-      // const numericId = parseInt(id, 10);
-      const blog = await prisma.blog.findUnique({
-        where: { id },
-        include: { category: true },
-      });
-
-      if (!blog) {
-        return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
-      }
-      return NextResponse.json(blog, { status: 200 });
+// File upload configuration using multer
+const upload = multer({
+  limits: { fileSize: 5 * 1024 * 1024 }, // Max file size 5MB
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
     } else {
-      const blogs: Blog[] = await prisma.blog.findMany({
-        include: { category: true },
-        orderBy: { createdAt: 'desc' },
-      });
-      return NextResponse.json(blogs, { status: 200 });
+      cb(new Error('Only JPEG, PNG, and WebP images are allowed'));
     }
-  } catch (error) {
-    console.error('Error fetching blogs:', error);
-    return NextResponse.json({ error: 'Failed to fetch blogs' }, { status: 500 });
+  },
+});
+
+// Helper function to process the file upload
+const processUpload = async (req: Request): Promise<BlogData> => {
+  const data = await req.formData();
+  const file = data.get('image') as File;
+  const title = data.get('title') as string;
+  const content = data.get('content') as string;
+  const category = data.get('category') as string;
+
+  if (!file || !title || !content || !category) {
+    throw new Error('All fields are required');
   }
-}
 
-// Update a blog (PUT)
-export async function PUT(req: Request): Promise<NextResponse> {
+  // Create uploads directory if it doesn't exist
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
   try {
-    const { id, title, content, imageUrl, categoryId }: BlogRequest = await req.json();
+    await writeFile(path.join(process.cwd(), 'public', '.gitkeep'), '');
+  } catch (error) {
+    // Directory already exists, continue
+  }
 
-    const updatedBlog: Blog = await prisma.blog.update({
-      where: { id },
-      data: { title, content, imageUrl, categoryId },
+  // Generate unique filename
+  const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+  const filename = `blog-${uniqueSuffix}${path.extname(file.name)}`;
+
+  // Convert file to buffer and save
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  // Save file to uploads directory
+  const filepath = path.join(uploadsDir, filename);
+  await writeFile(filepath, buffer);
+
+  // Return data object with filepath and categoryId
+  return {
+    title,
+    content,
+    categoryId: category, // categoryId will be used here
+    filepath: `/uploads/${filename}`,
+  };
+};
+
+// POST API to create a new blog post
+export async function POST(req: Request) {
+  try {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { message: 'Unauthorized - Please login' },
+        { status: 401 }
+      );
+    }
+
+    // Get user from database
+    const user = await prisma.user.findUnique({
+      where: {
+        email: session.user.email,
+      },
     });
 
-    return NextResponse.json(updatedBlog, { status: 200 });
-  } catch (error) {
-    console.error('Error updating blog:', error);
-    return NextResponse.json({ error: 'Failed to update blog' }, { status: 500 });
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { message: 'Unauthorized - Admin access required' },
+        { status: 401 }
+      );
+    }
+
+    // Process the upload (title, content, category, and file)
+    const { title, content, categoryId, filepath } = await processUpload(req);
+
+    // Find the category by ID (categoryId)
+    const categoryRecord = await prisma.blogCategory.findUnique({
+      where: { id: categoryId }, // Using categoryId to fetch the category
+    });
+
+    if (!categoryRecord) {
+      return NextResponse.json(
+        { message: 'Category not found' },
+        { status: 404 }
+      );
+    }
+
+    // Create a new blog post with the retrieved categoryId
+    const blog = await prisma.blog.create({
+      data: {
+        title,
+        content,
+        categoryId: categoryRecord.id, // Using categoryId from BlogCategory table
+        imageUrl: filepath,
+      },
+    });
+
+    return NextResponse.json(
+      { message: 'Blog post created successfully', blog },
+      { status: 201 }
+    );
+  } catch (error: any) {
+    console.error('Error creating blog post:', error);
+    return NextResponse.json(
+      { message: error.message || 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
-// Delete a blog (DELETE)
-export async function DELETE(req: Request): Promise<NextResponse> {
+// GET API to fetch all blogs, including category data
+export async function GET(req: Request) {
   try {
-    const { id }: { id: string } = await req.json();
-    
+    const blogs = await prisma.blog.findMany({
+      include: {
+        category: true, // Include the related category data
+      },
+    });
+
+    if (!blogs || blogs.length === 0) {
+      return NextResponse.json({ message: 'Blogs not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(blogs);
+  } catch (error: any) {
+    console.error('Error fetching blogs:', error);
+    return NextResponse.json(
+      { message: 'Internal server error', error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT API to update a blog post
+export async function PUT(req: Request) {
+  try {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { message: 'Unauthorized - Please login' },
+        { status: 401 }
+      );
+    }
+
+    const data = await req.json();
+    const { id, title, content, categoryId, imageUrl } = data;
+
+    if (!id || !title || !content || !categoryId) {
+      return NextResponse.json(
+        { message: 'All fields are required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if blog exists
+    const blog = await prisma.blog.findUnique({
+      where: { id },
+    });
+
+    if (!blog) {
+      return NextResponse.json({ message: 'Blog not found' }, { status: 404 });
+    }
+
+    // Update blog in the database
+    const updatedBlog = await prisma.blog.update({
+      where: { id },
+      data: {
+        title,
+        content,
+        categoryId, // Update categoryId
+        imageUrl: imageUrl || blog.imageUrl, // Only update image if provided
+      },
+    });
+
+    return NextResponse.json({ message: 'Blog updated successfully', updatedBlog });
+  } catch (error: any) {
+    console.error('Error updating blog:', error);
+    return NextResponse.json(
+      { message: 'Internal server error', error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE API to delete a blog post
+export async function DELETE(req: Request) {
+  try {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { message: 'Unauthorized - Please login' },
+        { status: 401 }
+      );
+    }
+
+    const data = await req.json();
+    const { id } = data;
+
+    if (!id) {
+      return NextResponse.json({ message: 'Blog ID is required' }, { status: 400 });
+    }
+
+    // Check if blog exists
+    const blog = await prisma.blog.findUnique({
+      where: { id },
+    });
+
+    if (!blog) {
+      return NextResponse.json({ message: 'Blog not found' }, { status: 404 });
+    }
+
+    // Delete blog from the database
     await prisma.blog.delete({
       where: { id },
     });
 
-    return NextResponse.json({ message: 'Blog deleted successfully' }, { status: 200 });
-  } catch (error) {
+    return NextResponse.json({ message: 'Blog deleted successfully' });
+  } catch (error: any) {
     console.error('Error deleting blog:', error);
-    return NextResponse.json({ error: 'Failed to delete blog' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal server error', error: error.message },
+      { status: 500 }
+    );
   }
 }

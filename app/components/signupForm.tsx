@@ -210,7 +210,7 @@ export default function Signup() {
         {/* Signup Button */}
         <motion.button
           type="submit"
-          className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white rounded-lg shadow-lg transition-all duration-300 font-bold"
+          className="w-full p-3 cursor-pointer bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white rounded-lg shadow-lg transition-all duration-300 font-bold"
           disabled={isSubmitting}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -240,7 +240,7 @@ export default function Signup() {
             })
           }
           type="button"
-          className="mt-4 w-full p-3 flex items-center justify-center bg-white text-gray-800 rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-300 font-bold"
+          className="mt-4 w-full p-3 cursor-pointer flex items-center justify-center bg-white text-gray-800 rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-300 font-bold"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}

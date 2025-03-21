@@ -3,7 +3,7 @@ import React from 'react';
 
 function Page() {
   return (
-    <div className="min-h-screen bg-gradient-to-r from-blue-500 via-purple-600 to-pink-500 p-6 flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-r from-blue-900 via-blue-800 to-blue-500 p-6 flex flex-col items-center justify-center">
       <div className="text-center text-white space-y-6 animate__animated animate__fadeIn">
         {/* Animated Welcome Header */}
         <h1 className="text-4xl font-extrabold tracking-wide animate__animated animate__fadeIn animate__delay-1s">

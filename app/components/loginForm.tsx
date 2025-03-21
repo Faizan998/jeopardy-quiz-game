@@ -129,7 +129,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white rounded-lg shadow-lg"
+            className="w-full cursor-pointer p-3 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white rounded-lg shadow-lg"
           >
             {isSubmitting ? "Logging in..." : "Login"}
           </button>
@@ -151,7 +151,7 @@ export default function LoginPage() {
             })
           }
           type="button"
-          className="mt-4 w-full p-3 flex items-center justify-center bg-white text-gray-800 rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-300 font-bold"
+          className="mt-4 w-full cursor-pointer p-3 flex items-center justify-center bg-white text-gray-800 rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-300 font-bold"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}

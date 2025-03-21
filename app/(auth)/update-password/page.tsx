@@ -67,7 +67,7 @@ export default function UpdatePassword() {
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 transition-colors duration-200"
+                className="absolute inset-y-0 cursor-pointer right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 transition-colors duration-200"
                 disabled={isLoading}
               >
                 {showPassword ? (
