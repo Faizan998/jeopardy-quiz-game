@@ -4,15 +4,14 @@ import { useState, useRef } from "react";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import ReCAPTCHA from "react-google-recaptcha";
 
+// Zod schema for validation (without recaptcha)
 const contactSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   message: z.string().min(10, "Message must be at least 10 characters"),
-  recaptcha: z.string().min(1, "Please verify the reCAPTCHA"),
 });
 
 type ContactFormData = z.infer<typeof contactSchema>;
@@ -30,62 +29,75 @@ export default function ContactPage() {
     formState: { errors },
     reset,
   } = useForm<ContactFormData>({
-    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      message: '',
+    },
   });
 
- const handleCaptchaChange = async (token: string | null) => {
-  if (token) {
-    try {
-      const response = await axios.post("/api/verify-captcha", { token });
+  // Handle reCAPTCHA verification
+  const handleCaptchaChange = async (token: string | null) => {
+    if (token) {
+      try {
+        const response = await axios.post("/api/verify-captcha", { token });
 
-      if (response.data.success) {
-        setIsVerified(true);
-      } else {
+        if (response.data.success) {
+          setIsVerified(true);
+        } else {
+          setIsVerified(false);
+          setResponseMessage("reCAPTCHA verification failed. Please try again.");
+        }
+      } catch (error) {
         setIsVerified(false);
-        setResponseMessage("reCAPTCHA verification failed. Please try again.");
+        setResponseMessage("Error verifying reCAPTCHA. Please try again.");
       }
-    } catch (error) {
+    } else {
       setIsVerified(false);
-      setResponseMessage("Error verifying reCAPTCHA. Please try again.");
     }
-  } else {
-    setIsVerified(false);
-  }
-};
+  };
 
+  const onSubmit = async (data: ContactFormData) => {
+    // Check if reCAPTCHA is verified first before doing the rest of the validation
+    if (!isVerified) {
+      setResponseMessage("Please complete the reCAPTCHA verification.");
+      return;
+    }
 
-const onSubmit = async (data: ContactFormData) => {
-  if (!isVerified) {
-    setResponseMessage("Please complete the reCAPTCHA verification.");
-    return;
-  }
+    // Manually validate with Zod before submitting
+    const validationResult = contactSchema.safeParse(data);
 
-  setIsLoading(true);
-  setResponseMessage("");
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map((err) => err.message);
+      setResponseMessage(`Validation Error: ${errorMessages.join(", ")}`);
+      return;
+    }
 
-  try {
-    const res = await axios.post("/api/contact", data, {
-      headers: { "Content-Type": "application/json" },
-      timeout: 15000,
-    });
+    setIsLoading(true);
+    setResponseMessage("");
 
-    if (res.status === 200) {
-      setResponseMessage("Message sent successfully! Check your email.");
-      reset();
-      if (recaptchaRef.current) {
-        recaptchaRef.current.reset();
+    try {
+      const res = await axios.post("/api/contact", data, {
+        headers: { "Content-Type": "application/json" },
+        timeout: 30000,
+      });
+
+      if (res.status === 200) {
+        setResponseMessage("Message sent successfully! Check your email.");
+        reset();
+        if (recaptchaRef.current) {
+          recaptchaRef.current.reset();
+        }
+        setIsVerified(false);
+        setFormKey((prev) => prev + 1);
       }
-      setIsVerified(false);
-      setFormKey((prev) => prev + 1);
+    } catch (error: any) {
+      console.error("Error during submission:", error.response?.data || error.message);
+      setResponseMessage("Failed to send message. Please try again later.");
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error: any) {
-    console.error("Error sending contact form:", error.response?.data || error.message);
-    setResponseMessage(error.response?.data?.message || "Failed to send message. Please try again.");
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
@@ -111,9 +123,9 @@ const onSubmit = async (data: ContactFormData) => {
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
       <div className="bg-gray-800 bg-opacity-80 p-8 rounded-xl shadow-2xl w-full max-w-md">
         <h1 className="text-3xl font-bold text-center mb-6 text-blue-400">Contact Us</h1>
-        <form 
-          key={formKey} 
-          onSubmit={handleSubmit(onSubmit)} 
+        <form
+          key={formKey}
+          onSubmit={handleSubmit(onSubmit)}
           className="space-y-6"
           suppressHydrationWarning
         >
@@ -150,7 +162,7 @@ const onSubmit = async (data: ContactFormData) => {
             />
             {errors.message && <p className="text-red-500 text-sm">{errors.message.message}</p>}
           </div>
-          
+
           <div className="flex justify-center">
             <ReCAPTCHA
               ref={recaptchaRef}
