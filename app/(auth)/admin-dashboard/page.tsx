@@ -1,7 +1,37 @@
+'use client';
+
 import Link from 'next/link';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 function Page() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === 'loading') return; // Wait for session to load
+
+    // Redirect to login if not authenticated
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    // Redirect to home if authenticated but not an admin
+    if (session.user.role !== 'ADMIN') {
+      router.push('/');
+    }
+  }, [session, status, router]);
+
+  // If loading or not authenticated, don't render content
+  if (status === 'loading' || !session) {
+    return <div className="min-h-screen bg-gradient-to-r from-blue-900 via-blue-800 to-blue-500 flex items-center justify-center">
+      <div className="text-white text-xl">Loading...</div>
+    </div>;
+  }
+
+  // Only render admin content if user is authenticated and is an admin
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-900 via-blue-800 to-blue-500 p-6 flex flex-col items-center justify-center">
       <div className="text-center text-white space-y-6 animate__animated animate__fadeIn">

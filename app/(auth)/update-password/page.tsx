@@ -4,6 +4,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid"; // Using Heroicons for eye icons
+import { toast, ToastContainer } from "react-toastify"; // Import toastify components
+import "react-toastify/dist/ReactToastify.css"; // Import the styles for Toastify
+import { motion } from "framer-motion"; // Import motion for button animation
 
 export default function UpdatePassword() {
   const router = useRouter();
@@ -11,18 +14,22 @@ export default function UpdatePassword() {
   const token = searchParams.get("token"); // Get token from query parameters
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false); // State for show/hide password
-  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // Handle redirect after successful update
   useEffect(() => {
-    if (message.includes("success")) {
-      const timer = setTimeout(() => {
-        router.push("/login");
-      }, 1500); // Redirect after 1.5 seconds to show success message
-      return () => clearTimeout(timer); // Cleanup timeout on unmount
+    if (newPassword === "") {
+      return;
     }
-  }, [message, router]);
+    if (isLoading) return; // Wait until the request is done
+
+    const timer = setTimeout(() => {
+      if (newPassword === "") {
+        router.push("/login");
+      }
+    }, 1500); // Redirect after 1.5 seconds to show success message
+    return () => clearTimeout(timer); // Cleanup timeout on unmount
+  }, [newPassword, isLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +39,10 @@ export default function UpdatePassword() {
         token,
         newPassword,
       });
-      setMessage(data.message);
+      setNewPassword(""); // Clear password field
+      toast.success(data.message || "Password updated successfully! Redirecting..."); // Show success toast
     } catch (error) {
-      setMessage("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again."); // Show error toast
     } finally {
       setIsLoading(false);
     }
@@ -72,63 +80,54 @@ export default function UpdatePassword() {
               >
                 {showPassword ? (
                   <EyeIcon className="h-5 w-5" />
-                  
                 ) : (
                   <EyeSlashIcon className="h-5 w-5" />
                 )}
               </button>
             </div>
-            <button
+            <motion.button
               type="submit"
               disabled={isLoading}
               className="w-full p-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg shadow-md hover:shadow-xl hover:from-blue-600 hover:to-blue-800 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed hover:scale-105 relative overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
             >
               {isLoading ? (
-                <>
-                  <span className="relative z-10">Updating...</span>
-                  <div className="absolute inset-0 h-full bg-blue-400 opacity-50 animate-loading-bar"></div>
-                </>
+                <span className="flex justify-center items-center">
+                  <motion.div
+                    className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  />
+                  Updating...
+                </span>
               ) : (
                 "Update Password"
               )}
-            </button>
+            </motion.button>
           </form>
         ) : (
           <p className="text-red-500 text-center">
             No token provided. Please use the reset link sent to your email.
           </p>
         )}
-
-        {message && (
-          <p
-            className={`text-center font-semibold ${
-              message.includes("success") ? "text-blue-400" : "text-red-500"
-            } transition-opacity duration-300`}
-          >
-            {message}
-          </p>
-        )}
       </div>
 
-      <style jsx>{`
-        @keyframes loadingBar {
-          0% {
-            width: 0;
-            left: 0;
-          }
-          50% {
-            width: 100%;
-            left: 0;
-          }
-          100% {
-            width: 0;
-            left: 100%;
-          }
-        }
-        .animate-loading-bar {
-          animation: loadingBar 1.5s infinite ease-in-out;
-        }
-      `}</style>
+      {/* Updated Toast Container */}
+      <ToastContainer
+        position="top-right"  // Set position to top-right
+        autoClose={5000}  // Automatically close the toast after 5 seconds
+        hideProgressBar={false}  // Show progress bar
+        newestOnTop={false}  // Show the newest toast on the top
+        closeOnClick
+        rtl={false}  // For right-to-left languages, you can set this to true
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }

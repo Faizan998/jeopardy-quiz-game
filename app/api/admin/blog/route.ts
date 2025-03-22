@@ -122,27 +122,53 @@ export async function POST(req: NextRequest) {
 
 // GET all blog posts
 export async function GET() {
-  try {
-    const blogs = await prisma.blog.findMany({
-      include: {
-        category: true,
-      },
-      orderBy: {
-        created_at: 'desc'
-      }
-    });
+  // Maximum number of retries
+  const MAX_RETRIES = 3;
+  let retries = 0;
+  let lastError = null;
 
-    return new NextResponse(
-      JSON.stringify(blogs),
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Error fetching blogs:', error);
-    return new NextResponse(
-      JSON.stringify({ message: 'Failed to fetch blogs' }),
-      { status: 500 }
-    );
+  while (retries < MAX_RETRIES) {
+    try {
+      const blogs = await prisma.blog.findMany({
+        include: {
+          category: true,
+        },
+        orderBy: {
+          created_at: 'desc'
+        }
+      });
+
+      return new NextResponse(
+        JSON.stringify(blogs),
+        { status: 200 }
+      );
+    } catch (error) {
+      lastError = error;
+      console.error(`Error fetching blogs (attempt ${retries + 1}/${MAX_RETRIES}):`, error);
+      
+      // Check if it's a connection error
+      if (error instanceof Error && 
+          (error.message.includes("Can't reach database server") || 
+           error.message.includes("connection"))) {
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
+        retries++;
+      } else {
+        // If it's not a connection error, don't retry
+        break;
+      }
+    }
   }
+
+  // Return error response after all retries failed
+  return new NextResponse(
+    JSON.stringify({ 
+      message: 'Failed to fetch blogs',
+      error: lastError instanceof Error ? lastError.message : 'Unknown error',
+      suggestion: 'Please check your database connection or try again later'
+    }),
+    { status: 503 }  // Service Unavailable
+  );
 }
 
 // DELETE a blog post (legacy support for requests with ID in body)

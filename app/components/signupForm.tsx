@@ -14,15 +14,13 @@ import {
   type SignupFormData,
 } from "@/app/utils/validationSchema";
 import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify"; // Correct import of ToastContainer
+import "react-toastify/dist/ReactToastify.css"; // Import toast styles
 
 export default function Signup() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error">(
-    "success"
-  );
 
   const {
     register,
@@ -43,29 +41,23 @@ export default function Signup() {
   }, [session, status, router]);
 
   const onSubmit = async (data: SignupFormData) => {
-    setMessage("");
-
     try {
       const res = await axios.post("/api/signup", data, {
         headers: { "Content-Type": "application/json" },
       });
 
       if (res.status === 201) {
-        setMessage("Signup successful! Redirecting to login...");
-        setMessageType("success");
+        toast.success("Signup successful! Redirecting to login...");
         reset();
-
         setTimeout(() => {
           router.push("/login");
         }, 2000);
       } else {
-        setMessage(res.data.message || "Unexpected error occurred.");
-        setMessageType("error");
+        toast.error(res.data.message || "Unexpected error occurred.");
       }
     } catch (error: any) {
       console.error("Signup Error:", error.response?.data || error);
-      setMessage(error.response?.data?.message || "Signup failed. Try again.");
-      setMessageType("error");
+      toast.error(error.response?.data?.message || "Signup failed. Try again.");
     }
   };
 
@@ -265,35 +257,17 @@ export default function Signup() {
         </motion.p>
       </motion.form>
 
-      {/* Success/Error Message */}
-      {message && (
-        <motion.p
-          className={`text-center mt-4 ${
-            messageType === "success" ? "text-blue-400" : "text-red-400"
-          } font-semibold`}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        >
-          {message}
-        </motion.p>
-      )}
-
-      {/* Redirect to Login */}
-      <motion.p
-        className="text-center text-gray-400 mt-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.9 }}
-      >
-        Already have an account?{" "}
-        <Link
-          href="/login"
-          className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
-        >
-          Login
-        </Link>
-      </motion.p>
+      
+      <ToastContainer 
+       position="top-right"  // Set position to top-right
+       autoClose={5000}  // Automatically close the toast after 5 seconds
+       hideProgressBar={false}  // Show progress bar
+       newestOnTop={false}  // Show the newest toast on the top
+       closeOnClick
+       rtl={false}  // For right-to-left languages, you can set this to true
+       pauseOnFocusLoss
+       draggable
+       pauseOnHover/>
     </div>
   );
 }

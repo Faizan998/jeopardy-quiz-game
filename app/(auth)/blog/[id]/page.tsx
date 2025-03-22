@@ -34,13 +34,13 @@ export default function BlogDetailPage() {
   const [blog, setBlog] = useState<Blog | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-  const id = params.id as string
+  const blogId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : ''
 
   useEffect(() => {
     const fetchBlog = async () => {
       setLoading(true)
       setError(null)
-      const data = await getBlogById(id)
+      const data = await getBlogById(blogId)
 
       if (data) {
         setBlog(data)
@@ -50,10 +50,10 @@ export default function BlogDetailPage() {
       setLoading(false)
     }
 
-    if (id) {
+    if (blogId) {
       fetchBlog()
     }
-  }, [id])
+  }, [blogId])
 
   return (
     <div className="container mx-auto px-4 py-12">

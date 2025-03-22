@@ -6,6 +6,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Link from "next/link";
 import ReCAPTCHA from "react-google-recaptcha";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Zod schema for validation (without recaptcha)
 const contactSchema = z.object({
@@ -18,10 +21,9 @@ type ContactFormData = z.infer<typeof contactSchema>;
 
 export default function ContactPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [responseMessage, setResponseMessage] = useState("");
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [formKey, setFormKey] = useState(0);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const {
     register,
@@ -30,9 +32,9 @@ export default function ContactPage() {
     reset,
   } = useForm<ContactFormData>({
     defaultValues: {
-      name: '',
-      email: '',
-      message: '',
+      name: "",
+      email: "",
+      message: "",
     },
   });
 
@@ -46,11 +48,11 @@ export default function ContactPage() {
           setIsVerified(true);
         } else {
           setIsVerified(false);
-          setResponseMessage("reCAPTCHA verification failed. Please try again.");
+          toast.error("reCAPTCHA verification failed. Please try again.");
         }
       } catch (error) {
         setIsVerified(false);
-        setResponseMessage("Error verifying reCAPTCHA. Please try again.");
+        toast.error("Error verifying reCAPTCHA. Please try again.");
       }
     } else {
       setIsVerified(false);
@@ -60,7 +62,7 @@ export default function ContactPage() {
   const onSubmit = async (data: ContactFormData) => {
     // Check if reCAPTCHA is verified first before doing the rest of the validation
     if (!isVerified) {
-      setResponseMessage("Please complete the reCAPTCHA verification.");
+      toast.error("Please complete the reCAPTCHA verification.");
       return;
     }
 
@@ -69,12 +71,12 @@ export default function ContactPage() {
 
     if (!validationResult.success) {
       const errorMessages = validationResult.error.errors.map((err) => err.message);
-      setResponseMessage(`Validation Error: ${errorMessages.join(", ")}`);
+      toast.error(`Validation Error: ${errorMessages.join(", ")}`);
       return;
     }
 
     setIsLoading(true);
-    setResponseMessage("");
+    toast.info("Processing your message...");
 
     try {
       const res = await axios.post("/api/contact", data, {
@@ -83,7 +85,7 @@ export default function ContactPage() {
       });
 
       if (res.status === 200) {
-        setResponseMessage("Message sent successfully! Check your email.");
+        toast.success("Message sent successfully! Check your email.");
         reset();
         if (recaptchaRef.current) {
           recaptchaRef.current.reset();
@@ -93,7 +95,7 @@ export default function ContactPage() {
       }
     } catch (error: any) {
       console.error("Error during submission:", error.response?.data || error.message);
-      setResponseMessage("Failed to send message. Please try again later.");
+      toast.error("Failed to send message. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -175,21 +177,40 @@ export default function ContactPage() {
           <button
             type="submit"
             disabled={isLoading || !isVerified}
-            className="w-full cursor-pointer p-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg hover:from-blue-600 hover:to-blue-800 disabled:bg-gray-600 transition-all"
+            className="w-full cursor-pointer p-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg hover:from-blue-600 hover:to-blue-800 disabled:bg-gray-600 transition-all flex items-center justify-center"
           >
-            {isLoading ? "Sending..." : "Send Message"}
+            {isLoading ? (
+              <>
+                {/* Spinner */}
+                <motion.div
+                  className="border-2 border-white border-t-transparent rounded-full w-5 h-5 mr-2"
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                />
+                {/* "Sending..." Text */}
+                Sending...
+              </>
+            ) : (
+              "Send Message"
+            )}
           </button>
-
-          {responseMessage && (
-            <p className={`text-center ${responseMessage.includes("success") ? "text-blue-400" : "text-red-700"}`}>
-              {responseMessage}
-            </p>
-          )}
-
           <p className="text-center text-gray-400 mt-4">
             <Link href="/" className="text-blue-400 hover:text-blue-300">← Back to Home</Link>
           </p>
         </form>
+
+        {/* Toast Container */}
+        <ToastContainer
+          position="top-right" // Set position to top-right
+          autoClose={5000} // Automatically close the toast after 5 seconds
+          hideProgressBar={false} // Show progress bar
+          newestOnTop={false} // Show the newest toast on the top
+          closeOnClick
+          rtl={false} // For right-to-left languages, you can set this to true
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </div>
     </div>
   );

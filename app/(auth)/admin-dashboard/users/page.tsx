@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { Edit, Trash2 } from "lucide-react"; // Importing Lucide Icons
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Import CSS for Toast notifications
 
 // Define types for user data
 interface User {
@@ -19,6 +21,7 @@ export default function UserList() {
   const [error, setError] = useState<string | null>(null); // Add error state
   const { data: session, status } = useSession(); // Using session from next-auth
   const router = useRouter();
+  const [loading, setLoading] = useState<boolean>(true); // State to track loading
 
   // Fetch all users from the API
   const fetchUsers = async () => {
@@ -44,6 +47,9 @@ export default function UserList() {
     } catch (err) {
       console.error("Error fetching user data:", err);
       setError("Failed to load users.");
+      toast.error("Failed to load users."); // Show toast error
+    } finally {
+      setLoading(false); // Set loading to false after fetch
     }
   };
 
@@ -56,23 +62,24 @@ export default function UserList() {
     try {
       if (!session || session.user.role !== "ADMIN") {
         setError("You are not authorized to delete users.");
+        toast.error("You are not authorized to delete users."); // Show toast error
         return;
       }
 
       const response = await axios.delete("/api/admin/user", {
         data: { email }, // Send the email to delete the user
       });
-          console.log(response);
+
       if (response.data.message === "User deleted successfully") {
-        alert("User deleted successfully");
+        toast.success("User deleted successfully"); // Show toast success
         setUsers(users.filter(user => user.email !== email)); // Remove deleted user from state
       } else {
-        alert("Failed to delete user.");
-        
+        toast.error("Failed to delete user."); // Show toast error
       }
     } catch (err) {
       console.error("Error deleting user:", err);
       setError("Failed to delete user.");
+      toast.error("Failed to delete user."); // Show toast error
     }
   };
 
@@ -97,6 +104,15 @@ export default function UserList() {
                   {error}
                 </td>
               </tr>
+            ) : loading ? (
+              <tr>
+                <td colSpan={5} className="text-center py-4">
+                  {/* Spinner */}
+                  <div className="flex justify-center items-center h-32">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-white"></div>
+                  </div>
+                </td>
+              </tr>
             ) : users.length > 0 ? (
               users.map((user, index) => (
                 <tr
@@ -108,11 +124,10 @@ export default function UserList() {
                   <td className="py-3 px-4">{user.email}</td>
                   <td className="py-3 px-4">{user.role}</td>
                   <td className="py-3 px-4 flex justify-start gap-4">
-                    
                     {/* Delete Icon (Lucide Trash Icon) */}
                     <button
                       onClick={() => handleDeleteUser(user.email)}
-                      className=" cursor-pointer text-red-600 hover:text-red-800 transform transition-all duration-300 ease-in-out hover:scale-110"
+                      className="cursor-pointer text-red-600 hover:text-red-800 transform transition-all duration-300 ease-in-out hover:scale-110"
                     >
                       <Trash2 size={20} /> {/* Lucide Trash Icon */}Delete
                     </button>
@@ -121,14 +136,27 @@ export default function UserList() {
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="text-center py-4 text-red-700">
-                  No users found.
+                <td colSpan={5} className="text-center py-4 text-white-700">
+                  No users found
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-right" // Set position to top-right
+        autoClose={5000} // Automatically close the toast after 5 seconds
+        hideProgressBar={false} // Show progress bar
+        newestOnTop={false} // Show the newest toast on the top
+        closeOnClick
+        rtl={false} // For right-to-left languages, you can set this to true
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }

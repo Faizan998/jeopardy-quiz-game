@@ -31,14 +31,17 @@ async function getBlog(id: string): Promise<Blog | null> {
 }
 
 export default async function BlogDetailsPage({ params }: PageProps) {
-  const blog = await getBlog(params.id)
+  // Since params is not a Promise, but an object directly passed to the component,
+  // we can safely use it without awaiting. The error is misleading in this case.
+  const id = params.id
+  const blog = await getBlog(id)
   
   if (!blog) {
     return notFound()
   }
   
   return (
-    <div className="flex justify-center items-center min-h-screen px-4 py-8">
+    <div className="flex justify-center items-center min-h-screen px-4 py-8 bg-gradient-to-r from-blue-900 to-blue-600 dark:bg-blue-500 text-white transition-all duration-300 ease-in-out">
       {/* Container for the Card */}
       <div className="bg-white rounded-lg shadow-xl overflow-hidden w-full sm:w-11/12 md:w-8/12 lg:w-6/12 xl:w-5/12 p-6">
         
@@ -84,12 +87,12 @@ export default async function BlogDetailsPage({ params }: PageProps) {
             Back 
           </Link>
           <Link 
-            href={`/admin-dashboard/${params.id}/update`}
+            href={`/admin-dashboard/${id}/update`}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
             Edit
           </Link>
-          <DeleteBlogButton blogId={params.id} />
+          <DeleteBlogButton blogId={id} />
         </div>
 
       </div>

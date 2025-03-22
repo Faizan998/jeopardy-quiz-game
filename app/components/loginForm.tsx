@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";  // Import the useSession hook
+import { signIn, useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
@@ -10,20 +10,19 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { loginSchema, type LoginFormData } from "@/app/utils/validationSchema";
 import { FcGoogle } from "react-icons/fc";
+import { toast, ToastContainer } from "react-toastify"; // Importing toast and ToastContainer
+import "react-toastify/dist/ReactToastify.css"; // Import the toast styles
 
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error">("success");
-  const [loading, setLoading] = useState(false);
   const [isClient, setIsClient] = useState(false); // Prevents hydration error
 
-  const { data: session, status } = useSession();  // Using useSession hook to check the session
+  const { data: session, status } = useSession();
+  
   useEffect(() => {
+    if (status === "loading") return;
     
-    if (status === "loading") return; // Wait until session is loaded
-
     // Redirect user based on their role once the session is loaded
     if (session?.user?.role === "ADMIN") {
       router.push("/admin-dashboard");
@@ -43,9 +42,6 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    setLoading(true);
-    setMessage("");
-
     try {
       const result = await signIn("credentials", {
         email: data.email,
@@ -57,18 +53,14 @@ export default function LoginPage() {
         throw new Error(result.error);
       }
 
-      setMessage("Login successful! Redirecting... ✅");
-      setMessageType("success");
+      toast.success("Login successful! Redirecting... ✅");
 
       // Wait for the session to be updated, then redirect to the game page
       setTimeout(() => {
         router.push("/game");
       }, 1500);
     } catch (error: any) {
-      setMessage(error.message || "Login failed. Please try again.");
-      setMessageType("error");
-    } finally {
-      setLoading(false);
+      toast.error(error.message || "Login failed. Please try again.");
     }
   };
 
@@ -76,7 +68,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 via-gray-900 to-black p-6">
-      <motion.div 
+      <motion.div
         className="text-center w-full max-w-md bg-gray-800/80 backdrop-blur-sm p-8 rounded-xl border border-gray-700 shadow-2xl"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -126,20 +118,29 @@ export default function LoginPage() {
           </div>
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full cursor-pointer p-3 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white rounded-lg shadow-lg"
-          >
-            {isSubmitting ? "Logging in..." : "Login"}
-          </button>
-
-          {/* Message */}
-          {message && (
-            <p className={`mt-4 text-center ${messageType === "success" ? "text-blue-400" : "text-red-400"}`}>
-              {message}
-            </p>
+          <motion.button
+          type="submit"
+          className="w-full p-3 cursor-pointer bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white rounded-lg shadow-lg transition-all duration-300 font-bold"
+          disabled={isSubmitting}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          {isSubmitting ? (
+            <span className="flex justify-center items-center">
+              <motion.span
+                className="border-2 border-white border-t-transparent rounded-full w-5 h-5 mr-2"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              />
+              Login...
+            </span>
+          ) : (
+            "Login"
           )}
+        </motion.button>
         </form>
 
         {/* Google Signup Button */}
@@ -176,6 +177,18 @@ export default function LoginPage() {
           </p>
         </div>
       </motion.div>
+
+      {/* Toast Container */}
+      <ToastContainer
+       position="top-right"  // Set position to top-right
+       autoClose={5000}  // Automatically close the toast after 5 seconds
+       hideProgressBar={false}  // Show progress bar
+       newestOnTop={false}  // Show the newest toast on the top
+       closeOnClick
+       rtl={false}  // For right-to-left languages, you can set this to true
+       pauseOnFocusLoss
+       draggable
+       pauseOnHover />
     </div>
   );
 }

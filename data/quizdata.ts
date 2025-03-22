@@ -33,24 +33,7 @@ const quizData = {
             correctIndex: 2,
             amount: 500,
           },
-          {
-            question: "What is the most abundant gas in Earth's atmosphere?",
-            options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"],
-            correctIndex: 2,
-            amount: 600,
-          },
-          {
-            question: "Which organ in the human body produces insulin?",
-            options: ["Liver", "Pancreas", "Heart", "Kidney"],
-            correctIndex: 1,
-            amount: 700,
-          },
-          {
-            question: "What is the hardest natural substance on Earth?",
-            options: ["Gold", "Iron", "Diamond", "Quartz"],
-            correctIndex: 2,
-            amount: 800,
-          },
+          
         ],
       },
       {
@@ -102,35 +85,7 @@ const quizData = {
             correctIndex: 1,
             amount: 500,
           },
-          {
-            question:
-              "What was the name of the ship that sank after hitting an iceberg in 1912?",
-            options: ["Titanic", "Lusitania", "Bismarck", "Olympic"],
-            correctIndex: 0,
-            amount: 600,
-          },
-          {
-            question: "Which empire was ruled by Julius Caesar?",
-            options: [
-              "Greek Empire",
-              "Persian Empire",
-              "Roman Empire",
-              "Ottoman Empire",
-            ],
-            correctIndex: 2,
-            amount: 700,
-          },
-          {
-            question: "Who wrote the Declaration of Independence?",
-            options: [
-              "Benjamin Franklin",
-              "Thomas Jefferson",
-              "Alexander Hamilton",
-              "James Madison",
-            ],
-            correctIndex: 1,
-            amount: 800,
-          },
+          
         ],
       },
       {
@@ -175,30 +130,6 @@ const quizData = {
             options: ["Andes", "Rockies", "Himalayas", "Alps"],
             correctIndex: 2,
             amount: 500,
-          },
-          {
-            question: "Which country has the largest population?",
-            options: ["USA", "China", "India", "Russia"],
-            correctIndex: 1,
-            amount: 600,
-          },
-          {
-            question: "Which desert is the largest in the world?",
-            options: ["Sahara", "Gobi", "Arctic", "Kalahari"],
-            correctIndex: 2,
-            amount: 700,
-          },
-          {
-            question:
-              "Which two continents are entirely in the Southern Hemisphere?",
-            options: [
-              "Africa and Asia",
-              "Australia and Antarctica",
-              "South America and Europe",
-              "North America and Oceania",
-            ],
-            correctIndex: 1,
-            amount: 800,
           },
         ],
       },

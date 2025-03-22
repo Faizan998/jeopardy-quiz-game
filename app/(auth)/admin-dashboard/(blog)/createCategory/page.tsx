@@ -43,7 +43,7 @@ function CategoryForm() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center bg-gray-50">
+    <div className="min-h-screen flex flex-col justify-center bg-gradient-to-r from-blue-900 to-blue-600 dark:bg-blue-500 text-white transition-all duration-300 ease-in-out">
       <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg space-y-6 mb-8">
         <h2 className="text-2xl font-semibold text-center text-blue-600">
           Create New Category

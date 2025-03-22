@@ -230,7 +230,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      timeout: 10000,
+      timeout: 50000,
     };
 
     const [adminResponse, userResponse] = await Promise.all([
