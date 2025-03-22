@@ -214,7 +214,7 @@ export default function CreateBlog() {
   }, [imagePreview]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-900 to-blue-600 dark:bg-blue-500 text-white transition-all duration-300 ease-in-out py-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-900 to-blue-600 dark:bg-blue-500  transition-all duration-300 ease-in-out py-6">
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-xl sm:max-w-lg md:max-w-xl lg:max-w-2xl xl:max-w-3xl space-y-6">

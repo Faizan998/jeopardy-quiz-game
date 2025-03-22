@@ -58,7 +58,7 @@ export default async function UpdateBlogPage({ params }: PageProps) {
   }
   
   return (
-    <div className="flex justify-center items-center min-h-screen px-4 py-8 bg-gradient-to-r from-blue-900 to-blue-600 dark:bg-blue-500 text-white transition-all duration-300 ease-in-out">
+    <div className="flex justify-center items-center min-h-screen px-4 py-8 bg-gradient-to-r from-blue-900 to-blue-600 dark:bg-blue-500  transition-all duration-300 ease-in-out">
       {/* Container for the Card */}
       <div className="bg-white rounded-lg shadow-md p-6 w-full sm:w-11/12 md:w-8/12 lg:w-6/12 xl:w-5/12">
         <div className="flex justify-between items-center mb-6">
