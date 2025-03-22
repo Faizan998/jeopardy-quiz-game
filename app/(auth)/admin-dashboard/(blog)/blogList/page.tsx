@@ -1,108 +1,94 @@
-"use client";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { Plus } from "lucide-react";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer } from "react-toastify";
+import React from 'react'
+import Link from 'next/link'
+import { Blog } from '@/app/types'
 
-// Define types for Blog and possible states
-interface Blog {
-  id: number;
-  title: string;
-  content: string;
-  imageUrl: string;
+// Fetch all blogs from the API
+async function getBlogs(): Promise<Blog[]> {
+  try {
+    // Use absolute URL for server-side fetching
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const res = await fetch(`${baseUrl}/api/admin/blog`, {
+      cache: 'no-store',
+    })
+    
+    if (!res.ok) {
+      return []
+    }
+    
+    return res.json()
+  } catch (error) {
+    console.error('Error fetching blogs:', error)
+    return []
+  }
 }
 
-export default function Blogs() {
-  const [blogs, setBlogs] = useState<Blog[]>([]); // Array of Blog objects
-  const [loading, setLoading] = useState<boolean>(true); // Loading state
-  const [error, setError] = useState<string | null>(null); // Error state
-
-  // Fetch Blogs from API
-  useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        const response = await axios.get<Blog[]>("/api/admin/blog"); // Ensure response is typed as Blog[]
-        setBlogs(response.data);
-      } catch (err) {
-        setError("Failed to fetch blogs.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBlogs();
-  }, []);
-
-  // Delete Blog
-  const deleteBlog = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this blog?")) return;
-
-    try {
-      await axios.delete("/api/admin/blog", { data: { id } });
-      setBlogs(blogs.filter((blog) => blog.id !== id));
-      toast.success("Blog has been deleted successfully");
-    } catch (err) {
-      toast.error("Failed to delete blog.");
-    }
-  };
-
-  // Update Blog (Redirect to Edit Page)
-  const editBlog = (id: number) => {
-    window.location.href = `/auth/blog/${id}/update`;
-  };
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
-
+export default async function BlogListPage() {
+  const blogs = await getBlogs()
+  
   return (
-    <div className="max-w-4xl mx-auto mt-10 mb-3">
-      <ToastContainer position="top-right" autoClose={3000} />
-      <h1 className="text-3xl font-bold mb-4 text-center">Blog List</h1>
-      <a
-        href="/auth/blog/createBlog"
-        className="bg-blue-500 text-white px-7 py-2 rounded mb-4 inline-flex items-center"
-      >
-        <Plus className="text-white mr-2" />
-        Create Blog
-      </a>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Blog Posts</h1>
+        <Link 
+          href="/admin-dashboard/createBlog"
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Create New Blog
+        </Link>
+      </div>
 
-      <ul className="mt-4">
-        {blogs.map((blog) => (
-          <li
-            key={blog.id}
-            className="border p-4 mt-5 flex justify-between rounded-lg bg-white-900/30 shadow-lg shadow-black"
-          >
-            <img
-              src={blog.imageUrl}
-              alt={blog.title}
-              className="w-full h-52 object-cover m-7 rounded-md shadow-md shadow-gray-700"
-            />
-
-            <div className="flex flex-col">
-              <h2 className="text-xl font-semibold">{blog.title}</h2>
-
-              <p className="text-gray-500">{blog.content}</p>
-
-              <div className="flex flex-row items-center space-x-2 px-3 py-2">
-                <button
-                  onClick={() => editBlog(blog.id)}
-                  className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 active:bg-green-700 cursor-pointer hover:scale-105"
+      {blogs.length === 0 ? (
+        <div className="bg-white rounded-lg shadow p-6 text-center">
+          <p className="text-gray-500">No blog posts found. Create a new one!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {blogs.map((blog) => (
+            <div
+              key={blog.id}
+              className="bg-white rounded-lg shadow-lg p-6 transform transition-all duration-300 hover:scale-105"
+            >
+              {/* Display the image if available */}
+              {blog.imageUrl && (
+                <img 
+                  src={blog.imageUrl}
+                  alt={blog.title}
+                  className="w-full h-48 object-cover rounded-t-lg mb-4"
+                />
+              )}
+              
+              {/* Category Section - Position swapped */}
+              <p className="text-md text-black-800 mb-2">
+                <strong>Category:</strong> {blog.category?.name || 'Uncategorized'}
+              </p>
+              
+              {/* Title Section */}
+              <h2 className="text-md font-semibold text-gray-700 mb-4">{blog.title}</h2>
+              
+              {/* Created At Section */}
+              <p className="text-sm text-gray-500 mb-4">
+                Created on {new Date(blog.created_at).toLocaleDateString()}
+              </p>
+              
+              {/* Action Links */}
+              <div className="flex justify-between">
+                <Link 
+                  href={`/admin-dashboard/${blog.id}`}
+                  className="text-blue-600 hover:text-blue-900"
+                >
+                  View
+                </Link>
+                <Link 
+                  href={`/admin-dashboard/${blog.id}/update`}
+                  className="text-green-600 hover:text-green-900"
                 >
                   Edit
-                </button>
-                <button
-                  onClick={() => deleteBlog(blog.id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 active:bg-red-700 cursor-pointer hover:scale-105"
-                >
-                  Delete
-                </button>
+                </Link>
               </div>
             </div>
-          </li>
-        ))}
-      </ul>
+          ))}
+        </div>
+      )}
     </div>
-  );
+  )
 }

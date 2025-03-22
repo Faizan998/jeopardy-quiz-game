@@ -14,21 +14,45 @@ export default function AdminNavigation() {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/admin-dashboard" className="text-xl font-bold text-blue-600">
-                Hello! Sayyad Faizan Ali 
+                Hello! Sayyad Faizan Ali
               </Link>
             </div>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-             
-              <Link
-                href="/admin-dashboard/createBlog"
-                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                  pathname === '/admin-dashboard/blogs'
-                    ? 'border-blue-500 text-gray-900'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                }`}
-              >
-                Manage Blogs
-              </Link>
+            {/* Centered Navigation */}
+            <div className="hidden sm:ml-6 sm:flex sm:space-x-8 mx-auto">
+              <div className="relative group">
+                <Link
+                  href="/admin-dashboard/createBlog"
+                  className={`inline-flex items-center px-1 pt-6 border-b-2 text-sm font-medium ${
+                    pathname === '/admin-dashboard/createBlog'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+                >
+                  Manage Blogs
+                </Link>
+                {/* Dropdown */}
+                <div className="absolute left-0 hidden group-hover:block py-6 mt-2 w-48 bg-white shadow-lg rounded-md z-10">
+                  <Link
+                    href="/admin-dashboard/createBlog"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Create Blog
+                  </Link>
+                  <Link
+                    href="/admin-dashboard/createCategory"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Create Category
+                  </Link>
+                  <Link
+                    href="/admin-dashboard/blogList"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Blog List
+                  </Link>
+                </div>
+              </div>
+
               <Link
                 href="/admin-dashboard/questions"
                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
@@ -53,7 +77,7 @@ export default function AdminNavigation() {
           </div>
           <div className="flex items-center">
             <button
-              onClick={() => signOut({callbackUrl: '/'})}
+              onClick={() => signOut({ callbackUrl: '/' })}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Sign out

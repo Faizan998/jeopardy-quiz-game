@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // Fetch all categories (GET)
 export async function GET() {
   try {
-    const categories = await prisma.category.findMany({
+    const categories = await prisma.blogCategory.findMany({
       orderBy: { name: 'asc' }, // Optional: Order by category name
     });
     return NextResponse.json(categories, { status: 200 });
@@ -20,14 +20,16 @@ export async function GET() {
   }
 }
 
+
+
 // Create a new category (POST)
 export async function POST(req: Request) {
   try {
-    // Parse incoming request body as JSON
+    // Parse the incoming request body as JSON
     const { name }: { name: string } = await req.json();
-    
+
     // Check if the name is provided and not empty
-    if (!name) {
+    if (!name || name.trim() === '') {
       return NextResponse.json(
         { error: 'Category name is required' },
         { status: 400 }
@@ -35,7 +37,7 @@ export async function POST(req: Request) {
     }
 
     // Create the new category
-    const newCategory = await prisma.category.create({
+    const newCategory = await prisma.blogCategory.create({
       data: { name },
     });
 
@@ -65,7 +67,7 @@ export async function DELETE(req: Request) {
     }
 
     // Attempt to delete the category from the database
-    const deletedCategory = await prisma.category.delete({
+    const deletedCategory = await prisma.blogCategory.delete({
       where: { id },
     });
 

@@ -1,151 +1,78 @@
-"use client";
+import React from 'react'
+import { notFound } from 'next/navigation'
+import { Blog } from '@/app/types'
+import UpdateBlogForm from './UpdateBlogForm'
+import Link from 'next/link'
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import axios from "axios";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-// Define types for Blog and Category
-interface Blog {
-  title: string;
-  content: string;
-  imageUrl: string;
-  category?: { _id: string; name: string };
+// Define the page props type
+type PageProps = {
+  params: {
+    id: string
+  }
 }
 
-interface Category {
-  _id: string;
-  name: string;
-}
-
-export default function EditBlog({ params }: { params: { id: string } }) {
-  const router = useRouter();
-  const { id } = params;
-
-  const [formData, setFormData] = useState<Blog>({
-    title: "",
-    content: "",
-    imageUrl: "",
-    category: { _id: "", name: "" },
-  });
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    const fetchBlog = async () => {
-      try {
-        const { data } = await axios.get<Blog>(`/api/admin/blog/${id}`);
-        setFormData(data);
-      } catch (error) {
-        toast.error("Failed to fetch blog data.");
-      }
-    };
-
-    const fetchCategories = async () => {
-      try {
-        const { data } = await axios.get<Category[]>("/api/admin/blog");
-        setCategories(data);
-      } catch (error) {
-        toast.error("Failed to fetch categories.");
-      }
-    };
-
-    fetchBlog();
-    fetchCategories();
-  }, [id]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      await axios.put(`/api/admin/blog/${id}`, formData);
-      toast.success("Blog updated successfully!");
-      router.push("/auth/blog");
-    } catch (error) {
-      toast.error("Failed to update blog.");
+// Fetch blog data server-side
+async function getBlog(id: string): Promise<Blog | null> {
+  try {
+    // Use absolute URL for server-side fetching
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const res = await fetch(`${baseUrl}/api/admin/blog/${id}`, {
+      cache: 'no-store',
+    })
+    
+    if (!res.ok) {
+      return null
     }
+    
+    return res.json()
+  } catch (error) {
+    console.error('Error fetching blog:', error)
+    return null
+  }
+}
 
-    setLoading(false);
-  };
+// Fetch blog categories for the form
+async function getCategories() {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const res = await fetch(`${baseUrl}/api/admin/blogCategory`, {
+      cache: 'no-store',
+    })
+    
+    if (!res.ok) {
+      return []
+    }
+    
+    return res.json()
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+    return []
+  }
+}
 
+export default async function UpdateBlogPage({ params }: PageProps) {
+  const blog = await getBlog(params.id)
+  const categories = await getCategories()
+  
+  if (!blog) {
+    return notFound()
+  }
+  
   return (
-    <div>
-      <ToastContainer position="top-right" autoClose={3000} />
-      <h1 className="text-center m-3 text-2xl">Edit Blog</h1>
-      <form onSubmit={handleSubmit} className="max-w-lg mx-auto bg-white shadow-md rounded-lg p-6 space-y-6">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-          <input
-            id="title"
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            required
-            className="w-full p-3 border border-gray-300 rounded-lg"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-          <textarea
-            id="content"
-            name="content"
-            value={formData.content}
-            onChange={handleChange}
-            required
-            rows={5}
-            className="w-full p-3 border border-gray-300 rounded-lg"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-          <input
-            id="imageUrl"
-            type="text"
-            name="imageUrl"
-            value={formData.imageUrl}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-          <select
-            id="category"
-            name="category"
-            value={formData.category?._id || ""}
-            onChange={handleChange}
-            required
-            className="w-full p-3 border border-gray-300 rounded-lg"
+    <div className="container mx-auto px-4 py-8">
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Update Blog Post</h1>
+          <Link 
+            href={`/admin-dashboard/${params.id}`}
+            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
           >
-            <option value="">Select a category</option>
-            {categories.map((cat) => (
-              <option key={cat._id} value={cat._id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
+            Cancel
+          </Link>
         </div>
-
-        <div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-600 cursor-pointer"
-          >
-            {loading ? "Updating..." : "Update Blog"}
-          </button>
-        </div>
-      </form>
+        
+        <UpdateBlogForm blog={blog} categories={categories} />
+      </div>
     </div>
-  );
+  )
 }
