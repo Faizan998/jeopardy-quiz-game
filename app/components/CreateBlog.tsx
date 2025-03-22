@@ -223,7 +223,7 @@ export default function CreateBlog() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title Input */}
           <div className="space-y-2">
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="title" className="block text-sm font-medium text-black">
               Blog Title
             </label>
             <input
@@ -240,7 +240,7 @@ export default function CreateBlog() {
 
           {/* Content Textarea */}
           <div className="space-y-2">
-            <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="content" className="block text-sm font-medium text-black">
               Blog Content
             </label>
             <textarea
@@ -257,7 +257,7 @@ export default function CreateBlog() {
 
           {/* Image Upload */}
           <div className="space-y-2">
-            <label htmlFor="image" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="image" className="block text-sm font-medium text-black">
               Upload Image
             </label>
             <input
@@ -272,7 +272,7 @@ export default function CreateBlog() {
             />
             {imagePreview && (
               <div className="mt-2">
-                <p className="text-sm text-gray-500 mb-1">Image Preview:</p>
+                <p className="text-sm text-black mb-1">Image Preview:</p>
                 <img 
                   src={imagePreview} 
                   alt="Preview" 
@@ -287,7 +287,7 @@ export default function CreateBlog() {
 
           {/* Category Dropdown */}
           <div className="space-y-2">
-            <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="categoryId" className="block text-sm font-medium text-black">
               Select Category
             </label>
             <select

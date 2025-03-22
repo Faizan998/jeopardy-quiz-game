@@ -100,7 +100,7 @@ export default function UpdateBlogForm({ blog, categories }: UpdateBlogFormProps
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
       </div>
@@ -113,7 +113,7 @@ export default function UpdateBlogForm({ blog, categories }: UpdateBlogFormProps
           id="category"
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         >
           <option value="">Select a category</option>
@@ -134,13 +134,13 @@ export default function UpdateBlogForm({ blog, categories }: UpdateBlogFormProps
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={10}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         ></textarea>
       </div>
       
       <div>
-        <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="image" className="block text-sm text-black font-medium mb-1">
           Image
         </label>
         <input
@@ -148,7 +148,7 @@ export default function UpdateBlogForm({ blog, categories }: UpdateBlogFormProps
           id="image"
           onChange={handleImageChange}
           accept="image/*"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <p className="text-sm text-gray-500 mt-1">
           Leave empty to keep the current image
@@ -158,7 +158,7 @@ export default function UpdateBlogForm({ blog, categories }: UpdateBlogFormProps
       {/* Image preview */}
       {previewImage && (
         <div className="mt-2">
-          <p className="text-sm font-medium text-gray-700 mb-1">Image Preview</p>
+          <p className="text-sm font-medium  text-gray-700 mb-1">Image Preview</p>
           <img
             src={previewImage}
             alt="Preview"
