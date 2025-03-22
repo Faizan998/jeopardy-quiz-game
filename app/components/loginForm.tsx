@@ -146,7 +146,7 @@ export default function LoginPage() {
         <motion.button
           onClick={() =>
             signIn("google", {
-              callbackUrl: "/login ",
+              callbackUrl: "/admin-dashboard ",
               redirect: false,
             })
           }

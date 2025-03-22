@@ -14,7 +14,6 @@ type PageProps = {
 // Fetch blog data server-side
 async function getBlog(id: string): Promise<Blog | null> {
   try {
-    // Use absolute URL for server-side fetching
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
     const res = await fetch(`${baseUrl}/api/admin/blog/${id}`, {
       cache: 'no-store',
@@ -59,8 +58,9 @@ export default async function UpdateBlogPage({ params }: PageProps) {
   }
   
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="flex justify-center items-center min-h-screen px-4 py-8">
+      {/* Container for the Card */}
+      <div className="bg-white rounded-lg shadow-md p-6 w-full sm:w-11/12 md:w-8/12 lg:w-6/12 xl:w-5/12">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Update Blog Post</h1>
           <Link 

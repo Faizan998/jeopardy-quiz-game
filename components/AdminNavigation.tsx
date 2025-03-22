@@ -22,7 +22,7 @@ export default function AdminNavigation() {
               <div className="relative group">
                 <Link
                   href="/admin-dashboard/createBlog"
-                  className={`inline-flex items-center px-1 pt-6 border-b-2 text-sm font-medium ${
+                  className={`inline-flex items-center px-1 pt-2 border-b-2 text-sm font-medium ${
                     pathname === '/admin-dashboard/createBlog'
                       ? 'border-blue-500 text-gray-900'
                       : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
@@ -31,7 +31,7 @@ export default function AdminNavigation() {
                   Manage Blogs
                 </Link>
                 {/* Dropdown */}
-                <div className="absolute left-0 hidden group-hover:block py-6 mt-2 w-48 bg-white shadow-lg rounded-md z-10">
+                <div className="absolute left-0 hidden group-hover:block py-4 mt-2 w-48 bg-white shadow-lg rounded-md z-10">
                   <Link
                     href="/admin-dashboard/createBlog"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

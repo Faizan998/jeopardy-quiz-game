@@ -10,7 +10,9 @@ type ParamsType = {
 // GET a single blog by ID
 export async function GET(request: Request, { params }: ParamsType) {
   try {
-    const { id } = params
+    // Await params before accessing its properties
+    const resolvedParams = await Promise.resolve(params)
+    const id = resolvedParams.id
     
     if (!id) {
       return new NextResponse(

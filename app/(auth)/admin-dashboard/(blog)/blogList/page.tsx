@@ -78,6 +78,7 @@ export default async function BlogListPage() {
                 >
                   View
                 </Link>
+                
                 <Link 
                   href={`/admin-dashboard/${blog.id}/update`}
                   className="text-green-600 hover:text-green-900"

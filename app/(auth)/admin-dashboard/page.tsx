@@ -21,7 +21,7 @@ function Page() {
 
           {/* Admin Panel Action Buttons */}
           <div className="mt-6 grid grid-cols-2 gap-4">
-            <Link href="/admin-dashboard/blogs" className="bg-blue-600 text-white py-2 px-4 rounded-md text-xl hover:bg-blue-700 transition">
+            <Link href="/admin-dashboard/blogList" className="bg-blue-600 text-white py-2 px-4 rounded-md text-xl hover:bg-blue-700 transition">
             Manage Blogs
             </Link>
             <Link href="/admin-dashboard/users" className="bg-green-600 text-white py-2 px-4 rounded-md text-xl hover:bg-green-700 transition">
