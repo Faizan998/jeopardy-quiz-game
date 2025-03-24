@@ -43,9 +43,9 @@ function CategoryForm() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center bg-gradient-to-r from-blue-900 to-blue-600 dark:bg-blue-500 text-white transition-all duration-300 ease-in-out">
+    <div className="min-h-screen flex flex-col justify-center bg-gradient-to-r from-blue-900 to-blue-600 dark:bg-blue-500 text-black transition-all duration-300 ease-in-out">
       <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg space-y-6 mb-8">
-        <h2 className="text-2xl font-semibold text-center text-blue-600">
+        <h2 className="text-2xl font-semibold text-center text-blue-700">
           Create New Category
         </h2>
 
@@ -65,7 +65,7 @@ function CategoryForm() {
           <div className="flex flex-col">
             <label
               htmlFor="categoryName"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-medium text-black"
             >
               Category Name
             </label>
@@ -73,7 +73,7 @@ function CategoryForm() {
               id="categoryName"
               type="text"
               placeholder="Enter category name"
-              className="mt-2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
+               className="mt-2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
               {...register("categoryName", {
                 required: "Category name is required",
                 minLength: {
@@ -105,7 +105,7 @@ function CategoryForm() {
         </form>
 
         {/* Additional Information */}
-        <div className="text-center text-sm text-gray-500">
+        <div className="text-center text-sm text-black">
           <p>
             Create and manage your categories easily. Make sure to keep them
             short and meaningful.

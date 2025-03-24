@@ -52,6 +52,39 @@ export default function AdminNavigation() {
                   </Link>
                 </div>
               </div>
+              <div className="relative group">
+                <Link
+                  href="/admin-dashboard/createProduct"
+                  className={`inline-flex items-center px-1 pt-6 border-b-2 text-sm font-medium ${
+                    pathname === '/admin-dashboard/createProduct'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+                >
+                  Manage Store
+                </Link>
+                {/* Dropdown */}
+                <div className="absolute left-0 hidden group-hover:block py-4 mt-2 w-48 bg-white shadow-lg rounded-md z-10">
+                  <Link
+                    href="/admin-dashboard/createProduct"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Create Product
+                  </Link>
+                  <Link
+                    href="/admin-dashboard/createProductCategory"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Create ProductCategory
+                  </Link>
+                  <Link
+                    href="/admin-dashboard/productList"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                   Product List
+                  </Link>
+                </div>
+              </div>
 
               <Link
                 href="/admin-dashboard/question-answer-update"
