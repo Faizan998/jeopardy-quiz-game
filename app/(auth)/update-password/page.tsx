@@ -35,7 +35,7 @@ export default function UpdatePassword() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { data } = await axios.post("/api/update-password", {
+      const { data } = await axios.post("/api/user/update-password", {
         token,
         newPassword,
       });

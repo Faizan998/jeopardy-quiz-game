@@ -8,6 +8,8 @@ export default function Navigation() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
+  
+
   if (!session) return null;
 
   return (
@@ -32,9 +34,9 @@ export default function Navigation() {
                 Game
               </Link>
               <Link
-                href="/leaderboard"
+                href='/game/leaderboard'
                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                  pathname === '/leaderboard'
+                  pathname === '/game/leaderboard'
                     ? 'border-blue-500 text-gray-900'
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                 }`}

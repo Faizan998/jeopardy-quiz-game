@@ -22,7 +22,7 @@ export default function AdminNavigation() {
               <div className="relative group">
                 <Link
                   href="/admin-dashboard/createBlog"
-                  className={`inline-flex items-center px-1 pt-2 border-b-2 text-sm font-medium ${
+                  className={`inline-flex items-center px-1 pt-6 border-b-2 text-sm font-medium ${
                     pathname === '/admin-dashboard/createBlog'
                       ? 'border-blue-500 text-gray-900'
                       : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
@@ -55,7 +55,7 @@ export default function AdminNavigation() {
 
               <Link
                 href="/admin-dashboard/question-answer-update"
-                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                className={`inline-flex items-center px-1 pt-2 border-b-2 text-sm font-medium ${
                   pathname.includes('/admin-dashboard/question-answer-update')
                     ? 'border-blue-500 text-gray-900'
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
@@ -65,7 +65,7 @@ export default function AdminNavigation() {
               </Link>
               <Link
                 href="/admin-dashboard/users"
-                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                className={`inline-flex items-center px-1 pt-2 border-b-2 text-sm font-medium ${
                   pathname === '/admin-dashboard/users'
                     ? 'border-blue-500 text-gray-900'
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'

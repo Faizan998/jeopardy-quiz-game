@@ -62,19 +62,19 @@ export default function DeleteBlogButton({ blogId }: DeleteBlogButtonProps) {
       {showConfirmation && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
-            <p className="mb-6">Are you sure you want to delete this blog post? This action cannot be undone.</p>
+            <h3 className="text-lg font-semibold text-black mb-4">Confirm Delete</h3>
+            <p className="mb-6 text-black ">Are you sure you want to delete this blog post? This action cannot be undone.</p>
             <div className="flex justify-end space-x-4">
               <button 
                 onClick={cancelDelete}
-                className="px-4 py-2 border border-gray-300 rounded"
+                className="px-4 py-2 border cursor-pointer bg-gray-500 border-gray-300 rounded"
                 disabled={isDeleting}
               >
                 Cancel
               </button>
               <button 
                 onClick={confirmDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded"
+                className="px-4 py-2 cursor-pointer bg-red-500 text-white rounded"
                 disabled={isDeleting}
               >
                 {isDeleting ? 'Deleting...' : 'Delete'}

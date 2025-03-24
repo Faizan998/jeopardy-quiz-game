@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';  // Import axios
 
 interface LeaderboardUser {
   id: string;
@@ -27,11 +28,11 @@ export default function LeaderboardPage() {
     fetchLeaderboard();
   }, []);
 
+  // Update to use axios with GET method
   const fetchLeaderboard = async () => {
     try {
-      const response = await fetch('/api/leaderboard');
-      const data = await response.json();
-      setUsers(data); // API already filters for USER role
+      const response = await axios.get('/api/user/leaderboard');
+      setUsers(response.data); // Assuming API returns filtered data for USER role
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
     } finally {
@@ -77,7 +78,7 @@ export default function LeaderboardPage() {
                 }`}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  <span className={`inline-block w-8 h-8 rounded-full flex items-center justify-center ${
+                  <span className={`inline-block w-8 h-8 rounded-full items-center justify-center ${
                     index === 0 ? 'bg-yellow-400 text-white' : 
                     index === 1 ? 'bg-gray-300 text-white' : 
                     index === 2 ? 'bg-amber-700 text-white' : 
@@ -101,4 +102,4 @@ export default function LeaderboardPage() {
       </div>
     </div>
   );
-} 
+}

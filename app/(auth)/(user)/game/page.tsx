@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import QuestionModal from '@/components/QuestionModal';
 import { Category, Question } from '@prisma/client';
+import axios from 'axios'; // Import Axios
 
 interface GameState {
   categories: Category[];
@@ -42,12 +43,12 @@ export default function GamePage() {
   const fetchGameData = async () => {
     try {
       const [categoriesRes, questionsRes] = await Promise.all([
-        fetch('/api/categories'),
-        fetch('/api/questions'),
+        axios.get('/api/user/categories'), // Use axios.get for categories
+        axios.get('/api/user/questions'), // Use axios.get for questions
       ]);
 
-      const categories = await categoriesRes.json();
-      const questions = await questionsRes.json();
+      const categories = categoriesRes.data;
+      const questions = questionsRes.data;
 
       setGameState(prev => ({
         ...prev,
@@ -73,19 +74,13 @@ export default function GamePage() {
     if (!gameState.selectedQuestion || !session?.user) return;
 
     try {
-      const response = await fetch('/api/answers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          questionId: gameState.selectedQuestion.id,
-          selectedIdx: selectedAnswer,
-        }),
+      const response = await axios.post('/api/user/answers', {
+        questionId: gameState.selectedQuestion.id,
+        selectedIdx: selectedAnswer,
       });
 
-      const result = await response.json();
-      
+      const result = response.data;
+
       setGameState(prev => ({
         ...prev,
         userScore: prev.userScore + (result.isCorrect ? gameState.selectedQuestion!.amount : 0),
@@ -101,10 +96,12 @@ export default function GamePage() {
     }
   };
 
-    if (status === 'loading') {
-        return   <div className="flex items-center justify-center min-h-screen">
+  if (status === 'loading') {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
         <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
+    );
   }
 
   return (
@@ -187,4 +184,4 @@ export default function GamePage() {
       />
     </div>
   );
-} 
+}

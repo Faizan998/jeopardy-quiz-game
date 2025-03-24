@@ -65,11 +65,11 @@ export default async function BlogDetailsPage({ params }: PageProps) {
 
         {/* Title Section */}
         <div className="mb-4">
-          <h1 className="text-2xl font-semibold text-gray-800">{blog.title}</h1>
+          <h1 className="text-2xl font-semibold text-gray-800">Title : {blog.title}</h1>
         </div>
 
         {/* Blog Content */}
-        <div className="prose max-w-none mb-4 text-base text-gray-700" dangerouslySetInnerHTML={{ __html: blog.content }} />
+        <div className="prose max-w-none mb-4 text-base text-gray-700" dangerouslySetInnerHTML={{ __html : blog.content }} />
         
         {/* Published Date */}
         <div className="mb-4">
