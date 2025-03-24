@@ -88,7 +88,7 @@ export default function QuestionDetail({ params }: { params: { id: string } | Pr
       }
 
       // Fetch categories for dropdown
-      const categoriesResponse = await axios.get("/api/categories");
+      const categoriesResponse = await axios.get("/api/user/categories");
       if (categoriesResponse.data) {
         setCategories(categoriesResponse.data);
       }
