@@ -1,37 +1,58 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
+import axios from 'axios';
 
 interface FormData {
-  category: string;
+  categoryId: string;
   title: string;
   description: string;
   image: File | null;
-  basePrice: string; // Changed to string to allow empty initial value
-  oneMonthPrice: string; // Changed to string
-  oneYearPrice: string; // Changed to string
-  lifetimePrice: string; // Changed to string
+  basePrice: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 export default function SubscriptionForm() {
   const [formData, setFormData] = useState<FormData>({
-    category: '',
+    categoryId: '',
     title: '',
     description: '',
     image: null,
-    basePrice: '', // No initial 0
-    oneMonthPrice: '', // No initial 0
-    oneYearPrice: '', // No initial 0
-    lifetimePrice: '', // No initial 0
+    basePrice: '',
   });
 
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    axios
+      .get('/api/admin/store/productCategory')
+      .then((res) => {
+        console.log('Category API response:', res.data.data);
+        if (Array.isArray(res.data.data)) {
+          setCategories(res.data.data);
+        } else {
+          console.error('Invalid category data format:', res.data.data);
+          setCategories([]); // Ensure categories is always an array
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching categories:', err);
+        setCategories([]); // Fallback to empty array on error
+      });
+  }, []);
+
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value, // Keep as string, no parsing here
+      [name]: value,
     }));
   };
 
@@ -43,18 +64,39 @@ export default function SubscriptionForm() {
     }));
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Convert price fields to numbers for submission if needed
-    const submissionData = {
-      ...formData,
-      basePrice: parseFloat(formData.basePrice) || 0,
-      oneMonthPrice: parseFloat(formData.oneMonthPrice) || 0,
-      oneYearPrice: parseFloat(formData.oneYearPrice) || 0,
-      lifetimePrice: parseFloat(formData.lifetimePrice) || 0,
-    };
-    console.log('Form Submitted:', submissionData);
-    // Add your submission logic here (e.g., API call)
+    setLoading(true);
+
+    const submissionData = new FormData();
+    submissionData.append('categoryId', formData.categoryId);
+    submissionData.append('title', formData.title);
+    submissionData.append('description', formData.description);
+    submissionData.append('basePrice', formData.basePrice);
+    if (formData.image) {
+      submissionData.append('image', formData.image);
+    }
+
+    try {
+      const response = await axios.post('/api/admin/store/product', submissionData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      console.log('Product submitted successfully:', response.data);
+      alert('Product added successfully!');
+      setFormData({
+        categoryId: '',
+        title: '',
+        description: '',
+        image: null,
+        basePrice: '',
+      });
+    } catch (error) {
+      console.error('Error submitting product:', error);
+      alert('Failed to add product.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,25 +105,33 @@ export default function SubscriptionForm() {
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-black"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center"> create Products</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">Create Product</h2>
 
-      {/* Category */}
-<div className="mb-4">
-  <label htmlFor="category" className="block text-sm font-medium mb-1">
-    Category
-  </label>
-  <select
-    id="category"
-    name="category"
-    value={formData.category}
-    
-    className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-    required
-  >
-   
-  </select>
-</div>
-
+        {/* Category Selection */}
+        <div className="mb-4">
+          <label htmlFor="categoryId" className="block text-sm font-medium mb-1">
+            Category
+          </label>
+          <select
+            id="categoryId"
+            name="categoryId"
+            value={formData.categoryId}
+            onChange={handleInputChange}
+            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="">Select Category</option>
+            {categories.length > 0 ? (
+              categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))
+            ) : (
+              <option disabled>Loading categories...</option>
+            )}
+          </select>
+        </div>
 
         {/* Title */}
         <div className="mb-4">
@@ -131,7 +181,7 @@ export default function SubscriptionForm() {
         </div>
 
         {/* Base Price */}
-        <div className="mb-4">
+        <div className="mb-6">
           <label htmlFor="basePrice" className="block text-sm font-medium mb-1">
             Base Price
           </label>
@@ -148,66 +198,13 @@ export default function SubscriptionForm() {
           />
         </div>
 
-        {/* One Month Subscription Price */}
-        <div className="mb-4">
-          <label htmlFor="oneMonthPrice" className="block text-sm font-medium mb-1">
-            One Month Subscription Price
-          </label>
-          <input
-            type="number"
-            id="oneMonthPrice"
-            name="oneMonthPrice"
-            value={formData.oneMonthPrice}
-            onChange={handleInputChange}
-            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            min="0"
-            step="0.01"
-            required
-          />
-        </div>
-
-        {/* One Year Subscription Price */}
-        <div className="mb-4">
-          <label htmlFor="oneYearPrice" className="block text-sm font-medium mb-1">
-            One Year Subscription Price
-          </label>
-          <input
-            type="number"
-            id="oneYearPrice"
-            name="oneYearPrice"
-            value={formData.oneYearPrice}
-            onChange={handleInputChange}
-            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            min="0"
-            step="0.01"
-            required
-          />
-        </div>
-
-        {/* Lifetime Subscription Price */}
-        <div className="mb-6">
-          <label htmlFor="lifetimePrice" className="block text-sm font-medium mb-1">
-            Lifetime Subscription Price
-          </label>
-          <input
-            type="number"
-            id="lifetimePrice"
-            name="lifetimePrice"
-            value={formData.lifetimePrice}
-            onChange={handleInputChange}
-            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            min="0"
-            step="0.01"
-            required
-          />
-        </div>
-
         {/* Submit Button */}
         <button
           type="submit"
           className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors"
+          disabled={loading}
         >
-          Submit
+          {loading ? 'Submitting...' : 'Submit'}
         </button>
       </form>
     </div>

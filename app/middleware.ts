@@ -17,6 +17,8 @@ export async function middleware(req: NextRequest) {
 
   const isAdminRoute = req.nextUrl.pathname.startsWith("/admin-dashboard");
   const isGameRoute = req.nextUrl.pathname.startsWith("/game");
+  const isStoreRoute = req.nextUrl.pathname.startsWith("/store");
+  const isSubscribeRoute = req.nextUrl.pathname.startsWith("/store/subscribe");
 
   // Case 1: Admin dashboard access without authentication - redirect to home
   if (isAdminRoute && !session) {
@@ -33,13 +35,20 @@ export async function middleware(req: NextRequest) {
   // Case 3: Other protected routes without authentication - redirect to login
   if (isGameRoute && !session) {
     console.log("Redirecting unauthenticated user from game to login");
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
-
+   // Restrict store access
+   if (isStoreRoute && !session) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+  if (isStoreRoute && session && session.role !== "USER") {
+    return NextResponse.redirect(new URL("/",
+    req.url));
+    }
   // Allow the request to continue
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/game", "/admin-dashboard"],
+  matcher: ["/game", "/admin-dashboard", "/store", "/store/subscribe"],
 };

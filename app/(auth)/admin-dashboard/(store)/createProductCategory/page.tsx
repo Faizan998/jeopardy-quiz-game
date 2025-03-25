@@ -24,7 +24,7 @@ export default function CategoryForm() {
   // Handle form submission
   const onSubmit: SubmitHandler<CategoryFormData> = async (data) => {
     try {
-      const response = await axios.post("/api/admin/blogCategory", {
+      const response = await axios.post("/api/admin/store/productCategory", {
         name: data.categoryName,
       });
 
@@ -51,7 +51,7 @@ export default function CategoryForm() {
 
         {/* Success Message */}
         {successMessage && (
-          <div className="text-green-300 text-sm text-center">
+          <div className="text-blue-800 text-sm text-center">
             {successMessage}
           </div>
         )}

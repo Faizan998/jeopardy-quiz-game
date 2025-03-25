@@ -16,6 +16,7 @@
     image            String?
     resetToken       String?
     resetTokenExpiry DateTime?
+    subscriptionType SubscriptionType @default(NONE)
     totalAmount      Int       @default(0)
     created_at       DateTime  @default(now())
     updated_at       DateTime  @default(now()) @updatedAt
@@ -69,11 +70,41 @@
   }
 
   model BlogCategory {
-    id         String   @id @default(uuid())
+    id         String   @id @default(uuid())  
     name       String
     created_at DateTime @default(now())
     updated_at DateTime @default(now()) @updatedAt
     blogs      Blog[]   // This is the "one to many" relation field
+  }
+
+    model ProductCategory {
+    id         String    @id @default(uuid())
+    name       String
+    created_at DateTime  @default(now())
+    updated_at DateTime  @default(now()) @updatedAt
+    products   Product[]
+  }
+
+  
+  model Product {
+    id              String          @id @default(uuid())
+    storeId         String
+    categoryId      String
+    title           String
+    description     String
+    imageUrl        String
+    basePrice       Float           @default(0.0)
+     createdAt   DateTime @default(now())
+    updated_at      DateTime        @default(now()) @updatedAt
+    category        ProductCategory @relation(fields: [categoryId], references: [id])
+  }
+
+
+  enum SubscriptionType {
+    NONE
+    ONE_MONTH
+    ONE_YEAR
+    LIFETIME
   }
 
 
@@ -81,6 +112,7 @@
     ADMIN
     USER
   }
+
 
 
 
