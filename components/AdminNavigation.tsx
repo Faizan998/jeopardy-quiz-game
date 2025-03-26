@@ -21,7 +21,7 @@ export default function AdminNavigation() {
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8 mx-auto">
               <div className="relative group">
                 <Link
-                  href="/admin-dashboard/createBlog"
+                  href="/admin-dashboard/create-Blog"
                   className={`inline-flex items-center px-1 pt-6 border-b-2 text-sm font-medium ${
                     pathname === '/admin-dashboard/createBlog'
                       ? 'border-blue-500 text-gray-900'
@@ -33,19 +33,19 @@ export default function AdminNavigation() {
                 {/* Dropdown */}
                 <div className="absolute left-0 hidden group-hover:block py-4 mt-2 w-48 bg-white shadow-lg rounded-md z-10">
                   <Link
-                    href="/admin-dashboard/createBlog"
+                    href="/admin-dashboard/create-Blog"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Create Blog
                   </Link>
                   <Link
-                    href="/admin-dashboard/createCategory"
+                    href="/admin-dashboard/create-Category"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Create Category
                   </Link>
                   <Link
-                    href="/admin-dashboard/blogList"
+                    href="/admin-dashboard/blog-List"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Blog List
@@ -54,9 +54,9 @@ export default function AdminNavigation() {
               </div>
               <div className="relative group">
                 <Link
-                  href="/admin-dashboard/createProduct"
+                  href="/admin-dashboard/create-Product"
                   className={`inline-flex items-center px-1 pt-6 border-b-2 text-sm font-medium ${
-                    pathname === '/admin-dashboard/createProduct'
+                    pathname === '/admin-dashboard/create-Product'
                       ? 'border-blue-500 text-gray-900'
                       : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                   }`}
@@ -66,19 +66,19 @@ export default function AdminNavigation() {
                 {/* Dropdown */}
                 <div className="absolute left-0 hidden group-hover:block py-4 mt-2 w-48 bg-white shadow-lg rounded-md z-10">
                   <Link
-                    href="/admin-dashboard/createProduct"
+                    href="/admin-dashboard/create-Product"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Create Product
                   </Link>
                   <Link
-                    href="/admin-dashboard/createProductCategory"
+                    href="/admin-dashboard/create-Product-Category"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Create ProductCategory
                   </Link>
                   <Link
-                    href="/admin-dashboard/productList"
+                    href="/admin-dashboard/product-List"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                    Product List

@@ -81,7 +81,7 @@ export default async function BlogDetailsPage({ params }: PageProps) {
         {/* Action Buttons */}
         <div className="flex justify-between mt-4">
           <Link 
-            href={`/admin-dashboard/blogList`}
+            href={`/admin-dashboard/blog-List`}
             className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
           >
             Back 

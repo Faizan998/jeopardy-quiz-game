@@ -37,7 +37,7 @@ export default function DeleteBlogButton({ blogId }: DeleteBlogButtonProps) {
       }
 
       // Navigate back to blog list after successful deletion
-      router.push('/admin-dashboard/blogList')
+      router.push('/admin-dashboard/blog-List')
       router.refresh()
     } catch (error) {
       console.error('Error deleting blog:', error)

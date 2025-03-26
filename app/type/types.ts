@@ -45,12 +45,13 @@ export type AnswerResponse = {
   pointsEarned: number;
   newTotalAmount: number;
 };
-interface AnsweredQuestion {
+
+export interface AnsweredQuestion {
   id: string;
   isCorrect: boolean;
 }
 
-interface Question {
+export interface Question {
   id: string;
   value: string;
   options: string[];
@@ -62,7 +63,7 @@ interface Question {
   isCorrect?: boolean; // Added by API transformation
 }
 
-interface GameState {
+export interface GameState {
   categories: Category[];
   questions: Question[];
   selectedQuestion: Question | null;
@@ -71,7 +72,7 @@ interface GameState {
   answeredQuestions: AnsweredQuestion[];
 }
 
-interface JeopardyApiResponse {
+export interface JeopardyApiResponse {
   message: string;
   jeopardyData: {
     id: string;
@@ -88,4 +89,29 @@ interface JeopardyApiResponse {
       Answer: { id: string; isCorrect: boolean }[];
     }[];
   }[];
+}
+
+// app/types.ts (example)
+export interface Product {
+  id: string;
+  categoryId: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  basePrice: number;
+  createdAt: string;
+  updated_at: string;
+  category?: {
+    id: string;
+    name: string;
+    created_at: string;
+    updated_at: string;
+  };
+}
+
+export interface ProductCategory {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
 }
