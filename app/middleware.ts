@@ -3,26 +3,24 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 export { default } from "next-auth/middleware";
 
-
 export async function middleware(req: NextRequest) {
-  // Get the session token with full session data
-  const session = await getToken({ 
-    req, 
+  const session = await getToken({
+    req,
     secret: process.env.NEXTAUTH_SECRET,
     secureCookie: process.env.NODE_ENV === "production",
   });
 
-  // Log session info for debugging
   console.log("Session in middleware:", session);
 
   const isAdminRoute = req.nextUrl.pathname.startsWith("/admin-dashboard");
   const isGameRoute = req.nextUrl.pathname.startsWith("/game");
   const isStoreRoute = req.nextUrl.pathname.startsWith("/store");
   const isSubscribeRoute = req.nextUrl.pathname.startsWith("/store/subscribe");
+  const isCategoriesRoute = req.nextUrl.pathname.startsWith("/categories"); // Added
 
-  // Case 1: Admin dashboard access without authentication - redirect to home
-  if (isAdminRoute && !session) {
-    console.log("Redirecting unauthenticated user from admin dashboard to home");
+  // Case 1: Protected routes without authentication - redirect to home
+  if ((isAdminRoute || isGameRoute || isStoreRoute || isCategoriesRoute) && !session) {
+    console.log("Redirecting unauthenticated user to home");
     return NextResponse.redirect(new URL("/", req.url));
   }
 
@@ -32,23 +30,16 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // Case 3: Other protected routes without authentication - redirect to login
-  if (isGameRoute && !session) {
-    console.log("Redirecting unauthenticated user from game to login");
+  // Case 3: Store and Categories access without USER role - redirect to home
+  if ((isStoreRoute || isCategoriesRoute) && session?.role !== "USER") {
+    console.log("Redirecting non-user role from store/categories to home");
     return NextResponse.redirect(new URL("/", req.url));
   }
-   // Restrict store access
-   if (isStoreRoute && !session) {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
-  if (isStoreRoute && session && session.role !== "USER") {
-    return NextResponse.redirect(new URL("/",
-    req.url));
-    }
+
   // Allow the request to continue
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/game", "/admin-dashboard", "/store", "/store/subscribe"],
+  matcher: ["/game", "/admin-dashboard", "/store", "/store/subscribe", "/categories"], // Added /categories
 };

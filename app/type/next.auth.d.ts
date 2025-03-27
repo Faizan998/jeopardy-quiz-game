@@ -1,39 +1,24 @@
-  // import NextAuth from "next-auth";
+import { Session as DefaultSession } from 'next-auth';
+import { JWT } from 'next-auth/jwt';
 
-  // declare module "next-auth" {
-  //   interface Session {
-  //     user: {
-  //       name: string;
-  //       email: string;
-  //       role: "ADMIN" | "USER"; 
-  //     };
-  //   }
-  // }
-
-  import NextAuth, { DefaultSession } from "next-auth";
-
-  declare module "next-auth" {
-    /**
-     * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
-     */
-    interface Session {
-      user: {
-        /** The user's postal address. */
-        role: string;
-        id: string;
-      } & DefaultSession["user"];
-    }
-    interface User{
-      id: string;
-      role: string;
-    }
+declare module 'next-auth' {
+  interface Session extends DefaultSession {
+    role?: string; // Optional role field
+    accessToken?: string; // Optional access token for API calls
+    token?: string; // Optional token for API calls
   }
-  
-  declare module "next-auth/jwt" {
-    /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
-    interface JWT {
-      /** OpenID ID Token */
-      id: string;
-      role: string;
-    }
+
+  interface User {
+    id: string;
+    role?: string; // Add role to User if it comes from your auth provider
+    accessToken?: string;
+    token?: string;
   }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    role?: string; // Add role to JWT
+    accessToken?: string; // Add accessToken to JWT
+  }
+}
