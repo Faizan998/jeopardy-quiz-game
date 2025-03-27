@@ -6,6 +6,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useSession } from 'next-auth/react'; // Import useSession
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 // Interfaces
 interface Category {
@@ -132,10 +133,11 @@ export default function EcommercePage() {
       <ToastContainer position="top-right" autoClose={3000} />
 
       {/* Header */}
-      <header className="bg-white shadow-md py-6">
-        <h1 className="text-3xl font-bold text-center text-gray-800">
-          Shop Categories
-        </h1>
+      <header className="bg-white shadow-md py-6 flex justify-between items-center px-6">
+        <h1 className="text-3xl font-bold text-gray-800"> Shop Categories </h1>
+        <Link href="/game/store/subscribe" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xl font-bold hover:bg-blue-800 transition-all duration-300">
+         Subscribe Now
+        </Link>
       </header>
 
       {/* Category Cards */}
