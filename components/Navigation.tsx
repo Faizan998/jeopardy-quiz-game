@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import { User, Gamepad2, Trophy, Store } from 'lucide-react';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -29,7 +30,7 @@ export default function Navigation() {
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                 }`}
               >
-                Game
+                <Gamepad2 className="w-5 h-5 mr-1" /> Game
               </Link>
               <Link
                 href='/game/leaderboard'
@@ -39,7 +40,7 @@ export default function Navigation() {
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                 }`}
               >
-                Leaderboard
+                <Trophy className="w-5 h-5 mr-1" /> Leaderboard
               </Link>
               <Link
                 href='/game/store'
@@ -49,12 +50,22 @@ export default function Navigation() {
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                 }`}
               >
-                Store
+                <Store className="w-5 h-5 mr-1" /> Store
               </Link>
             </div>
           </div>
           <div className="flex items-center">
-            <span className="text-gray-700 mr-4">
+            <Link
+              href='/game/profile'
+              className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                pathname === '/profile'
+                  ? 'border-blue-500 text-gray-900'
+                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+              }`}
+            >
+              <User className="w-5 h-5 mr-1" /> Profile
+            </Link>
+            <span className="text-gray-700 mx-4">
               Welcome, {session.user?.name}
             </span>
             <button

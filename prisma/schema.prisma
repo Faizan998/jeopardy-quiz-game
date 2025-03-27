@@ -1,138 +1,132 @@
-  generator client {
-    provider = "prisma-client-js"
-  }
+generator client {
+  provider = "prisma-client-js"
+}
 
-  datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
-  }
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-  model User {
-    id               String    @id @default(uuid())
-    name             String
-    email            String    @unique
-    password         String?
-    role             Role
-    image            String?
-    resetToken       String?
-    resetTokenExpiry DateTime?
-    subscriptionType SubscriptionType @default(NONE)
-    totalAmount      Int       @default(0)
-    created_at       DateTime  @default(now())
-    updated_at       DateTime  @default(now()) @updatedAt
-    Answer           Answer[]
+model User {
+  id               String           @id @default(uuid())
+  name             String
+  email            String           @unique
+  password         String?
+  role             Role
+  image            String?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  subscriptionType SubscriptionType @default(NONE)
+  totalAmount      Int              @default(0)
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @default(now()) @updatedAt
+  Answer           Answer[]
 
-  }
+  Cart Cart?
+}
 
-  model Question {
-    id         String   @id @default(uuid())
-    value      String
-    options    Json
-    amount     Int
-    CorrectIdx Int
-    categoryId String
-    created_at DateTime @default(now())
-    updated_at DateTime @default(now()) @updatedAt
-    Answer     Answer[]
-    category   Category @relation(fields: [categoryId], references: [id])
-  }
+model Question {
+  id         String   @id @default(uuid())
+  value      String
+  options    Json
+  amount     Int
+  CorrectIdx Int
+  categoryId String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  Answer     Answer[]
+  category   Category @relation(fields: [categoryId], references: [id])
+}
 
-  model Answer {
-    id           String   @id @default(uuid())
-    userId       String
-    questionId   String
-    selectedIdx  String
-    isCorrect    Boolean
-    created_at   DateTime @default(now())
-    updated_at   DateTime @default(now()) @updatedAt
-    pointsEarned Int      @default(0)
-    question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  }
+model Answer {
+  id           String   @id @default(uuid())
+  userId       String
+  questionId   String
+  selectedIdx  String
+  isCorrect    Boolean
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now()) @updatedAt
+  pointsEarned Int      @default(0)
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
-  model Category {
-    id         String     @id @default(uuid())
-    name       String
-    created_at DateTime   @default(now())
-    updated_at DateTime   @default(now()) @updatedAt
-    questions  Question[]
-  }
+model Category {
+  id         String     @id @default(uuid())
+  name       String
+  created_at DateTime   @default(now())
+  updated_at DateTime   @default(now()) @updatedAt
+  questions  Question[]
+}
 
-  model Blog {
-    id         String   @id @default(uuid())
-    title      String
-    content    String
-    imageUrl   String
-    created_at DateTime @default(now())
-    updated_at DateTime @default(now()) @updatedAt
-    categoryId String   // Add this field to store the relationship
-    category   BlogCategory @relation(fields: [categoryId], references: [id]) // Add the relation to BlogCategory
-  }
+model Blog {
+  id         String       @id @default(uuid())
+  title      String
+  content    String
+  imageUrl   String
+  created_at DateTime     @default(now())
+  updated_at DateTime     @default(now()) @updatedAt
+  categoryId String // Add this field to store the relationship
+  category   BlogCategory @relation(fields: [categoryId], references: [id]) // Add the relation to BlogCategory
+}
 
-  model BlogCategory {
-    id         String   @id @default(uuid())  
-    name       String
-    created_at DateTime @default(now())
-    updated_at DateTime @default(now()) @updatedAt
-    blogs      Blog[]   // This is the "one to many" relation field
-  }
+model BlogCategory {
+  id         String   @id @default(uuid())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  blogs      Blog[] // This is the "one to many" relation field
+}
 
-    model ProductCategory {
-    id         String    @id @default(uuid())
-    name       String
-    created_at DateTime  @default(now())
-    updated_at DateTime  @default(now()) @updatedAt
-    products   Product[]
-  }
+model ProductCategory {
+  id         String    @id @default(uuid())
+  name       String
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now()) @updatedAt
+  products   Product[]
+}
 
-  
-  model Product {
-    id              String          @id @default(uuid())
-    categoryId      String
-    title           String
-    description     String
-    imageUrl        String
-    basePrice       Float           @default(0.0)
-    createdAt   DateTime @default(now())
-    updated_at      DateTime        @default(now()) @updatedAt
-    category        ProductCategory @relation(fields: [categoryId], references: [id])
-  }
+model Product {
+  id          String          @id @default(uuid())
+  categoryId  String
+  title       String
+  description String
+  imageUrl    String
+  basePrice   Float           @default(0.0)
+  createdAt   DateTime        @default(now())
+  updated_at  DateTime        @default(now()) @updatedAt
+  category    ProductCategory @relation(fields: [categoryId], references: [id])
+  CartItem    CartItem[]
+}
 
+model Cart {
+  id        String     @id @default(cuid()) // Unique cart ID
+  userId    String     @unique // User's ID (linked to User model)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[] // Relation to Cart Items
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
 
-  enum SubscriptionType {
-    NONE
-    ONE_MONTH
-    ONE_YEAR
-    LIFETIME
-  }
+model CartItem {
+  id        String   @id @default(cuid()) // Unique item ID
+  cartId    String // Foreign key referencing Cart
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String // Foreign key referencing Product
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1) // Quantity of product in cart
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
+enum SubscriptionType {
+  NONE
+  ONE_MONTH
+  ONE_YEAR
+  LIFETIME
+}
 
-  enum Role {
-    ADMIN
-    USER
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+enum Role {
+  ADMIN
+  USER
+}
