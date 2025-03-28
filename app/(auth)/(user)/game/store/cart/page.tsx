@@ -26,6 +26,25 @@ export default function CartPage() {
     if (session?.user) fetchCart();
   }, [session]);
 
+  const calculateDiscountedPrice = (basePrice: number): number => {
+    if (!session?.user?.subscriptionType || !session.user.subscriptionTypeEnd) return basePrice;
+    
+    // Check if subscription has expired
+    const subscriptionEnd = new Date(session.user.subscriptionTypeEnd);
+    if (subscriptionEnd < new Date()) return basePrice;
+
+    switch (session.user.subscriptionType) {
+      case "ONE_MONTH":
+        return basePrice * 0.9; // 10% discount
+      case "ONE_YEAR":
+        return basePrice * 0.78; // 22% discount
+      case "LIFETIME":
+        return basePrice * 0.65; // 35% discount
+      default:
+        return basePrice;
+    }
+  };
+
   const fetchCart = async () => {
     try {
       setLoading(true);
@@ -33,7 +52,7 @@ export default function CartPage() {
       // Ensure price is a number and handle potential null/undefined values
       const items = (data.items || []).map((item: CartItem) => ({
         ...item,
-        price:(item.price) || 0, // Convert to number, default to 0 if invalid
+        price: (item.price) || 0, // Convert to number, default to 0 if invalid
       }));
       console.log("Cart items:", items);
       setCartItems(items);
@@ -72,13 +91,19 @@ export default function CartPage() {
     }
   };
 
-  // Calculate subtotal based on quantity
+  // Calculate subtotal based on quantity and subscription
   const subtotal = cartItems.reduce(
-    (sum, item) => sum + (item.price * item.quantity),
+    (sum, item) => sum + (calculateDiscountedPrice(item.price) * item.quantity),
     0
   );
   
-  // Total is just the subtotal (no tax added)
+  // Calculate base total without subscription discount
+  const baseTotal = cartItems.reduce(
+    (sum, item) => sum + (item.price * item.quantity),
+    0
+  );
+
+  // Total is the discounted subtotal
   const total = subtotal;
 
   if (loading) {
@@ -97,56 +122,76 @@ export default function CartPage() {
       {cartItems.length > 0 ? (
         <div className="max-w-4xl mx-auto">
           <div className="grid gap-6">
-            {cartItems.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white p-4 rounded-lg shadow-lg flex items-center gap-4"
-              >
-                <img
-                  src={item.imageUrl || "/placeholder.png"}
-                  alt={item.title}
-                  className="w-24 h-24 object-cover rounded-md"
-                />
-                <div className="flex-1">
-                  <h2 className="text-xl font-semibold">{item.title}</h2>
-                  <p className="text-gray-600">
-                  Price: ${item.price.toFixed(2)}
-                  </p>
-                  <p className="text-gray-600">
-                    Subtotal: ${(item.price * item.quantity).toFixed(2)}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <button
-                      className="bg-gray-200 p-1 rounded-md hover:bg-gray-300"
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    >
-                      <FiMinus />
-                    </button>
-                    <span className="text-lg font-semibold">{item.quantity}</span>
-                    <button
-                      className="bg-gray-200 p-1 rounded-md hover:bg-gray-300"
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    >
-                      <FiPlus />
-                    </button>
-                    <button
-                      className="ml-4 text-red-500 hover:text-red-700"
-                      onClick={() => removeItem(item.id)}
-                    >
-                      <FiTrash size={20} />
-                    </button>
+            {cartItems.map((item) => {
+              const discountedPrice = calculateDiscountedPrice(item.price);
+              const discount = session?.user?.subscriptionType && session.user.subscriptionTypeEnd && new Date(session.user.subscriptionTypeEnd) > new Date()
+                ? Math.round((1 - discountedPrice / item.price) * 100)
+                : 0;
+
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white p-4 rounded-lg shadow-lg flex items-center gap-4"
+                >
+                  <img
+                    src={item.imageUrl || "/placeholder.png"}
+                    alt={item.title}
+                    className="w-24 h-24 object-cover rounded-md"
+                  />
+                  <div className="flex-1">
+                    <h2 className="text-xl font-semibold">{item.title}</h2>
+                    <div className="mt-2">
+                      <p className="text-gray-600">
+                        Base Price: ${item.price.toFixed(2)}
+                      </p>
+                      {discount > 0 && (
+                        <p className="text-green-600">
+                          Subscription Price: ${discountedPrice.toFixed(2)} ({discount}% off)
+                        </p>
+                      )}
+                      <p className="text-gray-600">
+                        Subtotal: ${(discountedPrice * item.quantity).toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <button
+                        className="bg-gray-200 p-1 rounded-md hover:bg-gray-300"
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      >
+                        <FiMinus />
+                      </button>
+                      <span className="text-lg font-semibold">{item.quantity}</span>
+                      <button
+                        className="bg-gray-200 p-1 rounded-md hover:bg-gray-300"
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      >
+                        <FiPlus />
+                      </button>
+                      <button
+                        className="ml-4 text-red-500 hover:text-red-700"
+                        onClick={() => removeItem(item.id)}
+                      >
+                        <FiTrash size={20} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-8 bg-white p-6 rounded-lg shadow-lg">
             <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
             <div className="flex justify-between mb-2">
-              <span>Subtotal:</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>Base Total:</span>
+              <span>${baseTotal.toFixed(2)}</span>
             </div>
+            {session?.user?.subscriptionType && session.user.subscriptionTypeEnd && new Date(session.user.subscriptionTypeEnd) > new Date() && (
+              <div className="flex justify-between mb-2 text-green-600">
+                <span>Subscription Discount:</span>
+                <span>-${(baseTotal - subtotal).toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-lg border-t pt-2">
               <span>Total:</span>
               <span>${total.toFixed(2)}</span>

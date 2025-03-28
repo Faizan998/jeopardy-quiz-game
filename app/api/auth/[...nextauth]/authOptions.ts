@@ -15,6 +15,8 @@ declare module "next-auth" {
       email: string;
       role: string;
       totalAmount: number;
+      subscriptionType?: "NONE" | "ONE_MONTH" | "ONE_YEAR" | "LIFETIME";
+      subscriptionTypeEnd?: string;
     }
   }
 }

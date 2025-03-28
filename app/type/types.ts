@@ -25,6 +25,8 @@ export type User = {
   role: "ADMIN" | "USER";
   image?: string;
   totalAmount: number;
+  subscriptionType?: 'NONE' | 'ONE_MONTH' | 'ONE_YEAR' | 'LIFETIME';
+  subscriptionTypeEnd?: string;
 };
 
 // Session Type
