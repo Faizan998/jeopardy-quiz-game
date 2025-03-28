@@ -376,7 +376,7 @@ const CartSection = () => {
               }}
               className="w-full mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors cursor-pointer"
             >
-              Checkout
+              Place Order
             </button>
           </div>
         </div>
@@ -388,21 +388,53 @@ const CartSection = () => {
 const OrdersSection = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingOrder, setCancellingOrder] = useState<string | null>(null);
+
+  const fetchOrders = async () => {
+    try {
+      const { data } = await axios.get('/api/user/orders');
+      setOrders(data);
+    } catch (error) {
+      toast.error('Failed to fetch orders');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const { data } = await axios.get('/api/user/orders');
-        setOrders(data);
-      } catch (error) {
-        toast.error('Failed to fetch orders');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOrders();
   }, []);
+
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      // Show confirmation dialog
+      if (!window.confirm('Are you sure you want to cancel this order?')) {
+        return;
+      }
+
+      setCancellingOrder(orderId); // Set the cancelling state
+
+      const response = await axios.put(`/api/user/orders/${orderId}`, { 
+        status: 'CANCELLED' 
+      });
+      
+      // Update the orders state with the updated order from the response
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId ? response.data : order
+        )
+      );
+      
+      toast.success('Order cancelled successfully');
+    } catch (error: any) {
+      // Handle specific error messages from the API
+      const errorMessage = error.response?.data?.error || 'Failed to cancel order';
+      toast.error(errorMessage);
+      console.error('Error cancelling order:', error);
+    } finally {
+      setCancellingOrder(null); // Clear the cancelling state
+    }
+  };
 
   if (loading) {
     return (
@@ -451,9 +483,22 @@ const OrdersSection = () => {
                 {new Date(order.createdAt).toLocaleDateString()}
               </p>
             </div>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
-              {order.status}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
+                {order.status}
+              </span>
+              {order.status === 'PENDING' && (
+                <button
+                  onClick={() => handleDeleteOrder(order.id)}
+                  disabled={cancellingOrder === order.id}
+                  className={`cursor-pointer px-3 py-1 text-sm text-red-600 hover:text-red-800 transition-colors ${
+                    cancellingOrder === order.id ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {cancellingOrder === order.id ? 'Cancelling...' : 'Cancel Order'}
+                </button>
+              )}
+            </div>
           </div>
           
           <div className="space-y-4">

@@ -163,20 +163,20 @@ export default function CartPage() {
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       <button
-                        className="bg-gray-200 p-1 rounded-md hover:bg-gray-300"
+                        className="cursor-pointer bg-gray-200 p-1 rounded-md hover:bg-gray-300"
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
                       >
                         <FiMinus />
                       </button>
                       <span className="text-lg font-semibold">{item.quantity}</span>
                       <button
-                        className="bg-gray-200 p-1 rounded-md hover:bg-gray-300"
+                        className="cursor-pointer bg-gray-200 p-1 rounded-md hover:bg-gray-300"
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       >
                         <FiPlus />
                       </button>
                       <button
-                        className="ml-4 text-red-500 hover:text-red-700"
+                        className="cursor-pointer ml-4 text-red-500 hover:text-red-700"
                         onClick={() => removeItem(item.id)}
                       >
                         <FiTrash size={20} />
@@ -200,13 +200,13 @@ export default function CartPage() {
                 <span>-${discountTotal.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-lg border-t pt-2">
+            <div className="cursor-pointer flex justify-between font-bold text-lg border-t pt-2">
               <span>Total:</span>
               <span>${totalPrice.toFixed(2)}</span>
             </div>
             <button
               onClick={placeOrder}
-              className="w-full mt-4 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition"
+              className="cursor-pointer w-full mt-4 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition"
             >
               Place Order
             </button>
@@ -217,7 +217,7 @@ export default function CartPage() {
           <p className="text-gray-600 text-lg mb-4">Your cart is empty</p>
           <Link
             href="/game/store"
-            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition"
+            className="cursor-pointer bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition"
           >
             Continue Shopping
           </Link>

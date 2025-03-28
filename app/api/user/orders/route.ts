@@ -111,7 +111,14 @@ export async function PUT(
     }
 
     const order = await prisma.order.findUnique({
-      where: { id: params.id }
+      where: { id: params.id },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      }
     });
 
     if (!order) {
@@ -122,6 +129,18 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Validate status transition
+    if (status === 'CANCELLED') {
+      // Only allow cancellation of PENDING orders
+      if (order.status !== 'PENDING') {
+        return NextResponse.json(
+          { error: 'Only pending orders can be cancelled' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Update order status
     const updatedOrder = await prisma.order.update({
       where: { id: params.id },
       data: { status },
