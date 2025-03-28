@@ -31,6 +31,7 @@ interface Product {
   categoryId: string;
   imageUrl?: string;
   isInWishlist?: boolean;
+  discountedPrice?: number;
 }
 
 interface User {
@@ -193,11 +194,24 @@ export default function EcommercePage() {
     try {
       const isInWishlist = wishlistItems.includes(productId);
       const method = isInWishlist ? 'DELETE' : 'POST';
+      const product = products.find(p => p.id === productId);
+      
+      if (!product) {
+        toast.error('Product not found');
+        return;
+      }
+
+      const basePrice = product.basePrice ?? 0;
+      const discountedPrice = calculateDiscountedPrice(basePrice);
       
       await axios({
         method,
         url: '/api/user/wishlist',
-        data: { productId }
+        data: { 
+          productId,
+          basePrice,
+          discountedPrice
+        }
       });
 
       setWishlistItems(prev => 
@@ -300,7 +314,7 @@ export default function EcommercePage() {
                       className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-black transition-colors z-10"
                     >
                       <Heart 
-                        className={`w-5 h-5 ${
+                        className={`cursor-pointer w-5 h-5 ${
                           wishlistItems.includes(product.id) 
                             ? 'text-red-500 fill-current' 
                             : 'text-red-500'
@@ -319,13 +333,15 @@ export default function EcommercePage() {
                       {product.description}
                     </p>
                     <div className="mt-2">
-                      
-                      <p className="text-black font-semibold text-lg">
-                        ${discountedPrice.toFixed(2)}
-                      </p>
+                      <p className="text-gray-500 line-through">${basePrice.toFixed(2)}</p>
                       {discount > 0 && (
-                        <p className="text-green-600 text-sm">
-                          {discount}% off with your subscription!
+                        <p className="text-green-600 font-bold">
+                          ${discountedPrice.toFixed(2)} ({discount}% off with subscription)
+                        </p>
+                      )}
+                      {!discount && (
+                        <p className="text-black font-semibold text-lg">
+                          ${basePrice.toFixed(2)}
                         </p>
                       )}
                     </div>

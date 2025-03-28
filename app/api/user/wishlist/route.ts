@@ -37,13 +37,67 @@ export async function GET() {
           }
         }
       });
-      return NextResponse.json(newWishlist);
+
+      // Calculate discounted prices for items
+      const itemsWithDiscounts = newWishlist.items.map(item => ({
+        ...item,
+        discountedPrice: calculateDiscountedPrice(
+          item.product.basePrice,
+          session.user.subscriptionType,
+          session.user.subscriptionTypeEnd
+        )
+      }));
+
+      return NextResponse.json({
+        ...newWishlist,
+        items: itemsWithDiscounts,
+        subscription: {
+          type: session.user.subscriptionType,
+          endDate: session.user.subscriptionTypeEnd
+        }
+      });
     }
 
-    return NextResponse.json(wishlist);
+    // Calculate discounted prices for items
+    const itemsWithDiscounts = wishlist.items.map(item => ({
+      ...item,
+      discountedPrice: calculateDiscountedPrice(
+        item.product.basePrice,
+        session.user.subscriptionType,
+        session.user.subscriptionTypeEnd
+      )
+    }));
+
+    return NextResponse.json({
+      ...wishlist,
+      items: itemsWithDiscounts,
+      subscription: {
+        type: session.user.subscriptionType,
+        endDate: session.user.subscriptionTypeEnd
+      }
+    });
   } catch (error) {
     console.error('Error fetching wishlist:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+// Helper function to calculate discounted price
+function calculateDiscountedPrice(basePrice: number, subscriptionType?: string, subscriptionEnd?: string): number {
+  if (!subscriptionType || !subscriptionEnd) return basePrice;
+  
+  const subscriptionEndDate = new Date(subscriptionEnd);
+  if (subscriptionEndDate < new Date()) return basePrice;
+
+  switch (subscriptionType) {
+    case "ONE_MONTH":
+      return Math.round(basePrice * 0.9 * 100) / 100; // 10% discount
+    case "ONE_YEAR":
+      return Math.round(basePrice * 0.78 * 100) / 100; // 22% discount
+    case "LIFETIME":
+      return Math.round(basePrice * 0.65 * 100) / 100; // 35% discount
+    default:
+      return basePrice;
   }
 }
 

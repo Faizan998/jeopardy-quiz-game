@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { User, BadgeDollarSign, Heart, ShoppingCart, Package } from 'lucide-react';
+import { User,  Heart, ShoppingCart, Package } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -14,6 +14,7 @@ interface Product {
   description: string;
   imageUrl: string;
   basePrice: number;
+  discountedPrice?: number;
 }
 
 interface UserProfile {
@@ -51,7 +52,7 @@ interface CartResponse {
   items: CartItem[];
 }
 
-const calculateDiscountedPrice = (basePrice: number, subscriptionType?: string, subscriptionEnd?: string): number => {
+const calculateDiscountedPrice = (basePrice: number, subscriptionType?: string, subscriptionEnd?: string | null): number => {
   if (!subscriptionType || !subscriptionEnd) return basePrice;
   
   // Check if subscription has expired
@@ -60,11 +61,11 @@ const calculateDiscountedPrice = (basePrice: number, subscriptionType?: string, 
 
   switch (subscriptionType) {
     case "ONE_MONTH":
-      return basePrice * 0.9; // 10% discount
+      return Math.round(basePrice * 0.9 * 100) / 100; // 10% discount
     case "ONE_YEAR":
-      return basePrice * 0.78; // 22% discount
+      return Math.round(basePrice * 0.78 * 100) / 100; // 22% discount
     case "LIFETIME":
-      return basePrice * 0.65; // 35% discount
+      return Math.round(basePrice * 0.65 * 100) / 100; // 35% discount
     default:
       return basePrice;
   }
@@ -78,21 +79,44 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, isActive }) => {
 const WishlistSection = () => {
   const [wishlistItems, setWishlistItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const { data: session } = useSession();
+  const [user, setUser] = useState<{ subscriptionType: string | undefined; subscriptionTypeEnd: string | null | undefined } | null>(null);
 
   useEffect(() => {
-    const fetchWishlist = async () => {
+    const fetchUserData = async () => {
       try {
-        const { data } = await axios.get('/api/user/wishlist');
-        setWishlistItems(data.items.map((item: any) => item.product));
+        const response = await axios.get("/api/user/profile");
+        setUser(response.data);
       } catch (error) {
-        toast.error('Failed to fetch wishlist');
-      } finally {
-        setLoading(false);
+        console.error("Error fetching user data:", error);
       }
     };
 
-    fetchWishlist();
-  }, []);
+    if (session?.user) {
+      fetchUserData();
+      fetchWishlist();
+    }
+  }, [session]);
+
+  const fetchWishlist = async () => {
+    try {
+      const { data } = await axios.get('/api/user/wishlist');
+      const items = data.items.map((item: any) => ({
+        ...item.product,
+        basePrice: item.product.basePrice ?? 0,
+        discountedPrice: calculateDiscountedPrice(
+          item.product.basePrice ?? 0,
+          user?.subscriptionType,
+          user?.subscriptionTypeEnd
+        )
+      }));
+      setWishlistItems(items);
+    } catch (error) {
+      toast.error('Failed to fetch wishlist');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRemoveFromWishlist = async (productId: string) => {
     try {
@@ -107,26 +131,75 @@ const WishlistSection = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-4">Loading wishlist...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold flex items-center gap-2">
-        <Heart className="w-5 h-5" />
+        <Heart className="cursor-pointer w-5 h-5" />
         My Wishlist
       </h3>
       {wishlistItems.length === 0 ? (
         <p className="text-gray-500">Your wishlist is empty</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {wishlistItems.map((product) => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              onRemoveFromWishlist={handleRemoveFromWishlist}
-            />
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {wishlistItems.map((product) => {
+            const basePrice = product.basePrice ?? 0;
+            const discountedPrice = calculateDiscountedPrice(
+              basePrice,
+              user?.subscriptionType,
+              user?.subscriptionTypeEnd
+            );
+            const discount = user?.subscriptionType && user.subscriptionTypeEnd && new Date(user.subscriptionTypeEnd) > new Date()
+              ? Math.round((1 - discountedPrice / basePrice) * 100)
+              : 0;
+
+            return (
+              <div
+                key={product.id}
+                className="bg-white rounded-lg shadow-md p-4 relative hover:shadow-lg transition-shadow cursor-pointer"
+              >
+                <button
+                  onClick={() => handleRemoveFromWishlist(product.id)}
+                  className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-black transition-colors z-10 cursor-pointer"
+                >
+                  <Heart className="w-5 h-5 text-red-500 fill-current" />
+                </button>
+                <div className="relative aspect-square mb-3">
+                  <Image
+                    src={product.imageUrl || "/placeholder-product.jpg"}
+                    alt={product.title}
+                    fill
+                    className="object-contain rounded-md"
+                  />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {product.title}
+                </h3>
+                <p className="text-gray-600 text-sm line-clamp-2">
+                  {product.description}
+                </p>
+                <div className="mt-2">
+                  <p className="text-gray-500 line-through">${basePrice.toFixed(2)}</p>
+                  {discount > 0 && (
+                    <p className="text-green-600 font-bold">
+                      ${discountedPrice.toFixed(2)} ({discount}% off with subscription)
+                    </p>
+                  )}
+                  {!discount && (
+                    <p className="text-black font-semibold text-lg">
+                      ${basePrice.toFixed(2)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -195,13 +268,17 @@ const CartSection = () => {
   const discountTotal = baseTotal - totalPrice;
 
   if (loading) {
-    return <div className="text-center py-4">Loading cart...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold flex items-center gap-2">
-        <ShoppingCart className="w-5 h-5" />
+        <ShoppingCart className="cursor-pointer w-5 h-5" />
         Shopping Cart
       </h3>
       {cartItems.length === 0 ? (
@@ -212,7 +289,7 @@ const CartSection = () => {
             const discount = Math.round((1 - item.discountedPrice / item.price) * 100);
 
             return (
-              <div key={item.id} className="flex items-center gap-4 border rounded-lg p-4">
+              <div key={item.id} className="flex items-center gap-4 border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="relative w-24 h-24">
                   <Image
                     src={item.imageUrl || "/placeholder-product.jpg"}
@@ -239,20 +316,20 @@ const CartSection = () => {
                   <div className="flex items-center gap-2 mt-2">
                     <button
                       onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                      className="px-2 py-1 border rounded hover:bg-gray-100 transition-colors"
+                      className="px-2 py-1 border rounded hover:bg-gray-100 transition-colors cursor-pointer"
                     >
                       -
                     </button>
                     <span className="min-w-[2rem] text-center">{item.quantity}</span>
                     <button
                       onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                      className="px-2 py-1 border rounded hover:bg-gray-100 transition-colors"
+                      className="px-2 py-1 border rounded hover:bg-gray-100 transition-colors cursor-pointer"
                     >
                       +
                     </button>
                     <button
                       onClick={() => handleRemoveFromCart(item.id)}
-                      className="ml-4 text-red-500 hover:text-red-700 transition-colors"
+                      className="ml-4 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
                     >
                       Remove
                     </button>
@@ -297,7 +374,7 @@ const CartSection = () => {
                   toast.error('Failed to place order');
                 }
               }}
-              className="w-full mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="w-full mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors cursor-pointer"
             >
               Checkout
             </button>
@@ -431,44 +508,6 @@ const OrdersSection = () => {
   );
 };
 
-const ProductCard: React.FC<{ 
-  product: Product;
-  onRemoveFromWishlist?: (productId: string) => void;
-}> = ({ product, onRemoveFromWishlist }) => {
-  const handleAddToWishlist = async () => {
-    try {
-      await axios.post('/api/user/wishlist', { productId: product.id });
-      toast.success('Added to wishlist!');
-    } catch (error) {
-      toast.error('Failed to add to wishlist');
-    }
-  };
-
-  return (
-    <div className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-      <div className="relative aspect-square">
-        <Image
-          src={product.imageUrl}
-          alt={product.title}
-          fill
-          className="object-cover"
-        />
-        <button 
-          onClick={onRemoveFromWishlist ? () => onRemoveFromWishlist(product.id) : handleAddToWishlist}
-          className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
-        >
-          <Heart className={`w-5 h-5 ${onRemoveFromWishlist ? 'text-red-500 fill-current' : 'text-red-500'}`} />
-        </button>
-      </div>
-      <div className="p-4">
-        <h4 className="font-semibold">{product.title}</h4>
-        <p className="text-gray-600 text-sm mt-1">{product.description}</p>
-        <p className="text-lg font-bold mt-2">${product.basePrice}</p>
-      </div>
-    </div>
-  );
-};
-
 export default function ProfilePage() {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState(0);
@@ -513,7 +552,7 @@ export default function ProfilePage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-4 border-b-2 transition-colors ${
+                className={`flex items-center gap-2 px-6 py-4 border-b-2 transition-colors cursor-pointer ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-500'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
