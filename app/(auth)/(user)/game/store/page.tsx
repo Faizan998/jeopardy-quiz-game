@@ -8,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Heart } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -29,6 +30,7 @@ interface Product {
   basePrice?: number;
   categoryId: string;
   imageUrl?: string;
+  isInWishlist?: boolean;
 }
 
 interface User {
@@ -42,6 +44,7 @@ export default function EcommercePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
+  const [wishlistItems, setWishlistItems] = useState<string[]>([]);
 
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -67,6 +70,7 @@ export default function EcommercePage() {
     if (status === "authenticated") {
       fetchUserData();
       fetchCategories();
+      fetchWishlist();
     }
   }, [status, session, router]);
 
@@ -125,6 +129,18 @@ export default function EcommercePage() {
     }
   };
 
+  const fetchWishlist = async () => {
+    try {
+      const response = await axios.get('/api/user/wishlist');
+      if (response.data) {
+        const wishlistProductIds = response.data.items.map((item: any) => item.product.id);
+        setWishlistItems(wishlistProductIds);
+      }
+    } catch (error) {
+      console.error('Error fetching wishlist:', error);
+    }
+  };
+
   const handleSelection = (categoryId: string) => {
     setSelectedCategory(categoryId);
     sessionStorage.setItem("selectedCategory", categoryId);
@@ -170,6 +186,30 @@ export default function EcommercePage() {
         return basePrice * 0.65; // 35% discount
       default:
         return basePrice;
+    }
+  };
+
+  const handleWishlistToggle = async (productId: string) => {
+    try {
+      const isInWishlist = wishlistItems.includes(productId);
+      const method = isInWishlist ? 'DELETE' : 'POST';
+      
+      await axios({
+        method,
+        url: '/api/user/wishlist',
+        data: { productId }
+      });
+
+      setWishlistItems(prev => 
+        isInWishlist 
+          ? prev.filter(id => id !== productId)
+          : [...prev, productId]
+      );
+
+      toast.success(isInWishlist ? 'Removed from wishlist' : 'Added to wishlist');
+    } catch (error) {
+      console.error('Error updating wishlist:', error);
+      toast.error('Failed to update wishlist');
     }
   };
 
@@ -250,8 +290,23 @@ export default function EcommercePage() {
                 return (
                   <div
                     key={product.id}
-                    className="bg-white rounded-lg shadow-md p-4"
+                    className="bg-white rounded-lg shadow-md p-4 relative"
                   >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleWishlistToggle(product.id);
+                      }}
+                      className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-black transition-colors z-10"
+                    >
+                      <Heart 
+                        className={`w-5 h-5 ${
+                          wishlistItems.includes(product.id) 
+                            ? 'text-red-500 fill-current' 
+                            : 'text-red-500'
+                        }`}
+                      />
+                    </button>
                     <img
                       src={product.imageUrl || "/placeholder-product.jpg"}
                       alt={product.title}
@@ -275,7 +330,10 @@ export default function EcommercePage() {
                       )}
                     </div>
                     <button
-                      onClick={() => handleAddToCart(product)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart(product);
+                      }}
                       className="cursor-pointer mt-3 w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2 rounded-md hover:scale-105 hover:brightness-110 transition-transform duration-300"
                     >
                       Add to Cart
