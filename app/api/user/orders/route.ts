@@ -42,38 +42,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user's cart
-    const cart = await prisma.cart.findUnique({
-      where: { userId: session.user.id },
-      include: {
-        items: {
-          include: {
-            product: true
-          }
-        }
-      }
-    });
+    const { items, baseAmount, discountAmount, totalAmount } = await request.json();
 
-    if (!cart || cart.items.length === 0) {
-      return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'No items provided' }, { status: 400 });
     }
-
-    // Calculate total amount
-    const totalAmount = cart.items.reduce((sum, item) => {
-      return sum + (item.product.basePrice * item.quantity);
-    }, 0);
 
     // Create order
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,
         totalAmount,
+        baseAmount,
+        discountAmount,
         status: 'PENDING',
         items: {
-          create: cart.items.map(item => ({
+          create: items.map(item => ({
             productId: item.productId,
             quantity: item.quantity,
-            price: item.product.basePrice
+            price: item.price,
+            discountedPrice: item.discountedPrice
           }))
         }
       },
@@ -87,9 +75,15 @@ export async function POST(request: Request) {
     });
 
     // Clear cart
-    await prisma.cartItem.deleteMany({
-      where: { cartId: cart.id }
+    const cart = await prisma.cart.findUnique({
+      where: { userId: session.user.id }
     });
+
+    if (cart) {
+      await prisma.cartItem.deleteMany({
+        where: { cartId: cart.id }
+      });
+    }
 
     return NextResponse.json(order);
   } catch (error) {

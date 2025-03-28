@@ -15,6 +15,14 @@ interface CartItem {
   imageUrl: string;
   price: number;
   quantity: number;
+  discountedPrice: number;
+}
+
+interface CartResponse {
+  items: CartItem[];
+  totalPrice: number;
+  baseTotal: number;
+  discountTotal: number;
 }
 
 export default function CartPage() {
@@ -26,36 +34,11 @@ export default function CartPage() {
     if (session?.user) fetchCart();
   }, [session]);
 
-  const calculateDiscountedPrice = (basePrice: number): number => {
-    if (!session?.user?.subscriptionType || !session.user.subscriptionTypeEnd) return basePrice;
-    
-    // Check if subscription has expired
-    const subscriptionEnd = new Date(session.user.subscriptionTypeEnd);
-    if (subscriptionEnd < new Date()) return basePrice;
-
-    switch (session.user.subscriptionType) {
-      case "ONE_MONTH":
-        return basePrice * 0.9; // 10% discount
-      case "ONE_YEAR":
-        return basePrice * 0.78; // 22% discount
-      case "LIFETIME":
-        return basePrice * 0.65; // 35% discount
-      default:
-        return basePrice;
-    }
-  };
-
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get("/api/user/cart");
-      // Ensure price is a number and handle potential null/undefined values
-      const items = (data.items || []).map((item: CartItem) => ({
-        ...item,
-        price: (item.price) || 0, // Convert to number, default to 0 if invalid
-      }));
-      console.log("Cart items:", items);
-      setCartItems(items);
+      const { data } = await axios.get<CartResponse>("/api/user/cart");
+      setCartItems(data.items || []);
     } catch (error) {
       toast.error("Failed to load cart items");
       console.error("Fetch cart error:", error);
@@ -67,12 +50,8 @@ export default function CartPage() {
   const updateQuantity = async (id: string, newQuantity: number) => {
     if (newQuantity < 1) return removeItem(id);
     try {
-      await axios.put("/api/user/cart", { id, quantity: newQuantity });
-      setCartItems((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        )
-      );
+      const { data } = await axios.put<CartResponse>("/api/user/cart", { id, quantity: newQuantity });
+      setCartItems(data.items);
       toast.success("Quantity updated");
     } catch (error) {
       toast.error("Failed to update quantity");
@@ -82,8 +61,8 @@ export default function CartPage() {
 
   const removeItem = async (id: string) => {
     try {
-      await axios.delete("/api/user/cart", { data: { id } });
-      setCartItems((prev) => prev.filter((item) => item.id !== id));
+      const { data } = await axios.delete<CartResponse>("/api/user/cart", { data: { id } });
+      setCartItems(data.items);
       toast.success("Item removed from cart");
     } catch (error) {
       toast.error("Failed to remove item");
@@ -91,20 +70,52 @@ export default function CartPage() {
     }
   };
 
-  // Calculate subtotal based on quantity and subscription
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + (calculateDiscountedPrice(item.price) * item.quantity),
-    0
-  );
-  
-  // Calculate base total without subscription discount
+  const placeOrder = async () => {
+    try {
+      const baseTotal = cartItems.reduce(
+        (sum, item) => sum + (item.price * item.quantity),
+        0
+      );
+
+      const totalPrice = cartItems.reduce(
+        (sum, item) => sum + (item.discountedPrice * item.quantity),
+        0
+      );
+
+      const discountTotal = baseTotal - totalPrice;
+
+      await axios.post('/api/user/orders', {
+        items: cartItems.map(item => ({
+          productId: item.id,
+          quantity: item.quantity,
+          price: item.price,
+          discountedPrice: item.discountedPrice
+        })),
+        baseAmount: baseTotal,
+        discountAmount: discountTotal,
+        totalAmount: totalPrice
+      });
+
+      toast.success('Order placed successfully');
+      setCartItems([]);
+    } catch (error) {
+      toast.error('Failed to place order');
+      console.error('Place order error:', error);
+    }
+  };
+
+  // Calculate totals
   const baseTotal = cartItems.reduce(
     (sum, item) => sum + (item.price * item.quantity),
     0
   );
 
-  // Total is the discounted subtotal
-  const total = subtotal;
+  const totalPrice = cartItems.reduce(
+    (sum, item) => sum + (item.discountedPrice * item.quantity),
+    0
+  );
+
+  const discountTotal = baseTotal - totalPrice;
 
   if (loading) {
     return (
@@ -123,10 +134,7 @@ export default function CartPage() {
         <div className="max-w-4xl mx-auto">
           <div className="grid gap-6">
             {cartItems.map((item) => {
-              const discountedPrice = calculateDiscountedPrice(item.price);
-              const discount = session?.user?.subscriptionType && session.user.subscriptionTypeEnd && new Date(session.user.subscriptionTypeEnd) > new Date()
-                ? Math.round((1 - discountedPrice / item.price) * 100)
-                : 0;
+              const discount = Math.round((1 - item.discountedPrice / item.price) * 100);
 
               return (
                 <div
@@ -146,11 +154,11 @@ export default function CartPage() {
                       </p>
                       {discount > 0 && (
                         <p className="text-green-600">
-                          Subscription Price: ${discountedPrice.toFixed(2)} ({discount}% off)
+                          Subscription Price: ${item.discountedPrice.toFixed(2)} ({discount}% off)
                         </p>
                       )}
                       <p className="text-gray-600">
-                        Subtotal: ${(discountedPrice * item.quantity).toFixed(2)}
+                        Subtotal: ${(item.discountedPrice * item.quantity).toFixed(2)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
@@ -186,16 +194,22 @@ export default function CartPage() {
               <span>Base Total:</span>
               <span>${baseTotal.toFixed(2)}</span>
             </div>
-            {session?.user?.subscriptionType && session.user.subscriptionTypeEnd && new Date(session.user.subscriptionTypeEnd) > new Date() && (
+            {discountTotal > 0 && (
               <div className="flex justify-between mb-2 text-green-600">
                 <span>Subscription Discount:</span>
-                <span>-${(baseTotal - subtotal).toFixed(2)}</span>
+                <span>-${discountTotal.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold text-lg border-t pt-2">
               <span>Total:</span>
-              <span>${total.toFixed(2)}</span>
+              <span>${totalPrice.toFixed(2)}</span>
             </div>
+            <button
+              onClick={placeOrder}
+              className="w-full mt-4 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition"
+            >
+              Place Order
+            </button>
           </div>
         </div>
       ) : (

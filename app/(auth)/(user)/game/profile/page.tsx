@@ -28,7 +28,9 @@ interface Order {
   createdAt: string;
   status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'COMPLETED';
   totalAmount: number;
-  items: { id: string; product: Product; quantity: number; price: number }[];
+  baseAmount: number;
+  discountAmount: number;
+  items: { id: string; product: Product; quantity: number; price: number; discountedPrice: number }[];
 }
 
 interface TabPanelProps {
@@ -42,7 +44,31 @@ interface CartItem {
   imageUrl: string;
   price: number;
   quantity: number;
+  discountedPrice: number;
 }
+
+interface CartResponse {
+  items: CartItem[];
+}
+
+const calculateDiscountedPrice = (basePrice: number, subscriptionType?: string, subscriptionEnd?: string): number => {
+  if (!subscriptionType || !subscriptionEnd) return basePrice;
+  
+  // Check if subscription has expired
+  const subscriptionEndDate = new Date(subscriptionEnd);
+  if (subscriptionEndDate < new Date()) return basePrice;
+
+  switch (subscriptionType) {
+    case "ONE_MONTH":
+      return basePrice * 0.9; // 10% discount
+    case "ONE_YEAR":
+      return basePrice * 0.78; // 22% discount
+    case "LIFETIME":
+      return basePrice * 0.65; // 35% discount
+    default:
+      return basePrice;
+  }
+};
 
 const TabPanel: React.FC<TabPanelProps> = ({ children, isActive }) => {
   if (!isActive) return null;
@@ -119,15 +145,8 @@ const CartSection = () => {
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get('/api/user/cart');
-      if (Array.isArray(data.items)) {
-        setCartItems(data.items.map((item: any) => ({
-          ...item,
-          price: Number(item.price) || 0
-        })));
-      } else {
-        toast.error('Failed to fetch cart');
-      }
+      const { data } = await axios.get<CartResponse>('/api/user/cart');
+      setCartItems(data.items || []);
     } catch (error) {
       toast.error('Error loading cart');
     } finally {
@@ -142,12 +161,8 @@ const CartSection = () => {
     }
 
     try {
-      await axios.put('/api/user/cart', { id: itemId, quantity });
-      setCartItems(items =>
-        items.map(item =>
-          item.id === itemId ? { ...item, quantity } : item
-        )
-      );
+      const { data } = await axios.put<CartResponse>('/api/user/cart', { id: itemId, quantity });
+      setCartItems(data.items);
       toast.success('Cart updated');
     } catch (error) {
       toast.error('Failed to update cart');
@@ -156,20 +171,28 @@ const CartSection = () => {
 
   const handleRemoveFromCart = async (itemId: string) => {
     try {
-      await axios.delete('/api/user/cart', {
+      const { data } = await axios.delete<CartResponse>('/api/user/cart', {
         data: { id: itemId }
       });
-      setCartItems(items => items.filter(item => item.id !== itemId));
+      setCartItems(data.items);
       toast.success('Removed from cart');
     } catch (error) {
       toast.error('Failed to remove from cart');
     }
   };
 
-  const total = cartItems.reduce(
+  // Calculate totals
+  const baseTotal = cartItems.reduce(
     (sum, item) => sum + (item.price * item.quantity),
     0
   );
+
+  const totalPrice = cartItems.reduce(
+    (sum, item) => sum + (item.discountedPrice * item.quantity),
+    0
+  );
+
+  const discountTotal = baseTotal - totalPrice;
 
   if (loading) {
     return <div className="text-center py-4">Loading cart...</div>;
@@ -185,60 +208,89 @@ const CartSection = () => {
         <p className="text-gray-500">Your cart is empty</p>
       ) : (
         <div className="space-y-4">
-          {cartItems.map((item) => (
-            <div key={item.id} className="flex items-center gap-4 border rounded-lg p-4">
-              <div className="relative w-24 h-24">
-                <Image
-                  src={item.imageUrl || "/placeholder-product.jpg"}
-                  alt={item.title}
-                  fill
-                  className="object-cover rounded"
-                />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-semibold">{item.title}</h4>
-                <div className="mt-2">
-                  <p className="text-gray-600">
-                    Price: ${item.price.toFixed(2)}
-                  </p>
-                  <p className="text-gray-600">
-                    Subtotal: ${(item.price * item.quantity).toFixed(2)}
-                  </p>
+          {cartItems.map((item) => {
+            const discount = Math.round((1 - item.discountedPrice / item.price) * 100);
+
+            return (
+              <div key={item.id} className="flex items-center gap-4 border rounded-lg p-4">
+                <div className="relative w-24 h-24">
+                  <Image
+                    src={item.imageUrl || "/placeholder-product.jpg"}
+                    alt={item.title}
+                    fill
+                    className="object-cover rounded"
+                  />
                 </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <button
-                    onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                    className="px-2 py-1 border rounded hover:bg-gray-100 transition-colors"
-                  >
-                    -
-                  </button>
-                  <span className="min-w-[2rem] text-center">{item.quantity}</span>
-                  <button
-                    onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                    className="px-2 py-1 border rounded hover:bg-gray-100 transition-colors"
-                  >
-                    +
-                  </button>
-                  <button
-                    onClick={() => handleRemoveFromCart(item.id)}
-                    className="ml-4 text-red-500 hover:text-red-700 transition-colors"
-                  >
-                    Remove
-                  </button>
+                <div className="flex-1">
+                  <h4 className="font-semibold">{item.title}</h4>
+                  <div className="mt-2">
+                    <p className="text-gray-600">
+                      Base Price: ${item.price.toFixed(2)}
+                    </p>
+                    {discount > 0 && (
+                      <p className="text-green-600">
+                        Subscription Price: ${item.discountedPrice.toFixed(2)} ({discount}% off)
+                      </p>
+                    )}
+                    <p className="text-gray-600">
+                      Subtotal: ${(item.discountedPrice * item.quantity).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                      className="px-2 py-1 border rounded hover:bg-gray-100 transition-colors"
+                    >
+                      -
+                    </button>
+                    <span className="min-w-[2rem] text-center">{item.quantity}</span>
+                    <button
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                      className="px-2 py-1 border rounded hover:bg-gray-100 transition-colors"
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => handleRemoveFromCart(item.id)}
+                      className="ml-4 text-red-500 hover:text-red-700 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           <div className="mt-4 p-4 border rounded-lg">
             <h4 className="font-semibold mb-2">Order Summary</h4>
+            <div className="flex justify-between mb-2">
+              <span>Base Total:</span>
+              <span>${baseTotal.toFixed(2)}</span>
+            </div>
+            {discountTotal > 0 && (
+              <div className="flex justify-between mb-2 text-green-600">
+                <span>Subscription Discount:</span>
+                <span>-${discountTotal.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-lg border-t pt-2">
               <span>Total:</span>
-              <span>${total.toFixed(2)}</span>
+              <span>${totalPrice.toFixed(2)}</span>
             </div>
             <button
               onClick={async () => {
                 try {
-                  await axios.post('/api/user/orders');
+                  await axios.post('/api/user/orders', {
+                    items: cartItems.map(item => ({
+                      productId: item.id,
+                      quantity: item.quantity,
+                      price: item.price,
+                      discountedPrice: item.discountedPrice
+                    })),
+                    baseAmount: baseTotal,
+                    discountAmount: discountTotal,
+                    totalAmount: totalPrice
+                  });
                   toast.success('Order placed successfully');
                   setCartItems([]);
                 } catch (error) {
@@ -341,8 +393,14 @@ const OrdersSection = () => {
                 <div className="flex-1">
                   <h4 className="font-medium">{item.product.title}</h4>
                   <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                  <p className="text-sm text-gray-500">
+                    Base Price: ${item.price.toFixed(2)}
+                  </p>
                   <p className="text-sm font-medium text-blue-600">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    Discounted Price: ${item.discountedPrice.toFixed(2)}
+                  </p>
+                  <p className="text-sm font-medium text-green-600">
+                    Subtotal: ${(item.discountedPrice * item.quantity).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -350,6 +408,16 @@ const OrdersSection = () => {
           </div>
 
           <div className="mt-4 pt-4 border-t">
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-medium">Base Amount:</span>
+              <span>${order.baseAmount.toFixed(2)}</span>
+            </div>
+            {order.discountAmount > 0 && (
+              <div className="flex justify-between items-center mb-2 text-green-600">
+                <span>Discount Amount:</span>
+                <span>-${order.discountAmount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center">
               <span className="font-medium">Total Amount:</span>
               <span className="text-lg font-bold text-blue-600">

@@ -13,12 +13,34 @@ interface CartItemResponse {
   price: number;
   imageUrl: string;
   quantity: number;
+  discountedPrice: number;
 }
 
 interface CartResponse {
   items: CartItemResponse[];
   totalPrice: number;
+  baseTotal: number;
+  discountTotal: number;
 }
+
+const calculateDiscountedPrice = (basePrice: number, subscriptionType?: string, subscriptionEnd?: string): number => {
+  if (!subscriptionType || !subscriptionEnd) return basePrice;
+  
+  // Check if subscription has expired
+  const subscriptionEndDate = new Date(subscriptionEnd);
+  if (subscriptionEndDate < new Date()) return basePrice;
+
+  switch (subscriptionType) {
+    case "ONE_MONTH":
+      return basePrice * 0.9; // 10% discount
+    case "ONE_YEAR":
+      return basePrice * 0.78; // 22% discount
+    case "LIFETIME":
+      return basePrice * 0.65; // 35% discount
+    default:
+      return basePrice;
+  }
+};
 
 // Define the include type for Prisma queries
 const cartInclude = {
@@ -64,27 +86,44 @@ export async function GET() {
           },
         },
       });
-      return NextResponse.json({ items: [], totalPrice: 0 });
+      return NextResponse.json({ items: [], totalPrice: 0, baseTotal: 0, discountTotal: 0 });
     }
 
-    // Calculate total price
-    const totalPrice = user.Cart.items.reduce(
+    // Calculate totals
+    const baseTotal = user.Cart.items.reduce(
       (sum: number, item) => sum + item.product.basePrice * item.quantity,
       0
     );
 
     // Transform the response to match the expected format
-    const cartItems = user.Cart.items.map((item) => ({
-      id: item.product.id,
-      title: item.product.title,
-      price: item.product.basePrice,
-      imageUrl: item.product.imageUrl,
-      quantity: item.quantity,
-    }));
+    const cartItems = user.Cart.items.map((item) => {
+      const discountedPrice = calculateDiscountedPrice(
+        item.product.basePrice,
+        user.subscriptionType,
+        user.subscriptionTypeEnd?.toISOString()
+      );
+      return {
+        id: item.product.id,
+        title: item.product.title,
+        price: item.product.basePrice,
+        imageUrl: item.product.imageUrl,
+        quantity: item.quantity,
+        discountedPrice
+      };
+    });
+
+    const totalPrice = cartItems.reduce(
+      (sum, item) => sum + item.discountedPrice * item.quantity,
+      0
+    );
+
+    const discountTotal = baseTotal - totalPrice;
 
     return NextResponse.json({
       items: cartItems,
       totalPrice: Number(totalPrice.toFixed(2)),
+      baseTotal: Number(baseTotal.toFixed(2)),
+      discountTotal: Number(discountTotal.toFixed(2))
     });
   } catch (error) {
     console.error("GET cart error:", error);
@@ -170,15 +209,40 @@ export async function POST(req: NextRequest) {
     });
 
     // Transform the response
-    const cartItems = updatedCart?.items.map((item) => ({
-      id: item.product.id,
-      title: item.product.title,
-      price: item.product.basePrice,
-      imageUrl: item.product.imageUrl,
-      quantity: item.quantity,
-    }));
+    const cartItems = updatedCart?.items.map((item) => {
+      const discountedPrice = calculateDiscountedPrice(
+        item.product.basePrice,
+        user.subscriptionType,
+        user.subscriptionTypeEnd?.toISOString()
+      );
+      return {
+        id: item.product.id,
+        title: item.product.title,
+        price: item.product.basePrice,
+        imageUrl: item.product.imageUrl,
+        quantity: item.quantity,
+        discountedPrice
+      };
+    }) || [];
 
-    return NextResponse.json({ items: cartItems });
+    const baseTotal = cartItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
+    const totalPrice = cartItems.reduce(
+      (sum, item) => sum + item.discountedPrice * item.quantity,
+      0
+    );
+
+    const discountTotal = baseTotal - totalPrice;
+
+    return NextResponse.json({
+      items: cartItems,
+      totalPrice: Number(totalPrice.toFixed(2)),
+      baseTotal: Number(baseTotal.toFixed(2)),
+      discountTotal: Number(discountTotal.toFixed(2))
+    });
   } catch (error) {
     console.error("POST cart error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -243,15 +307,40 @@ export async function PUT(req: NextRequest) {
     });
 
     // Transform the response
-    const cartItems = updatedCart?.items.map((item) => ({
-      id: item.product.id,
-      title: item.product.title,
-      price: item.product.basePrice,
-      imageUrl: item.product.imageUrl,
-      quantity: item.quantity,
-    }));
+    const cartItems = updatedCart?.items.map((item) => {
+      const discountedPrice = calculateDiscountedPrice(
+        item.product.basePrice,
+        user.subscriptionType,
+        user.subscriptionTypeEnd?.toISOString()
+      );
+      return {
+        id: item.product.id,
+        title: item.product.title,
+        price: item.product.basePrice,
+        imageUrl: item.product.imageUrl,
+        quantity: item.quantity,
+        discountedPrice
+      };
+    }) || [];
 
-    return NextResponse.json({ items: cartItems });
+    const baseTotal = cartItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
+    const totalPrice = cartItems.reduce(
+      (sum, item) => sum + item.discountedPrice * item.quantity,
+      0
+    );
+
+    const discountTotal = baseTotal - totalPrice;
+
+    return NextResponse.json({
+      items: cartItems,
+      totalPrice: Number(totalPrice.toFixed(2)),
+      baseTotal: Number(baseTotal.toFixed(2)),
+      discountTotal: Number(discountTotal.toFixed(2))
+    });
   } catch (error) {
     console.error("PUT cart error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -305,15 +394,40 @@ export async function DELETE(req: NextRequest) {
     });
 
     // Transform the response
-    const cartItems = updatedCart?.items.map((item) => ({
-      id: item.product.id,
-      title: item.product.title,
-      price: item.product.basePrice,
-      imageUrl: item.product.imageUrl,
-      quantity: item.quantity,
-    }));
+    const cartItems = updatedCart?.items.map((item) => {
+      const discountedPrice = calculateDiscountedPrice(
+        item.product.basePrice,
+        user.subscriptionType,
+        user.subscriptionTypeEnd?.toISOString()
+      );
+      return {
+        id: item.product.id,
+        title: item.product.title,
+        price: item.product.basePrice,
+        imageUrl: item.product.imageUrl,
+        quantity: item.quantity,
+        discountedPrice
+      };
+    }) || [];
 
-    return NextResponse.json({ items: cartItems });
+    const baseTotal = cartItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
+    const totalPrice = cartItems.reduce(
+      (sum, item) => sum + item.discountedPrice * item.quantity,
+      0
+    );
+
+    const discountTotal = baseTotal - totalPrice;
+
+    return NextResponse.json({
+      items: cartItems,
+      totalPrice: Number(totalPrice.toFixed(2)),
+      baseTotal: Number(baseTotal.toFixed(2)),
+      discountTotal: Number(discountTotal.toFixed(2))
+    });
   } catch (error) {
     console.error("DELETE cart error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
