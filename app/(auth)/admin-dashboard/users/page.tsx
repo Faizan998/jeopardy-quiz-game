@@ -14,6 +14,9 @@ interface User {
   name: string;
   email: string;
   role: string;
+  points: number;
+  rank: number;
+  subscriptionType: string;
 }
 
 export default function UserList() {
@@ -94,6 +97,7 @@ export default function UserList() {
               <th className="py-3 px-4 text-left">Name</th>
               <th className="py-3 px-4 text-left">Email</th>
               <th className="py-3 px-4 text-left">Role</th>
+              <th className="py-3 px-4 text-left">SubscriptionType</th>
               <th className="py-3 px-4 text-left">Actions</th>
             </tr>
           </thead>
@@ -123,6 +127,7 @@ export default function UserList() {
                   <td className="py-3 px-4">{user.name}</td>
                   <td className="py-3 px-4">{user.email}</td>
                   <td className="py-3 px-4">{user.role}</td>
+                  <td className="py-3 px-4">{user.subscriptionType}</td>
                   <td className="py-3 px-4 flex justify-start gap-4">
                     {/* Delete Icon (Lucide Trash Icon) */}
                     <button
