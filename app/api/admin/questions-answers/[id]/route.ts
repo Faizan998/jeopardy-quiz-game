@@ -59,7 +59,7 @@ export async function PUT(
 
     const body = await request.json();
     
-    // Update the question
+    // Update the question with shuffled options
     const updatedQuestion = await prisma.question.update({
       where: {
         id,
@@ -79,18 +79,18 @@ export async function PUT(
     
     // If there are answers to update
     if (body.answers && body.answers.length > 0) {
-      // Process each answer update
+      // Process each answer update with new indices
       for (const answer of body.answers) {
         if (answer.id) {
-          // Update existing answer
+          // Update existing answer with new selected index
           await prisma.answer.update({
             where: {
               id: answer.id,
             },
             data: {
-              selectedIdx: answer.selectedIdx,
-              isCorrect: answer.isCorrect,
-              pointsEarned: answer.pointsEarned,
+              selectedIdx: answer.selectedIdx.toString(), // Ensure it's stored as string
+              isCorrect: answer.selectedIdx === body.correctIdx, // Recalculate correctness based on new indices
+              pointsEarned: answer.selectedIdx === body.correctIdx ? updatedQuestion.amount : 0, // Recalculate points
             },
           });
         }

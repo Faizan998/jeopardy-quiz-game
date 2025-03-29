@@ -159,7 +159,7 @@ export default function LoginPage() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
         >
-          <FcGoogle className="text-2xl mr-2" /> Sign up with Google
+          <FcGoogle className="text-2xl mr-2" /> Sign in with Google
         </motion.button>
 
         {/* Signup & Home Links */}

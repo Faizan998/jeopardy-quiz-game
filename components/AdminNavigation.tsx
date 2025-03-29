@@ -8,7 +8,7 @@ export default function AdminNavigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="bg-white shadow">
+<nav className="bg-white shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
@@ -52,6 +52,7 @@ export default function AdminNavigation() {
                   </Link>
                 </div>
               </div>
+
               <div className="relative group">
                 <Link
                   href="/admin-dashboard/create-Product"
@@ -75,27 +76,46 @@ export default function AdminNavigation() {
                     href="/admin-dashboard/create-Product-Category"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Create ProductCategory
+                    Create Product Category
                   </Link>
                   <Link
                     href="/admin-dashboard/product-List"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                   Product List
+                    Product List
                   </Link>
                 </div>
               </div>
 
-              <Link
-                href="/admin-dashboard/question-answer-update"
-                className={`inline-flex items-center px-1 pt-2 border-b-2 text-sm font-medium ${
-                  pathname.includes('/admin-dashboard/question-answer-update')
-                    ? 'border-blue-500 text-gray-900'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                }`}
-              >
-                Q&A Management
-              </Link>
+              {/* Q&A Management with Dropdown */}
+              <div className="relative group">
+                <Link
+                  href="/admin-dashboard/question-answer-update"
+                  className={`inline-flex items-center px-1 pt-6 border-b-2 text-sm font-medium ${
+                    pathname === '/admin-dashboard/question-answer-update'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+                >
+                  Q&A Management
+                </Link>
+                {/* Dropdown */}
+                <div className="absolute left-0 hidden group-hover:block py-8 mt-2 w-48 bg-white shadow-lg rounded-md z-10">
+                  <Link
+                    href="/admin-dashboard/create-question"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Create Q&A
+                  </Link>
+                  <Link
+                    href="/admin-dashboard/question-answer-update"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    question-answer-update
+                  </Link>
+                </div>
+              </div>
+
               <Link
                 href="/admin-dashboard/users"
                 className={`inline-flex items-center px-1 pt-2 border-b-2 text-sm font-medium ${

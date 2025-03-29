@@ -7,6 +7,8 @@ import { useSession } from "next-auth/react";
 import { CheckCircle, XCircle, Save, ArrowLeft, Plus, Trash } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Define types
 interface User {
@@ -50,7 +52,6 @@ export default function QuestionDetail({ params }: { params: { id: string } | Pr
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -61,6 +62,16 @@ export default function QuestionDetail({ params }: { params: { id: string } | Pr
   const [correctIdx, setCorrectIdx] = useState<number>(0);
   const [categoryId, setCategoryId] = useState<string>("");
   const [editingAnswers, setEditingAnswers] = useState<Answer[]>([]);
+
+  // Add shuffle function
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  };
 
   // Fetch question data
   const fetchQuestionData = async () => {
@@ -139,27 +150,36 @@ export default function QuestionDetail({ params }: { params: { id: string } | Pr
     try {
       setSaving(true);
       setError(null);
-      setSuccessMessage(null);
       
       if (!questionValue.trim()) {
-        setError("Question text cannot be empty.");
+        toast.error("Question text cannot be empty.");
         setSaving(false);
         return;
       }
       
       if (options.some(option => !option.trim())) {
-        setError("Options cannot be empty.");
+        toast.error("Options cannot be empty.");
         setSaving(false);
         return;
       }
+
+      // Shuffle the options array
+      const shuffledOptions = shuffleArray([...options]);
+      
+      // Find the new index of the correct answer after shuffling
+      const correctAnswer = options[correctIdx];
+      const newCorrectIdx = shuffledOptions.findIndex(opt => opt === correctAnswer);
       
       const payload = {
         value: questionValue,
-        options: options,
+        options: shuffledOptions,
         amount: amount,
-        correctIdx: correctIdx,
+        correctIdx: newCorrectIdx,
         categoryId: categoryId,
-        answers: editingAnswers
+        answers: editingAnswers.map(answer => ({
+          ...answer,
+          selectedIdx: shuffledOptions.findIndex(opt => opt === options[Number(answer.selectedIdx)])
+        }))
       };
       
       // Fix: Use the correct API endpoint path with /admin/
@@ -167,16 +187,11 @@ export default function QuestionDetail({ params }: { params: { id: string } | Pr
       
       if (response.data) {
         setQuestion(response.data);
-        setSuccessMessage("Question updated successfully!");
-        
-        // Reset form after successful save
-        setTimeout(() => {
-          setSuccessMessage(null);
-        }, 3000);
+        toast.success("Question updated successfully!");
       }
     } catch (err) {
       console.error("Error saving question:", err);
-      setError("Failed to save question.");
+      toast.error("Failed to save question.");
     } finally {
       setSaving(false);
     }
@@ -214,6 +229,19 @@ export default function QuestionDetail({ params }: { params: { id: string } | Pr
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-r from-blue-900 to-blue-600 text-white p-6">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      
       <div className="flex items-center mb-6">
         <button 
           onClick={handleBack}
@@ -225,18 +253,6 @@ export default function QuestionDetail({ params }: { params: { id: string } | Pr
       </div>
       
       <AnimatePresence>
-        {successMessage && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="bg-green-500/80 p-3 rounded-lg mb-6 flex items-center"
-          >
-            <CheckCircle size={18} className="mr-2" />
-            {successMessage}
-          </motion.div>
-        )}
-
         {error && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}

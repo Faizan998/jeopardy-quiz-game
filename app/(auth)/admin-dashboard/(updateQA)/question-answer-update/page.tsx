@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useSession } from "next-auth/react";
-import { Edit, Trash2, ExternalLink } from "lucide-react"; 
+import { Edit, Trash2, ExternalLink, Plus } from "lucide-react"; 
 import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Define types
 interface User {
@@ -101,9 +103,36 @@ export default function QuestionAnswerUpdate() {
     router.push(`/admin-dashboard/question-answer-update/${id}`);
   };
 
+  // Add delete handler
+  const handleDeleteQuestion = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // Prevent card click event
+  
+
+    try {
+      const response = await axios.delete(`/api/admin/questions/${id}`);
+      if (response.data) {
+        toast.success("Question deleted successfully!");
+        // Refresh questions list
+        fetchQuestionsWithAnswers();
+      }
+    } catch (err) {
+      console.error("Error deleting question:", err);
+      toast.error("Failed to delete question");
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-r from-blue-900 to-blue-600 text-white p-6">
-      <h1 className="text-3xl font-bold mb-6">Question and Answer Management</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Question and Answer Management</h1>
+        <button
+          onClick={() => router.push("/admin-dashboard/create-question")}
+          className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors duration-300"
+        >
+          <Plus size={20} className="mr-2" />
+          Create Question
+        </button>
+      </div>
       
       {loading ? (
         <div className="flex justify-center items-center h-64">
@@ -162,13 +191,23 @@ export default function QuestionAnswerUpdate() {
                 </div>
               </div>
               
-              <div className="bg-blue-900 p-3 flex justify-end">
+              <div className="cursor-pointer bg-blue-900 p-3 flex justify-end space-x-4">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteQuestion(e, question.id);
+                  }}
+                  className="cursor-pointer flex items-center text-red-400 hover:text-red-300 transition-colors duration-300"
+                >
+                  <Trash2 size={16} className="mr-1" />
+                  Delete
+                </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleEditQuestion(question.id);
                   }}
-                  className="flex items-center text-blue-300 hover:text-white transition-colors duration-300"
+                  className="cursor-pointer flex items-center text-blue-300 hover:text-white transition-colors duration-300"
                 >
                   <Edit size={16} className="mr-1" />
                   Edit
@@ -178,6 +217,9 @@ export default function QuestionAnswerUpdate() {
           ))}
         </motion.div>
       )}
+
+      {/* Add Toast Container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop />
     </div>
   );
 } 
