@@ -1,10 +1,19 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useEffect } from 'react';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login'); // Sign out hone ke baad login page par redirect
+    }
+  }, [status, router]);
 
   if (status === 'loading') return null; // Wait for session to load
 
