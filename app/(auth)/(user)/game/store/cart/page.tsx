@@ -8,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useSession } from "next-auth/react";
 import { FiPlus, FiMinus, FiTrash } from "react-icons/fi";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface CartItem {
   id: string;
@@ -28,10 +29,14 @@ interface CartResponse {
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     if (session?.user) fetchCart();
+    if (status === "unauthenticated") {
+      router.push("/login");  // Login page par redirect
+    }
   }, [session]);
 
   const fetchCart = async () => {
