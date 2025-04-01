@@ -78,7 +78,7 @@ export default function LeaderboardPage() {
                 }`}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  <span className={`inline-block w-8 h-8 rounded-full items-center justify-center ${
+                  <span className={`inline-flex w-7 h-7 rounded-full items-center justify-center ${
                     index === 0 ? 'bg-yellow-400 text-white' : 
                     index === 1 ? 'bg-gray-300 text-white' : 
                     index === 2 ? 'bg-amber-700 text-white' : 
