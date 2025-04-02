@@ -1,290 +1,79 @@
-import GoogleProvider from "next-auth/providers/google";
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
-import CredentialsProvider from "next-auth/providers/credentials";
 import { NextAuthOptions } from "next-auth";
-
-const prisma = new PrismaClient();
-
-// Extend the built-in session types
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      role: string;
-      totalAmount: number;
-      subscriptionType?: "NONE" | "ONE_MONTH" | "ONE_YEAR" | "LIFETIME";
-      subscriptionTypeEnd?: string;
-    }
-  }
-}
+import CredentialsProvider from "next-auth/providers/credentials";
+import prisma from "@/lib/prisma";
+import { compare } from "bcryptjs";
+import { Role, SubscriptionType } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
+  session: {
+    strategy: "jwt",
+  },
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
     CredentialsProvider({
-      name: "Credentials",
+      name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        try {
-          if (!credentials?.email || !credentials?.password) {
-            throw new Error("Missing credentials");
-          }
-
-          const user = await prisma.user.findUnique({
-            where: {
-              email: credentials.email,
-            },
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              password: true,
-              role: true,
-              totalAmount: true,
-            },
-          });
-
-          if (!user || !user.password) {
-            throw new Error("Invalid credentials");
-          }
-
-          const isValid = await bcrypt.compare(credentials.password, user.password);
-          if (!isValid) {
-            throw new Error("Invalid credentials");
-          }
-
-          return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            totalAmount: user.totalAmount,
-          };
-        } catch (error) {
-          console.error("Login error:", error);
-          throw new Error(error instanceof Error ? error.message : "Something went wrong");
+        if (!credentials?.email || !credentials?.password) {
+          return null;
         }
+
+        const dbUser = await prisma.user.findUnique({
+          where: {
+            email: credentials.email,
+          },
+        });
+
+        if (!dbUser) {
+          return null;
+        }
+
+        const isValid = await compare(credentials.password, dbUser.password!);
+
+        if (!isValid) {
+          return null;
+        }
+
+        return {
+          id: dbUser.id,
+          email: dbUser.email,
+          name: dbUser.name,
+          role: dbUser.role,
+          totalAmount: dbUser.totalAmount,
+          subscriptionType: dbUser.subscriptionType,
+          subscriptionTypeEnd: dbUser.subscriptionTypeEnd?.toISOString() || undefined,
+        };
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
-  pages: {
-    signIn: "/login",
-  },
   callbacks: {
-    async signIn({ user }) {
-      try {
-        const userRole = user.email === "alifaizan15245@gmail.com" ? "ADMIN" : "USER";
-
-        const existingUser = await prisma.user.findUnique({
-          where: { email: user.email },
-        });
-
-        if (!existingUser) {
-          const randomPassword = Math.random().toString(36).slice(-8);
-          const hashedPassword = await bcrypt.hash(randomPassword, 10);
-
-        const createdUser =   await prisma.user.create({
-            data: {
-              name: user.name,
-              email: user.email,
-              role: userRole,
-              password: hashedPassword,
-              image: user.image || null,
-              totalAmount: 0,
-            },
-          });
-          console.log("user created info", createdUser);
-          user.role = createdUser.role;
-          user.id = createdUser.id;
-        // } else if (existingUser.role !== userRole) {
-        } else  {
-
-          const updateUser = await prisma.user.update({
-            where: { email: user.email },
-            data: { image: user.image || null },
-          });
-          user.role = updateUser.role;
-          user.id = updateUser.id;
-        }
-
-        return true;
-      } catch (error) {
-        console.error("Error saving user:", error);
-        return false;
-      }
+    session: ({ session, token }) => {
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: token.id,
+          role: token.role as Role,
+          totalAmount: token.totalAmount,
+          subscriptionType: token.subscriptionType as SubscriptionType,
+          subscriptionTypeEnd: token.subscriptionTypeEnd || undefined,
+        },
+      };
     },
-
-    async jwt({ token, user }) {
+    jwt: ({ token, user }) => {
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        console.log("JWT Callback - User Role:", user.role); // Debugging
-        token.totalAmount = user.totalAmount;
+        return {
+          ...token,
+          id: user.id,
+          role: user.role as Role,
+          totalAmount: user.totalAmount,
+          subscriptionType: user.subscriptionType as SubscriptionType,
+          subscriptionTypeEnd: user.subscriptionTypeEnd || undefined,
+        };
       }
       return token;
     },
-
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.user.totalAmount = token.totalAmount as number;
-      }
-      return session;
-    },
   },
 };
-
-
-// import GoogleProvider from "next-auth/providers/google";
-// import { PrismaClient } from "@prisma/client";
-// import bcrypt from "bcryptjs";
-// import CredentialsProvider from "next-auth/providers/credentials";
-
-// const prisma = new PrismaClient();
-
-// export const authOptions = {
-//   session: {
-//     strategy: "jwt",
-//   },
-//   debug: true,
-//   providers: [
-//     GoogleProvider({
-//       clientId: process.env.GOOGLE_CLIENT_ID!,
-//       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-//     }),
-//     CredentialsProvider({
-//       name: "Credentials",
-//       credentials: {
-//         email: { label: "Email", type: "email" },
-//         password: { label: "Password", type: "password" },
-//       },
-//       async authorize(credentials) {
-//         try {
-//           console.log("credentials", credentials);
-
-//           const user = await prisma.user.findUnique({
-//             where: { email: credentials?.email },
-//             select: { id: true, name: true, email: true, role: true, password: true, totalAmount: true }, 
-//           });
-
-//           if (!user) {
-//             throw new Error("No user found");
-//           }
-
-//           if (!credentials?.password) {
-//             throw new Error("Password is required");
-//           }
-
-//           const isValid = await bcrypt.compare(credentials.password, user.password!);
-//           if (!isValid) {
-//             throw new Error("Password is incorrect");
-//           }
-
-//           console.log("Login successful");
-
-//           return {
-//             id: user.id,
-//             name: user.name,
-//             email: user.email,
-//             role: user.role,
-//             totalAmount: user.totalAmount ?? 0,
-//           };
-//         } catch (error) {
-//           console.log("Login error:", error);
-//           throw new Error(error instanceof Error ? error.message : "Something went wrong");
-//         }
-//       },
-//     }),
-//   ],
-
-//   secret: process.env.NEXTAUTH_SECRET, // ✅ Fix: `NEXTAUTH_URL` nahi, `NEXTAUTH_SECRET` hona chahiye
-
-//   callbacks: {
-//     async signIn({ user }: { user: any }) {
-//       try {
-//         console.log("User signing in:", user);
-
-//         const existingUser = await prisma.user.findUnique({
-//           where: { email: user.email },
-//         });
-
-//         const userRole = existingUser ? existingUser.role : "USER";
-
-//         if (!existingUser) {
-//           const randomPassword = Math.random().toString(36).slice(-8);
-//           const hashedPassword = await bcrypt.hash(randomPassword, 10);
-
-//           await prisma.user.create({
-//             data: {
-//               name: user.name,
-//               email: user.email,
-//               role: userRole,
-//               password: hashedPassword,
-//               image: user.image || null,
-//             },
-//           });
-//         }
-
-//         return true;
-//       } catch (error) {
-//         console.error("Error saving user:", error);
-//         return false;
-//       }
-//     },
-
-//     async jwt({ token, user }: { token: any; user?: any }) {
-//       if (user) {
-//         token.id = user.id;
-//         token.email = user.email;
-//         token.role = user.role;
-//         token.totalAmount = user.totalAmount ?? 0;
-//       }
-
-//       return token;
-//     },
-
-//     async session({ session, token }: { session: any; token: any }) {
-//       console.log("Session callback running...");
-
-//       if (!token.email) {
-//         console.log("Token email missing, session is null");
-//         return null;
-//       }
-
-//       const dbUser = await prisma.user.findUnique({
-//         where: { email: token.email },
-//         select: { id: true, role: true, totalAmount: true },
-//       });
-
-//       if (!dbUser) {
-//         console.log("User not found in DB, returning null session");
-//         return null;
-//       }
-
-//       session.user = {
-//         id: dbUser.id,
-//         email: token.email,
-//         role: dbUser.role,
-//         totalAmount: dbUser.totalAmount ?? 0,
-//       };
-
-//       console.log("Final session object:", session);
-
-//       return session;
-//     },
-//   },
-// };
-

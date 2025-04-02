@@ -76,6 +76,7 @@ export default function CartPage() {
 
   const placeOrder = async () => {
     try {
+      setLoading(true);
       const { data } = await axios.post('/api/user/orders', {
         items: cartItems.map(item => ({
           productId: item.id,
@@ -85,14 +86,17 @@ export default function CartPage() {
         })),
         baseAmount: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
         discountAmount: cartItems.reduce((sum, item) => sum + ((item.price - item.discountedPrice) * item.quantity), 0),
-        totalAmount: cartItems.reduce((sum, item) => sum + (item.discountedPrice * item.quantity), 0)
+        totalAmount: cartItems.reduce((sum, item) => sum + (item.discountedPrice * item.quantity), 0),
+        subscriptionType: null // Regular order, not a subscription
       });
 
-      toast.success('Order created successfully');
-      router.push(`/game/store/orders/${data.id}`);
+      toast.success('Order placed successfully!');
+      router.push('/game/store/orders'); // Redirect to orders page
     } catch (error) {
       toast.error('Failed to create order');
       console.error('Place order error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -40,9 +40,27 @@ export default function SubscribePage() {
   };
 
   const plans = [
-    { name: "One Month", value: "ONE_MONTH", discount: "10% Off", benefits: "Enjoy a 10% discount on all store items." },
-    { name: "One Year", value: "ONE_YEAR", discount: "22% Off", benefits: "Get a 22% discount and priority support." },
-    { name: "Lifetime", value: "LIFETIME", discount: "35% Off", benefits: "Unlock lifetime access with a 35% discount and premium features." },
+    { 
+      name: "One Month", 
+      value: "ONE_MONTH", 
+      price: 99,
+      discount: "10% Off", 
+      benefits: "Enjoy a 10% discount on all store items." 
+    },
+    { 
+      name: "One Year", 
+      value: "ONE_YEAR", 
+      price: 299,
+      discount: "22% Off", 
+      benefits: "Get a 22% discount and priority support." 
+    },
+    { 
+      name: "Lifetime", 
+      value: "LIFETIME", 
+      price: 2999,
+      discount: "35% Off", 
+      benefits: "Unlock lifetime access with a 35% discount and premium features." 
+    },
   ];
 
   if (status === "loading") {
@@ -55,7 +73,7 @@ export default function SubscribePage() {
         {plans.map((plan, index) => (
           <motion.div
             key={plan.value}
-            className="relative bg-white/90 backdrop-blur-md p-8 w-80 h-96 shadow-lg text-center border-2 border-gray-400 rounded-xl transition duration-300 hover:shadow-xl"
+            className="relative bg-white/90 backdrop-blur-md p-8 w-80 h-96 shadow-lg text-center border-2 border-gray-400 rounded-xl transition duration-300 hover:shadow-xl cursor-pointer"
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -72,11 +90,12 @@ export default function SubscribePage() {
               </span>
             </div>
             <h2 className="text-2xl font-bold mb-4 text-gray-900 mt-4">{plan.name}</h2>
+            <div className="text-3xl font-bold text-gray-800 mb-4">₹{plan.price}</div>
             <p className="text-gray-600 text-sm mb-6 leading-relaxed">{plan.benefits}</p>
 
             <motion.button
               onClick={() => handleSubscribe(plan.value)}
-              className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-8 py-3 font-bold text-lg rounded-full hover:from-blue-600 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-8 py-3 font-bold text-lg rounded-full hover:from-blue-600 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.9 }}
             >

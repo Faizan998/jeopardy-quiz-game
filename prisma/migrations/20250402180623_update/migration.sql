@@ -5,7 +5,7 @@ CREATE TYPE "SubscriptionType" AS ENUM ('NONE', 'ONE_MONTH', 'ONE_YEAR', 'LIFETI
 CREATE TYPE "Role" AS ENUM ('ADMIN', 'USER');
 
 -- CreateEnum
-CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED');
+CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'PAYMENT_PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED', 'REFUNDED');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -162,6 +162,8 @@ CREATE TABLE "Order" (
     "baseAmount" DOUBLE PRECISION NOT NULL,
     "discountAmount" DOUBLE PRECISION NOT NULL,
     "status" "OrderStatus" NOT NULL DEFAULT 'PENDING',
+    "paymentReference" TEXT,
+    "paymentDetails" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -190,6 +192,9 @@ CREATE UNIQUE INDEX "Cart_userId_key" ON "Cart"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Wishlist_userId_key" ON "Wishlist"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Order_paymentReference_key" ON "Order"("paymentReference");
 
 -- AddForeignKey
 ALTER TABLE "Question" ADD CONSTRAINT "Question_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
