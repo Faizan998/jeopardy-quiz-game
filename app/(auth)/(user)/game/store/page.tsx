@@ -167,9 +167,6 @@ export default function EcommercePage() {
     }
   };
 
-  const handleBuyNow = (productId: string) => {
-    router.push(`/payment?product=${productId}`);
-  };
 
   const calculateDiscountedPrice = (basePrice: number): number => {
     if (!user?.subscriptionType || !user.subscriptionTypeEnd) return basePrice;
@@ -354,13 +351,6 @@ export default function EcommercePage() {
                     >
                       Add to Cart
                     </button>
-
-                    <Link
-                      href={`/game/store/product/${product.id}`}
-                      className="mt-3 w-full block text-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2 rounded-md hover:scale-105 hover:brightness-110 transition-transform duration-300"
-                    >
-                      Buy Now
-                    </Link>
                   </div>
                 );
               })}

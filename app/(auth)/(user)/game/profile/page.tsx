@@ -7,6 +7,7 @@ import { User,  Heart, ShoppingCart, Package } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import Link from 'next/link';
 
 interface Product {
   id: string;
@@ -385,177 +386,9 @@ const CartSection = () => {
   );
 };
 
-const OrdersSection = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [cancellingOrder, setCancellingOrder] = useState<string | null>(null);
-
-  const fetchOrders = async () => {
-    try {
-      const { data } = await axios.get('/api/user/orders');
-      setOrders(data);
-    } catch (error) {
-      toast.error('Failed to fetch orders');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const handleDeleteOrder = async (orderId: string) => {
-    try {
-      // Show confirmation dialog
-      if (!window.confirm('Are you sure you want to cancel this order?')) {
-        return;
-      }
-
-      setCancellingOrder(orderId); // Set the cancelling state
-
-      const response = await axios.put(`/api/user/orders/${orderId}`, { 
-        status: 'CANCELLED' 
-      });
-      
-      // Update the orders state with the updated order from the response
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
-          order.id === orderId ? response.data : order
-        )
-      );
-      
-      toast.success('Order cancelled successfully');
-    } catch (error: any) {
-      // Handle specific error messages from the API
-      const errorMessage = error.response?.data?.error || 'Failed to cancel order';
-      toast.error(errorMessage);
-      console.error('Error cancelling order:', error);
-    } finally {
-      setCancellingOrder(null); // Clear the cancelling state
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (orders.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <Package className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">No Orders Yet</h3>
-        <p className="text-gray-500">Your order history will appear here once you make a purchase.</p>
-      </div>
-    );
-  }
-
-  const getStatusColor = (status: Order['status']) => {
-    switch (status) {
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'PROCESSING':
-        return 'bg-blue-100 text-blue-800';
-      case 'SHIPPED':
-        return 'bg-purple-100 text-purple-800';
-      case 'DELIVERED':
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
-      case 'CANCELLED':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {orders.map((order) => (
-        <div key={order.id} className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h3 className="text-lg font-semibold">Order #{order.id.slice(-6)}</h3>
-              <p className="text-sm text-gray-500">
-                {new Date(order.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
-                {order.status}
-              </span>
-              {order.status === 'PENDING' && (
-                <button
-                  onClick={() => handleDeleteOrder(order.id)}
-                  disabled={cancellingOrder === order.id}
-                  className={`cursor-pointer px-3 py-1 text-sm text-red-600 hover:text-red-800 transition-colors ${
-                    cancellingOrder === order.id ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  {cancellingOrder === order.id ? 'Cancelling...' : 'Cancel Order'}
-                </button>
-              )}
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            {order.items.map((item) => (
-              <div key={item.id} className="flex items-center gap-4">
-                <div className="relative w-20 h-20">
-                  <Image
-                    src={item.product.imageUrl || "/placeholder-product.jpg"}
-                    alt={item.product.title}
-                    fill
-                    className="object-cover rounded-md"
-                  />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium">{item.product.title}</h4>
-                  <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
-                  <p className="text-sm text-gray-500">
-                    Base Price: ${item.price.toFixed(2)}
-                  </p>
-                  <p className="text-sm font-medium text-blue-600">
-                    Discounted Price: ${item.discountedPrice.toFixed(2)}
-                  </p>
-                  <p className="text-sm font-medium text-green-600">
-                    Subtotal: ${(item.discountedPrice * item.quantity).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 pt-4 border-t">
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-medium">Base Amount:</span>
-              <span>${order.baseAmount.toFixed(2)}</span>
-            </div>
-            {order.discountAmount > 0 && (
-              <div className="flex justify-between items-center mb-2 text-green-600">
-                <span>Discount Amount:</span>
-                <span>-${order.discountAmount.toFixed(2)}</span>
-              </div>
-            )}
-            <div className="flex justify-between items-center">
-              <span className="font-medium">Total Amount:</span>
-              <span className="text-lg font-bold text-blue-600">
-                ${order.totalAmount.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
 export default function ProfilePage() {
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState('profile');
 
   if (!session?.user) {
     return <p className="text-center text-gray-500">No user data available</p>;
@@ -568,57 +401,71 @@ export default function ProfilePage() {
     role: session.user.role,
   };
 
-  const tabs = [
-    { id: 0, label: 'Wishlist', icon: Heart },
-    { id: 1, label: 'Cart', icon: ShoppingCart },
-    { id: 2, label: 'Orders', icon: Package },
-  ];
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* User Info Section */}
-      <section className="bg-white rounded-lg shadow-sm p-6 mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
-            <User className="w-10 h-10 text-gray-500" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold">{user.name}</h2>
-            <p className="text-gray-600">{user.email}</p>
-          </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex gap-4 border-b mb-4">
+          <button
+            className={`px-4 py-2 ${
+              activeTab === 'profile'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+            onClick={() => setActiveTab('profile')}
+          >
+            <User className="w-5 h-5 inline-block mr-2" />
+            Profile
+          </button>
+          <button
+            className={`px-4 py-2 ${
+              activeTab === 'wishlist'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+            onClick={() => setActiveTab('wishlist')}
+          >
+            <Heart className="w-5 h-5 inline-block mr-2" />
+            Wishlist
+          </button>
+          <button
+            className={`px-4 py-2 ${
+              activeTab === 'cart'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+            onClick={() => setActiveTab('cart')}
+          >
+            <ShoppingCart className="w-5 h-5 inline-block mr-2" />
+            Cart
+          </button>
+          <Link
+            href="/game/store/orders"
+            className="px-4 py-2 text-gray-500 hover:text-gray-700"
+          >
+            <Package className="w-5 h-5 inline-block mr-2" />
+            Orders
+          </Link>
         </div>
-      </section>
 
-      {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-sm">
-        <div className="border-b">
-          <div className="flex">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-4 border-b-2 transition-colors cursor-pointer ${
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-500'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <tab.icon className="w-5 h-5" />
-                {tab.label}
-              </button>
-            ))}
+        <TabPanel isActive={activeTab === 'profile'}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Name</label>
+              <p className="mt-1 text-lg">{session?.user?.name || 'N/A'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <p className="mt-1 text-lg">{session?.user?.email || 'N/A'}</p>
+            </div>
           </div>
-        </div>
+        </TabPanel>
 
-        {/* Tab Panels */}
-        <TabPanel isActive={activeTab === 0}>
+        <TabPanel isActive={activeTab === 'wishlist'}>
           <WishlistSection />
         </TabPanel>
-        <TabPanel isActive={activeTab === 1}>
+
+        <TabPanel isActive={activeTab === 'cart'}>
           <CartSection />
-        </TabPanel>
-        <TabPanel isActive={activeTab === 2}>
-          <OrdersSection />
         </TabPanel>
       </div>
     </div>

@@ -1,4 +1,3 @@
-// app/game/store/cart/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -77,34 +76,22 @@ export default function CartPage() {
 
   const placeOrder = async () => {
     try {
-      const baseTotal = cartItems.reduce(
-        (sum, item) => sum + (item.price * item.quantity),
-        0
-      );
-
-      const totalPrice = cartItems.reduce(
-        (sum, item) => sum + (item.discountedPrice * item.quantity),
-        0
-      );
-
-      const discountTotal = baseTotal - totalPrice;
-
-      await axios.post('/api/user/orders', {
+      const { data } = await axios.post('/api/user/orders', {
         items: cartItems.map(item => ({
           productId: item.id,
           quantity: item.quantity,
           price: item.price,
           discountedPrice: item.discountedPrice
         })),
-        baseAmount: baseTotal,
-        discountAmount: discountTotal,
-        totalAmount: totalPrice
+        baseAmount: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        discountAmount: cartItems.reduce((sum, item) => sum + ((item.price - item.discountedPrice) * item.quantity), 0),
+        totalAmount: cartItems.reduce((sum, item) => sum + (item.discountedPrice * item.quantity), 0)
       });
 
-      toast.success('Order placed successfully');
-      setCartItems([]);
+      toast.success('Order created successfully');
+      router.push(`/game/store/orders/${data.id}`);
     } catch (error) {
-      toast.error('Failed to place order');
+      toast.error('Failed to create order');
       console.error('Place order error:', error);
     }
   };

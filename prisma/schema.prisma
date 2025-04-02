@@ -22,7 +22,6 @@ model User {
   created_at       DateTime         @default(now())
   updated_at       DateTime         @default(now()) @updatedAt
   Answer           Answer[]
-
   Cart             Cart?
   Wishlist         Wishlist?
   Orders           Order[]
@@ -152,6 +151,8 @@ model Order {
   baseAmount  Float
   discountAmount Float
   status      OrderStatus @default(PENDING)
+  paymentReference String? @unique // PayPal order ID
+  paymentDetails Json? // PayPal payment details
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 }
@@ -183,8 +184,9 @@ enum Role {
 
 enum OrderStatus {
   PENDING
+  PAYMENT_PENDING
   PROCESSING
-  SHIPPED
-  DELIVERED
+  COMPLETED
   CANCELLED
+  REFUNDED
 }
