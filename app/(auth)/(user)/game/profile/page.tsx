@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
-import { User, Heart, ShoppingCart, Package } from 'lucide-react';
+import { User,  Heart, ShoppingCart, Package } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -72,12 +72,32 @@ const WishlistSection = () => {
   const { data: session } = useSession();
   const [user, setUser] = useState<{ subscriptionType: string | undefined; subscriptionTypeEnd: string | null | undefined } | null>(null);
 
-
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get("/api/user/profile");
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+  
+    if (session?.user) {
+      fetchUserData();
+    }
+  }, [session]);
+  
+  useEffect(() => {
+    if (user) {
+      fetchWishlist();
+    }
+  }, [user]);
+  
 
   const fetchWishlist = async () => {
     try {
       const { data } = await axios.get('/api/user/wishlist');
-      const items = data.items.map((item: { product: Product }) => ({
+      const items = data.items.map((item: any) => ({
         ...item.product,
         basePrice: item.product.basePrice ?? 0,
         discountedPrice: calculateDiscountedPrice(
@@ -87,30 +107,12 @@ const WishlistSection = () => {
         )
       }));
       setWishlistItems(items);
-    } catch (err) {
+    } catch (error) {
       toast.error('Failed to fetch wishlist');
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await axios.get("/api/user/profile");
-        setUser(response.data);
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-      }
-    };
-
-    if (session?.user) {
-      fetchUserData();
-      fetchWishlist();
-    }
-  }, [session, fetchWishlist]);
-
- 
 
   const handleRemoveFromWishlist = async (productId: string) => {
     try {
