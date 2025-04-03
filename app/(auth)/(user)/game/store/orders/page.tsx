@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 interface OrderItem {
   id: string;
@@ -37,7 +38,7 @@ export default function OrdersPage() {
     if (status === "unauthenticated") {
       router.push("/login");
     }
-  }, [session]);
+  }, [session, router, status]);
 
   const fetchOrders = async () => {
     try {
@@ -71,25 +72,49 @@ export default function OrdersPage() {
             {orders.map((order) => (
               <div key={order.id} className="bg-white p-4 rounded-lg shadow-lg">
                 <h2 className="text-xl font-semibold">Order ID: {order.id}</h2>
-                <p className="text-gray-600">Placed on: {new Date(order.createdAt).toLocaleString()}</p>
-                <p className="text-gray-600 font-medium">Status: {order.status}</p>
-                {order.paymentReference && <p className="text-gray-600">Payment Ref: {order.paymentReference}</p>}
+                <p className="text-gray-600">
+                  Placed on: {new Date(order.createdAt).toLocaleString()}
+                </p>
+                <p className="text-gray-600 font-medium">
+                  Status: {order.status}
+                </p>
+                {order.paymentReference && (
+                  <p className="text-gray-600">
+                    Payment Ref: {order.paymentReference}
+                  </p>
+                )}
 
                 <div className="mt-4">
                   {order.items.map((item) => (
-                    <div key={item.productId} className="flex items-center gap-4 border-b py-2">
-                      <img src={item.imageUrl || "/placeholder.png"} alt={item.title} className="w-20 h-20 object-cover rounded-md" />
+                    <div
+                      key={item.productId}
+                      className="flex items-center gap-4 border-b py-2"
+                    >
+                      <Image
+                        src={item.imageUrl || "/placeholder.png"}
+                        alt={item.title}
+                        width={80} // ✅ Required width
+                        height={80} // ✅ Required height
+                        className="w-20 h-20 object-cover rounded-md"
+                      />
+
                       <div>
                         <h3 className="text-lg">{item.title}</h3>
-                        <p className="text-gray-600">Quantity: {item.quantity}</p>
-                        <p className="text-gray-600">Price: ${item.discountedPrice.toFixed(2)}</p>
+                        <p className="text-gray-600">
+                          Quantity: {item.quantity}
+                        </p>
+                        <p className="text-gray-600">
+                          Price: ${item.discountedPrice.toFixed(2)}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 <div className="mt-4">
-                  <p className="font-semibold">Total Amount: ${order.totalAmount.toFixed(2)}</p>
+                  <p className="font-semibold">
+                    Total Amount: ${order.totalAmount.toFixed(2)}
+                  </p>
                 </div>
               </div>
             ))}
@@ -98,7 +123,10 @@ export default function OrdersPage() {
       ) : (
         <div className="text-center">
           <p className="text-gray-600 text-lg mb-4">You have no orders yet</p>
-          <Link href="/game/store" className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition">
+          <Link
+            href="/game/store"
+            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition"
+          >
             Continue Shopping
           </Link>
         </div>
