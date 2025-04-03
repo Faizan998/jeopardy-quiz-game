@@ -44,7 +44,7 @@ export default function CartPage() {
       setLoading(true);
       const { data } = await axios.get<CartResponse>("/api/user/cart");
       console.log("Cart data:", data);
-      setCartItems(data.items || []);
+      setCartItems(data.items);
     } catch (error) {
       toast.error("Failed to load cart items");
       console.error("Fetch cart error:", error);
