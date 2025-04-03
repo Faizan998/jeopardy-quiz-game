@@ -104,7 +104,7 @@ export default function CartPage() {
           0
         ),
       });
-
+      console.log("Order Response:", data);
       toast.success("Order created successfully");
       router.push(`/game/store/orders`); // Redirect to general orders page
     } catch (error) {
