@@ -66,33 +66,13 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, isActive }) => {
   return <div className="p-4">{children}</div>;
 };
 
+
+
 const WishlistSection = () => {
   const [wishlistItems, setWishlistItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { data: session } = useSession();
   const [user, setUser] = useState<{ subscriptionType: string | undefined; subscriptionTypeEnd: string | null | undefined } | null>(null);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await axios.get("/api/user/profile");
-        setUser(response.data);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
-  
-    if (session?.user) {
-      fetchUserData();
-    }
-  }, [session]);
-  
-  useEffect(() => {
-    if (user) {
-      fetchWishlist();
-    }
-  }, [user]);
-  
 
   const fetchWishlist = async () => {
     try {
@@ -113,6 +93,30 @@ const WishlistSection = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get("/api/user/profile");
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+  
+    if (session?.user) {
+      fetchUserData();
+    }
+  }, [session]);
+  
+  useEffect(() => {
+    
+      fetchWishlist();
+    
+  }, [fetchWishlist]);
+  
+
+
 
   const handleRemoveFromWishlist = async (productId: string) => {
     try {
