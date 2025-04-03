@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { FiPlus, FiMinus, FiTrash } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface CartItem {
   id: string;
@@ -34,14 +35,15 @@ export default function CartPage() {
   useEffect(() => {
     if (session?.user) fetchCart();
     if (status === "unauthenticated") {
-      router.push("/login");  // Login page par redirect
+      router.push("/login"); // Login page par redirect
     }
-  }, [session]);
+  }, [session, router, status]);
 
   const fetchCart = async () => {
     try {
       setLoading(true);
       const { data } = await axios.get<CartResponse>("/api/user/cart");
+      console.log("Cart data:", data);
       setCartItems(data.items || []);
     } catch (error) {
       toast.error("Failed to load cart items");
@@ -54,7 +56,10 @@ export default function CartPage() {
   const updateQuantity = async (id: string, newQuantity: number) => {
     if (newQuantity < 1) return removeItem(id);
     try {
-      const { data } = await axios.put<CartResponse>("/api/user/cart", { id, quantity: newQuantity });
+      const { data } = await axios.put<CartResponse>("/api/user/cart", {
+        id,
+        quantity: newQuantity,
+      });
       setCartItems(data.items);
       toast.success("Quantity updated");
     } catch (error) {
@@ -65,7 +70,9 @@ export default function CartPage() {
 
   const removeItem = async (id: string) => {
     try {
-      const { data } = await axios.delete<CartResponse>("/api/user/cart", { data: { id } });
+      const { data } = await axios.delete<CartResponse>("/api/user/cart", {
+        data: { id },
+      });
       setCartItems(data.items);
       toast.success("Item removed from cart");
     } catch (error) {
@@ -76,35 +83,44 @@ export default function CartPage() {
 
   const placeOrder = async () => {
     try {
-      const { data } = await axios.post('/api/user/orders', {
-        items: cartItems.map(item => ({
+      const { data } = await axios.post("/api/user/orders", {
+        items: cartItems.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
           price: item.price,
-          discountedPrice: item.discountedPrice
+          discountedPrice: item.discountedPrice,
         })),
-        baseAmount: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        discountAmount: cartItems.reduce((sum, item) => sum + ((item.price - item.discountedPrice) * item.quantity), 0),
-        totalAmount: cartItems.reduce((sum, item) => sum + (item.discountedPrice * item.quantity), 0)
+        baseAmount: cartItems.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0
+        ),
+        discountAmount: cartItems.reduce(
+          (sum, item) =>
+            sum + (item.price - item.discountedPrice) * item.quantity,
+          0
+        ),
+        totalAmount: cartItems.reduce(
+          (sum, item) => sum + item.discountedPrice * item.quantity,
+          0
+        ),
       });
-  
-      toast.success('Order created successfully');
-      router.push(`/game/store/orders`);  // Redirect to general orders page
+
+      toast.success("Order created successfully");
+      router.push(`/game/store/orders`); // Redirect to general orders page
     } catch (error) {
-      toast.error('Failed to create order');
-      console.error('Place order error:', error);
+      toast.error("Failed to create order");
+      console.error("Place order error:", error);
     }
   };
-  
 
   // Calculate totals
   const baseTotal = cartItems.reduce(
-    (sum, item) => sum + (item.price * item.quantity),
+    (sum, item) => sum + item.price * item.quantity,
     0
   );
 
   const totalPrice = cartItems.reduce(
-    (sum, item) => sum + (item.discountedPrice * item.quantity),
+    (sum, item) => sum + item.discountedPrice * item.quantity,
     0
   );
 
@@ -127,18 +143,23 @@ export default function CartPage() {
         <div className="max-w-4xl mx-auto">
           <div className="grid gap-6">
             {cartItems.map((item) => {
-              const discount = Math.round((1 - item.discountedPrice / item.price) * 100);
+              const discount = Math.round(
+                (1 - item.discountedPrice / item.price) * 100
+              );
 
               return (
                 <div
                   key={item.id}
                   className="bg-white p-4 rounded-lg shadow-lg flex items-center gap-4"
                 >
-                  <img
+                  <Image
                     src={item.imageUrl || "/placeholder.png"}
                     alt={item.title}
-                    className="w-24 h-24 object-cover rounded-md"
+                    width={96} // 24 * 4 = 96px
+                    height={96} // 24 * 4 = 96px
+                    className="object-cover rounded-md"
                   />
+
                   <div className="flex-1">
                     <h2 className="text-xl font-semibold">{item.title}</h2>
                     <div className="mt-2">
@@ -147,24 +168,32 @@ export default function CartPage() {
                       </p>
                       {discount > 0 && (
                         <p className="text-green-600">
-                          Subscription Price: ${item.discountedPrice.toFixed(2)} ({discount}% off)
+                          Subscription Price: ${item.discountedPrice.toFixed(2)}{" "}
+                          ({discount}% off)
                         </p>
                       )}
                       <p className="text-gray-600">
-                        Subtotal: ${(item.discountedPrice * item.quantity).toFixed(2)}
+                        Subtotal: $
+                        {(item.discountedPrice * item.quantity).toFixed(2)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       <button
                         className="cursor-pointer bg-gray-200 p-1 rounded-md hover:bg-gray-300"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() =>
+                          updateQuantity(item.id, item.quantity - 1)
+                        }
                       >
                         <FiMinus />
                       </button>
-                      <span className="text-lg font-semibold">{item.quantity}</span>
+                      <span className="text-lg font-semibold">
+                        {item.quantity}
+                      </span>
                       <button
                         className="cursor-pointer bg-gray-200 p-1 rounded-md hover:bg-gray-300"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() =>
+                          updateQuantity(item.id, item.quantity + 1)
+                        }
                       >
                         <FiPlus />
                       </button>
