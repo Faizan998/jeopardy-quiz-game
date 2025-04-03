@@ -104,21 +104,21 @@ export default function EcommercePage() {
 
  
 
-  const fetchProducts = async (categoryId: string) => {
+  const fetchProducts = useCallback(async (categoryId: string) => {
     try {
       setIsLoading(true);
       const response = await axios.get("/api/admin/store/product", {
         headers: { Authorization: `Bearer ${session?.accessToken}` },
       });
-      console.log("Products Response:", response);
+      
       const allProducts = Array.isArray(response.data)
         ? response.data
         : response.data?.data || [];
-
+  
       const filteredProducts = allProducts.filter(
         (product: Product) => product.categoryId === categoryId
       );
-
+  
       const productsWithFallback = filteredProducts.map((product: Product) => ({
         ...product,
         price: product.price ?? 0,
@@ -132,7 +132,9 @@ export default function EcommercePage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [session?.accessToken]); // session?.accessToken ko dependency array me add kiya
+  
+  
 
   const fetchWishlist = async () => {
     try {
