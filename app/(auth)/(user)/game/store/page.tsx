@@ -52,21 +52,54 @@ export default function EcommercePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  const fetchProducts = useCallback(async (categoryId: string) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get("/api/admin/store/product", {
+        headers: { Authorization: `Bearer ${session?.accessToken}` },
+      });
+  
+      const allProducts = Array.isArray(response.data)
+        ? response.data
+        : response.data?.data || [];
+  
+      const filteredProducts = allProducts.filter(
+        (product: Product) => product.categoryId === categoryId
+      );
+  
+      const productsWithFallback = filteredProducts.map((product: Product) => ({
+        ...product,
+        price: product.price ?? 0,
+        basePrice: product.basePrice ?? 0,
+      }));
+  
+      setProducts(productsWithFallback);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      toast.error("Failed to load products");
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [session?.accessToken]);
+  
   const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await axios.get("/api/admin/store/productCategory", {
         headers: { Authorization: `Bearer ${session?.accessToken}` },
       });
+  
       const fetchedCategories = Array.isArray(response.data)
         ? response.data
         : response.data?.data || [];
+  
       setCategories(fetchedCategories);
   
       const storedCategory = sessionStorage.getItem("selectedCategory");
       if (storedCategory) {
         setSelectedCategory(storedCategory);
-        await fetchProducts(storedCategory);
+        await fetchProducts(storedCategory); // ✅ Now it's declared before use
       }
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -75,7 +108,9 @@ export default function EcommercePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [session?.accessToken]); // dependency add ki gayi hai
+  }, [session?.accessToken, fetchProducts]); // ✅ fetchProducts is now correctly referenced
+  
+  
   
   useEffect(() => {
     if (status === "loading") return;
@@ -84,6 +119,11 @@ export default function EcommercePage() {
       return;
     }
   
+
+
+ 
+  
+
     const fetchUserData = async () => {
       try {
         const response = await axios.get("/api/user/profile", {
@@ -104,36 +144,6 @@ export default function EcommercePage() {
 
  
 
-  const fetchProducts = useCallback(async (categoryId: string) => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get("/api/admin/store/product", {
-        headers: { Authorization: `Bearer ${session?.accessToken}` },
-      });
-      
-      const allProducts = Array.isArray(response.data)
-        ? response.data
-        : response.data?.data || [];
-  
-      const filteredProducts = allProducts.filter(
-        (product: Product) => product.categoryId === categoryId
-      );
-  
-      const productsWithFallback = filteredProducts.map((product: Product) => ({
-        ...product,
-        price: product.price ?? 0,
-        basePrice: product.basePrice ?? 0,
-      }));
-      setProducts(productsWithFallback);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      toast.error("Failed to load products");
-      setProducts([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [session?.accessToken]); // session?.accessToken ko dependency array me add kiya
-  
 
 
   const fetchWishlist = async () => {
