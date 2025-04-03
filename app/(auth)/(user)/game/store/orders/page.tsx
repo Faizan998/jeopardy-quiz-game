@@ -8,18 +8,27 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-interface Order {
+interface OrderItem {
   id: string;
-  totalAmount: number;
-  baseAmount: number;
-  discountAmount: number;
   createdAt: string;
   status: string;
+  paymentReference: string | null;
+  items: {
+    productId: string;
+    title: string;
+    imageUrl: string;
+    price: number;
+    discountedPrice: number;
+    quantity: number;
+  }[];
+  baseAmount: number;
+  discountAmount: number;
+  totalAmount: number;
 }
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [orders, setOrders] = useState<OrderItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -33,8 +42,8 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get<Order[]>("/api/user/orders/list"); // New API endpoint
-      setOrders(data || []);
+      const { data } = await axios.get<OrderItem[]>("/api/user/orders");
+      setOrders(data);
     } catch (error) {
       toast.error("Failed to load orders");
       console.error("Fetch orders error:", error);
@@ -60,47 +69,37 @@ export default function OrdersPage() {
         <div className="max-w-4xl mx-auto">
           <div className="grid gap-6">
             {orders.map((order) => (
-              <Link href={`/game/store/orders/${order.id}`} key={order.id}>
-                <div className="bg-white p-4 rounded-lg shadow-lg flex justify-between items-center gap-4 cursor-pointer hover:bg-gray-50 transition">
-                  <div>
-                    <h2 className="text-xl font-semibold">Order #{order.id.slice(0, 8)}</h2>
-                    <p className="text-gray-600">
-                      Date: {new Date(order.createdAt).toLocaleDateString()}
-                    </p>
-                    <p className={order.status === "COMPLETED" ? "text-green-600" : "text-yellow-600"}>
-                      Status: {order.status}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-gray-600">Base Total: ${order.baseAmount.toFixed(2)}</p>
-                    {order.discountAmount > 0 && (
-                      <p className="text-green-600">
-                        Discount: -${order.discountAmount.toFixed(2)}
-                      </p>
-                    )}
-                    <p className="font-bold">Total: ${order.totalAmount.toFixed(2)}</p>
-                  </div>
+              <div key={order.id} className="bg-white p-4 rounded-lg shadow-lg">
+                <h2 className="text-xl font-semibold">Order ID: {order.id}</h2>
+                <p className="text-gray-600">Placed on: {new Date(order.createdAt).toLocaleString()}</p>
+                <p className="text-gray-600 font-medium">Status: {order.status}</p>
+                {order.paymentReference && <p className="text-gray-600">Payment Ref: {order.paymentReference}</p>}
+
+                <div className="mt-4">
+                  {order.items.map((item) => (
+                    <div key={item.productId} className="flex items-center gap-4 border-b py-2">
+                      <img src={item.imageUrl || "/placeholder.png"} alt={item.title} className="w-20 h-20 object-cover rounded-md" />
+                      <div>
+                        <h3 className="text-lg">{item.title}</h3>
+                        <p className="text-gray-600">Quantity: {item.quantity}</p>
+                        <p className="text-gray-600">Price: ${item.discountedPrice.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </Link>
+
+                <div className="mt-4">
+                  <p className="font-semibold">Total Amount: ${order.totalAmount.toFixed(2)}</p>
+                </div>
+              </div>
             ))}
-          </div>
-          <div className="text-center mt-6">
-            <Link
-              href="/game/store"
-              className="cursor-pointer bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition"
-            >
-              Continue Shopping
-            </Link>
           </div>
         </div>
       ) : (
         <div className="text-center">
           <p className="text-gray-600 text-lg mb-4">You have no orders yet</p>
-          <Link
-            href="/game/store"
-            className="cursor-pointer bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition"
-          >
-            Start Shopping
+          <Link href="/game/store" className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition">
+            Continue Shopping
           </Link>
         </div>
       )}
