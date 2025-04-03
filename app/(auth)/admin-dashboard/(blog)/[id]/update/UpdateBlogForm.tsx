@@ -171,7 +171,7 @@ export default function UpdateBlogForm({ blog, categories }: UpdateBlogFormProps
         <button
           type="submit"
           disabled={isSubmitting}
-          className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
+          className="cursor-pointer bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
         >
           {isSubmitting ? 'Updating...' : 'Update Blog'}
         </button>

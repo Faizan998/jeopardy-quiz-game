@@ -267,7 +267,7 @@ export default function CreateBlog() {
               onChange={handleFileChange}
               ref={fileInputRef}
               accept="image/jpeg,image/png,image/webp"
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
+              className="cursor-pointer w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
               required
             />
             {imagePreview && (
@@ -316,7 +316,7 @@ export default function CreateBlog() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out disabled:bg-blue-400"
+              className="cursor-pointer w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out disabled:bg-blue-400"
             >
               {loading ? (
                 <span className="flex items-center justify-center">

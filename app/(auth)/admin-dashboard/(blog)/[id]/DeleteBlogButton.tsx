@@ -52,7 +52,7 @@ export default function DeleteBlogButton({ blogId }: DeleteBlogButtonProps) {
     <>
       <button 
         onClick={handleDeleteClick}
-        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:bg-red-300"
+        className="cursor-pointer bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:bg-red-300"
         disabled={isDeleting}
       >
         {isDeleting ? 'Deleting...' : 'Delete'}
@@ -67,7 +67,7 @@ export default function DeleteBlogButton({ blogId }: DeleteBlogButtonProps) {
             <div className="flex justify-end space-x-4">
               <button 
                 onClick={cancelDelete}
-                className="px-4 py-2 border cursor-pointer bg-gray-500 border-gray-300 rounded"
+                className=" px-4 py-2 border cursor-pointer bg-gray-500 border-gray-300 rounded"
                 disabled={isDeleting}
               >
                 Cancel

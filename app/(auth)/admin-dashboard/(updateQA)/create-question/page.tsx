@@ -206,14 +206,14 @@ export default function CreateQuestion() {
                         <button
                             type="button"
                             onClick={() => router.push("/admin-dashboard/question-answer-update")}
-                            className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                            className="cursor-pointer px-4 py-2 text-gray-600 hover:text-gray-800"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                            className="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                         >
                             {loading ? "Creating..." : "Create Question"}
                         </button>

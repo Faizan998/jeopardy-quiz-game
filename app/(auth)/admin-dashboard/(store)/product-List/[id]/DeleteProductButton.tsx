@@ -62,7 +62,7 @@ export default function DeleteProductButton({ productId }: DeleteProductButtonPr
       />
       <button
         onClick={handleDeleteClick}
-        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:bg-red-300 transition-all duration-200"
+        className="cursor-pointer bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:bg-red-300 transition-all duration-200"
         disabled={isDeleting}
       >
         {isDeleting ? 'Deleting...' : 'Delete'}
@@ -79,14 +79,14 @@ export default function DeleteProductButton({ productId }: DeleteProductButtonPr
             <div className="flex justify-end space-x-4">
               <button
                 onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-all duration-200 disabled:bg-gray-300"
+                className="cursor-pointer px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-all duration-200 disabled:bg-gray-300"
                 disabled={isDeleting}
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-all duration-200 disabled:bg-red-300"
+                className="cursor-pointer px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-all duration-200 disabled:bg-red-300"
                 disabled={isDeleting}
               >
                 {isDeleting ? 'Deleting...' : 'Delete'}

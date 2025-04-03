@@ -352,13 +352,13 @@ export default function QuestionDetail({ params }: { params: { id: string } | Pr
         <button
           onClick={handleSaveQuestion}
           disabled={saving}
-          className={`flex items-center justify-center w-full py-3 rounded-lg text-white font-medium ${
+          className={`cursor-pointer flex items-center justify-center w-full py-3 rounded-lg text-white font-medium ${
             saving ? 'bg-blue-700 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500'
           } transition-colors`}
         >
           {saving ? (
             <>
-              <div className="animate-spin h-4 w-4 border-2 border-white border-r-transparent rounded-full mr-2"></div>
+              <div className="cursor-pointer animate-spin h-4 w-4 border-2 border-white border-r-transparent rounded-full mr-2"></div>
               Saving...
             </>
           ) : (

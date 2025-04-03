@@ -156,7 +156,7 @@ export default function SubscriptionForm() {
             name="image"
             accept="image/*"
             onChange={handleFileChange}
-            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="cursor-pointer w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -175,7 +175,7 @@ export default function SubscriptionForm() {
           />
         </div>
 
-        <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors" disabled={loading}>
+        <button type="submit" className="cursor-pointer w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors" disabled={loading}>
           {loading ? 'Submitting...' : 'Submit'}
         </button>
       </form>

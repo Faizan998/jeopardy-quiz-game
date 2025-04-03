@@ -175,7 +175,7 @@ export default function UpdateProductForm({ product, categories }: UpdateProduct
             id="image"
             onChange={handleImageChange}
             accept="image/*"
-            className="w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="cursor-pointer w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <p className="text-sm text-gray-500 mt-1">
             Leave empty to keep the current image
@@ -198,7 +198,7 @@ export default function UpdateProductForm({ product, categories }: UpdateProduct
           <button
             type="submit"
             disabled={isSubmitting}
-            className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed transition-all duration-200"
+            className="cursor-pointer bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed transition-all duration-200"
           >
             {isSubmitting ? 'Updating...' : 'Update Product'}
           </button>
