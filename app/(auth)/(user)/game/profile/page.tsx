@@ -1,9 +1,8 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { User,  Heart, ShoppingCart, Package } from 'lucide-react';
+import { User, Heart, ShoppingCart, Package } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -23,16 +22,6 @@ interface UserProfile {
   name: string;
   email: string;
   role: string;
-}
-
-interface Order {
-  id: string;
-  createdAt: string;
-  status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'COMPLETED';
-  totalAmount: number;
-  baseAmount: number;
-  discountAmount: number;
-  items: { id: string; product: Product; quantity: number; price: number; discountedPrice: number }[];
 }
 
 interface TabPanelProps {
@@ -83,26 +72,12 @@ const WishlistSection = () => {
   const { data: session } = useSession();
   const [user, setUser] = useState<{ subscriptionType: string | undefined; subscriptionTypeEnd: string | null | undefined } | null>(null);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await axios.get("/api/user/profile");
-        setUser(response.data);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
 
-    if (session?.user) {
-      fetchUserData();
-      fetchWishlist();
-    }
-  }, [session]);
 
   const fetchWishlist = async () => {
     try {
       const { data } = await axios.get('/api/user/wishlist');
-      const items = data.items.map((item: any) => ({
+      const items = data.items.map((item: { product: Product }) => ({
         ...item.product,
         basePrice: item.product.basePrice ?? 0,
         discountedPrice: calculateDiscountedPrice(
@@ -112,12 +87,30 @@ const WishlistSection = () => {
         )
       }));
       setWishlistItems(items);
-    } catch (error) {
+    } catch (err) {
       toast.error('Failed to fetch wishlist');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get("/api/user/profile");
+        setUser(response.data);
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      }
+    };
+
+    if (session?.user) {
+      fetchUserData();
+      fetchWishlist();
+    }
+  }, [session, fetchWishlist]);
+
+ 
 
   const handleRemoveFromWishlist = async (productId: string) => {
     try {

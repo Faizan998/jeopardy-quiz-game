@@ -13,7 +13,7 @@ interface LeaderboardUser {
 }
 
 export default function LeaderboardPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [users, setUsers] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
