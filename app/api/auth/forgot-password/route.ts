@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma"; // Ensure Prisma is correctly set up
 import crypto from "crypto";
-import * as Brevo from "@getbrevo/brevo"; // Use * as Brevo to import all exports
+import Brevo from "@getbrevo/brevo";
+
 
 export async function POST(req: Request) {
   try {
