@@ -34,7 +34,7 @@ export default function CartPage() {
   useEffect(() => {
     if (session?.user) fetchCart();
     if (status === "unauthenticated") {
-      router.push("/login");  // Login page par redirect
+      router.push("/login");
     }
   }, [session]);
 
@@ -76,7 +76,7 @@ export default function CartPage() {
 
   const placeOrder = async () => {
     try {
-      const { data } = await axios.post('/api/user/orders', {
+      await axios.post('/api/user/orders', {
         items: cartItems.map(item => ({
           productId: item.id,
           quantity: item.quantity,
@@ -89,14 +89,13 @@ export default function CartPage() {
       });
 
       toast.success('Order created successfully');
-      router.push(`/game/store/orders/${data.id}`);
+      router.push('/game/store/orders'); // Redirect to orders list page
     } catch (error) {
       toast.error('Failed to create order');
       console.error('Place order error:', error);
     }
   };
 
-  // Calculate totals
   const baseTotal = cartItems.reduce(
     (sum, item) => sum + (item.price * item.quantity),
     0
@@ -192,7 +191,7 @@ export default function CartPage() {
                 <span>-${discountTotal.toFixed(2)}</span>
               </div>
             )}
-            <div className="cursor-pointer flex justify-between font-bold text-lg border-t pt-2">
+            <div className="flex justify-between font-bold text-lg border-t pt-2">
               <span>Total:</span>
               <span>${totalPrice.toFixed(2)}</span>
             </div>
