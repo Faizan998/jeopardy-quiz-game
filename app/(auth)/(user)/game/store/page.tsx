@@ -134,6 +134,9 @@ export default function EcommercePage() {
     }
   }, [session?.accessToken]); // session?.accessToken ko dependency array me add kiya
   
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchProducts]);
   
 
   const fetchWishlist = async () => {
