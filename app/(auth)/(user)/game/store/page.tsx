@@ -8,7 +8,9 @@ import "react-toastify/dist/ReactToastify.css";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Heart } from 'lucide-react';
+import { Heart } from "lucide-react";
+import { useCallback } from "react";
+import Image from "next/image";
 
 interface Category {
   id: string;
@@ -50,32 +52,7 @@ export default function EcommercePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  useEffect(() => {
-    if (status === "loading") return;
-    if (status === "unauthenticated") {
-      router.push("/login");
-      return;
-    }
-
-    const fetchUserData = async () => {
-      try {
-        const response = await axios.get("/api/user/profile", {
-          headers: { Authorization: `Bearer ${session?.accessToken}` },
-        });
-        setUser(response.data);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
-
-    if (status === "authenticated") {
-      fetchUserData();
-      fetchCategories();
-      fetchWishlist();
-    }
-  }, [status, session, router]);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await axios.get("/api/admin/store/productCategory", {
@@ -85,7 +62,7 @@ export default function EcommercePage() {
         ? response.data
         : response.data?.data || [];
       setCategories(fetchedCategories);
-
+  
       const storedCategory = sessionStorage.getItem("selectedCategory");
       if (storedCategory) {
         setSelectedCategory(storedCategory);
@@ -98,7 +75,34 @@ export default function EcommercePage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [session?.accessToken]); // dependency add ki gayi hai
+  
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
+    }
+  
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get("/api/user/profile", {
+          headers: { Authorization: `Bearer ${session?.accessToken}` },
+        });
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+  
+    if (status === "authenticated") {
+      fetchUserData();
+      fetchCategories();
+      fetchWishlist();
+    }
+  }, [status, session, router, fetchCategories]); // fetchCategories ko dependency me add kiya
+
+ 
 
   const fetchProducts = async (categoryId: string) => {
     try {
@@ -132,13 +136,15 @@ export default function EcommercePage() {
 
   const fetchWishlist = async () => {
     try {
-      const response = await axios.get('/api/user/wishlist');
+      const response = await axios.get("/api/user/wishlist");
       if (response.data) {
-        const wishlistProductIds = response.data.items.map((item: any) => item.product.id);
+        const wishlistProductIds: string[] = response.data.items.map(
+          (item: { product: { id: string } }) => item.product.id
+        );
         setWishlistItems(wishlistProductIds);
       }
     } catch (error) {
-      console.error('Error fetching wishlist:', error);
+      console.error("Error fetching wishlist:", error);
     }
   };
 
@@ -158,7 +164,7 @@ export default function EcommercePage() {
         imageUrl: product.imageUrl || "/placeholder-product.jpg",
         quantity: 1,
       });
-
+      console.log("Add to cart response:", response);
       toast.success("Product added to cart!");
       router.push("/game/store/cart");
     } catch (error) {
@@ -167,10 +173,9 @@ export default function EcommercePage() {
     }
   };
 
-
   const calculateDiscountedPrice = (basePrice: number): number => {
     if (!user?.subscriptionType || !user.subscriptionTypeEnd) return basePrice;
-    
+
     // Check if subscription has expired
     const subscriptionEnd = new Date(user.subscriptionTypeEnd);
     if (subscriptionEnd < new Date()) return basePrice;
@@ -190,37 +195,39 @@ export default function EcommercePage() {
   const handleWishlistToggle = async (productId: string) => {
     try {
       const isInWishlist = wishlistItems.includes(productId);
-      const method = isInWishlist ? 'DELETE' : 'POST';
-      const product = products.find(p => p.id === productId);
-      
+      const method = isInWishlist ? "DELETE" : "POST";
+      const product = products.find((p) => p.id === productId);
+
       if (!product) {
-        toast.error('Product not found');
+        toast.error("Product not found");
         return;
       }
 
       const basePrice = product.basePrice ?? 0;
       const discountedPrice = calculateDiscountedPrice(basePrice);
-      
+
       await axios({
         method,
-        url: '/api/user/wishlist',
-        data: { 
+        url: "/api/user/wishlist",
+        data: {
           productId,
           basePrice,
-          discountedPrice
-        }
+          discountedPrice,
+        },
       });
 
-      setWishlistItems(prev => 
-        isInWishlist 
-          ? prev.filter(id => id !== productId)
+      setWishlistItems((prev) =>
+        isInWishlist
+          ? prev.filter((id) => id !== productId)
           : [...prev, productId]
       );
 
-      toast.success(isInWishlist ? 'Removed from wishlist' : 'Added to wishlist');
+      toast.success(
+        isInWishlist ? "Removed from wishlist" : "Added to wishlist"
+      );
     } catch (error) {
-      console.error('Error updating wishlist:', error);
-      toast.error('Failed to update wishlist');
+      console.error("Error updating wishlist:", error);
+      toast.error("Failed to update wishlist");
     }
   };
 
@@ -243,8 +250,11 @@ export default function EcommercePage() {
         <div className="flex items-center gap-4">
           {user?.subscriptionType && user.subscriptionTypeEnd && (
             <div className="text-sm text-gray-600">
-              <p>Subscription: {user.subscriptionType.replace(/_/g, ' ')}</p>
-              <p>Expires: {new Date(user.subscriptionTypeEnd).toLocaleDateString()}</p>
+              <p>Subscription: {user.subscriptionType.replace(/_/g, " ")}</p>
+              <p>
+                Expires:{" "}
+                {new Date(user.subscriptionTypeEnd).toLocaleDateString()}
+              </p>
             </div>
           )}
           <Link
@@ -294,9 +304,12 @@ export default function EcommercePage() {
               {products.map((product: Product) => {
                 const basePrice = product.basePrice ?? 0;
                 const discountedPrice = calculateDiscountedPrice(basePrice);
-                const discount = user?.subscriptionType && user.subscriptionTypeEnd && new Date(user.subscriptionTypeEnd) > new Date()
-                  ? Math.round((1 - discountedPrice / basePrice) * 100)
-                  : 0;
+                const discount =
+                  user?.subscriptionType &&
+                  user.subscriptionTypeEnd &&
+                  new Date(user.subscriptionTypeEnd) > new Date()
+                    ? Math.round((1 - discountedPrice / basePrice) * 100)
+                    : 0;
 
                 return (
                   <div
@@ -310,17 +323,19 @@ export default function EcommercePage() {
                       }}
                       className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-black transition-colors z-10"
                     >
-                      <Heart 
+                      <Heart
                         className={`cursor-pointer w-5 h-5 ${
-                          wishlistItems.includes(product.id) 
-                            ? 'text-red-500 fill-current' 
-                            : 'text-red-500'
+                          wishlistItems.includes(product.id)
+                            ? "text-red-500 fill-current"
+                            : "text-red-500"
                         }`}
                       />
                     </button>
-                    <img
+                    <Image
                       src={product.imageUrl || "/placeholder-product.jpg"}
                       alt={product.title}
+                      width={300}
+                      height={200}
                       className="w-full max-h-48 object-contain rounded-md mb-3"
                     />
                     <h3 className="text-lg font-semibold text-gray-800">
@@ -330,10 +345,13 @@ export default function EcommercePage() {
                       {product.description}
                     </p>
                     <div className="mt-2">
-                      <p className="text-gray-500 line-through">${basePrice.toFixed(2)}</p>
+                      <p className="text-gray-500 line-through">
+                        ${basePrice.toFixed(2)}
+                      </p>
                       {discount > 0 && (
                         <p className="text-green-600 font-bold">
-                          ${discountedPrice.toFixed(2)} ({discount}% off with subscription)
+                          ${discountedPrice.toFixed(2)} ({discount}% off with
+                          subscription)
                         </p>
                       )}
                       {!discount && (
