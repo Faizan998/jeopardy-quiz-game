@@ -32,7 +32,7 @@ async function parseFormData(req: NextRequest): Promise<BlogPostData> {
     const uploadsDir = await ensureUploadsDir();
     
     // Parse the request as FormData
-    //Faizan
+    //
     const formData = await req.formData();
     
     const title = formData.get('title') as string;
