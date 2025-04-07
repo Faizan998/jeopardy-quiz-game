@@ -5,7 +5,7 @@ import prisma from '@/app/lib/prisma';
 import fs from 'fs';
 import { NextRequest } from 'next/server';
 
-// Define the shape of the request body
+// Define the shape of the request body;
 interface BlogPostData {
   title: string;
   content: string;
