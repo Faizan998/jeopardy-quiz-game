@@ -1,78 +1,107 @@
-import React from 'react'
-import { notFound } from 'next/navigation'
-import { Blog } from '@/app/types'
-import UpdateBlogForm from './UpdateBlogForm'
-import Link from 'next/link'
+'use client';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 
-// Define the page props type
-type PageProps = {
-  params: {
-    id: string
-  }
+// Define TypeScript interfaces
+interface Blog {
+  id: string;
+  title: string;
+  imageUrl: string;
+  content: string;
+  categoryId: string;
 }
 
-// Fetch blog data server-side
-async function getBlog(id: string): Promise<Blog | null> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/admin/blog/${id}`, {
-      cache: 'no-store',
-    })
-    
-    if (!res.ok) {
-      return null
+export default function BlogUpdate() {
+  const [formData, setFormData] = useState<Blog | null>(null);
+  const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+
+  useEffect(() => {
+    fetchBlog();
+  }, [id]);
+
+  const fetchBlog = async () => {
+    try {
+      const response = await fetch(`/api/blogs/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch blog');
+      const data: Blog = await response.json();
+      setFormData(data);
+    } catch (error) {
+      console.error('Error fetching blog:', error);
     }
-    
-    return res.json()
-  } catch (error) {
-    console.error('Error fetching blog:', error)
-    return null
-  }
-}
+  };
 
-// Fetch blog categories for the form
-async function getCategories() {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/admin/blogCategory`, {
-      cache: 'no-store',
-    })
-    
-    if (!res.ok) {
-      return []
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData) return;
+
+    try {
+      const response = await fetch(`/api/blogs/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (response.ok) {
+        router.push(`/blogs/${id}`);
+      } else {
+        throw new Error('Failed to update blog');
+      }
+    } catch (error) {
+      console.error('Error updating blog:', error);
     }
-    
-    return res.json()
-  } catch (error) {
-    console.error('Error fetching categories:', error)
-    return []
-  }
-}
+  };
 
-export default async function UpdateBlogPage({ params }: PageProps) {
-  const blog = await getBlog(params.id)
-  const categories = await getCategories()
-  
-  if (!blog) {
-    return notFound()
-  }
-  
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData((prev) =>
+      prev ? { ...prev, [e.target.name]: e.target.value } : null
+    );
+  };
+
+  if (!formData) return <div className="text-center py-8">Loading...</div>;
+
   return (
-    <div className="flex justify-center items-center min-h-screen px-4 py-8 bg-gradient-to-r from-blue-900 to-blue-600 dark:bg-blue-500  transition-all duration-300 ease-in-out">
-      {/* Container for the Card */}
-      <div className="bg-white rounded-lg shadow-md p-6 w-full sm:w-11/12 md:w-8/12 lg:w-6/12 xl:w-5/12">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Update Blog Post</h1>
-          <Link 
-            href={`/admin-dashboard/${blog.id}`}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-          >
-            Cancel
-          </Link>
+    <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <h1 className="text-3xl font-bold mb-6">Update Blog</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            placeholder="Title"
+            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
-        
-        <UpdateBlogForm blog={blog} categories={categories} />
-      </div>
+        <div>
+          <input
+            type="text"
+            name="imageUrl"
+            value={formData.imageUrl}
+            onChange={handleChange}
+            placeholder="Image URL"
+            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <textarea
+            name="content"
+            value={formData.content}
+            onChange={handleChange}
+            placeholder="Content"
+            className="w-full p-2 border rounded h-48 resize-y focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <button
+          type="submit"
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+        >
+          Update Blog
+        </button>
+      </form>
     </div>
-  )
+  );
 }

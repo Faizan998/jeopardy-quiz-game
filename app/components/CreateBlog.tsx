@@ -223,7 +223,7 @@ export default function CreateBlog() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title Input */}
           <div className="space-y-2">
-            <label htmlFor="title" className="block text-sm font-medium text-black">
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
               Blog Title
             </label>
             <input

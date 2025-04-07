@@ -1,101 +1,92 @@
-import React from 'react'
-import { Blog } from '@/app/types'
-import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import DeleteBlogButton from './DeleteBlogButton'
+'use client';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 
-// Define the page props type
-type PageProps = {
-  params: {
-    id: string
-  }
+// Define TypeScript interfaces
+interface BlogCategory {
+  name: string;
 }
 
-// Fetch blog data server-side
-async function getBlog(id: string): Promise<Blog | null> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/admin/blog/${id}`, {
-      cache: 'no-store',
-    })
-    
-    if (!res.ok) {
-      return null
+interface Blog {
+  id: string;
+  title: string;
+  imageUrl: string;
+  content: string;
+  created_at: string;
+  category: BlogCategory;
+}
+
+export default function BlogDetail() {
+  const [blog, setBlog] = useState<Blog | null>(null);
+  const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+
+  useEffect(() => {
+    fetchBlog();
+  }, [id]);
+
+  const fetchBlog = async () => {
+    try {
+      const response = await fetch(`/api/blogs/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch blog');
+      const data: Blog = await response.json();
+      setBlog(data);
+    } catch (error) {
+      console.error('Error fetching blog:', error);
     }
-    
-    return res.json()
-  } catch (error) {
-    console.error('Error fetching blog:', error)
-    return null
-  }
-}
+  };
 
-export default async function BlogDetailsPage({ params }: PageProps) {
-  // Since params is not a Promise, but an object directly passed to the component,
-  // we can safely use it without awaiting. The error is misleading in this case.
-  const id = params.id
-  const blog = await getBlog(id)
-  
-  if (!blog) {
-    return notFound()
-  }
-  
+  const handleDelete = async () => {
+    if (confirm('Are you sure you want to delete this blog?')) {
+      try {
+        const response = await fetch(`/api/blogs/${id}`, {
+          method: 'DELETE',
+        });
+        if (response.ok) {
+          router.push('/blogs');
+        } else {
+          throw new Error('Failed to delete blog');
+        }
+      } catch (error) {
+        console.error('Error deleting blog:', error);
+      }
+    }
+  };
+
+  const handleUpdate = () => {
+    router.push(`/blogs/${id}/edit`);
+  };
+
+  if (!blog) return <div className="text-center py-8">Loading...</div>;
+
   return (
-    <div className="flex justify-center items-center min-h-screen px-4 py-8 bg-gradient-to-r from-blue-900 to-blue-600 dark:bg-blue-500 text-white transition-all duration-300 ease-in-out">
-      {/* Container for the Card */}
-      <div className="bg-white rounded-lg shadow-xl overflow-hidden w-full sm:w-11/12 md:w-8/12 lg:w-6/12 xl:w-5/12 p-6">
-        
-        {/* Blog Image */}
-        {blog.imageUrl && (
-          <div className="mb-4">
-            <img 
-              src={blog.imageUrl} 
-              alt={blog.title} 
-              className="w-full h-64 object-cover rounded-t-lg mb-4"
-            />
-          </div>
-        )}
-
-        {/* Category Section */}
-        <div className="mb-4">
-          <p className="text-lg text-gray-600">
-            <strong>Category:</strong> {blog.category?.name || 'Uncategorized'}
-          </p>
-        </div>
-
-        {/* Title Section */}
-        <div className="mb-4">
-          <h1 className="text-2xl font-semibold text-gray-800">Title : {blog.title}</h1>
-        </div>
-
-        {/* Blog Content */}
-        <div className="prose max-w-none mb-4 text-base text-gray-700" dangerouslySetInnerHTML={{ __html : blog.content }} />
-        
-        {/* Published Date */}
-        <div className="mb-4">
-          <p className="text-md text-gray-500">
-            <strong>Published:</strong> {new Date(blog.created_at).toLocaleDateString()}
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-between mt-4">
-          <Link 
-            href={`/admin-dashboard/blog-List`}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-          >
-            Back 
-          </Link>
-          <Link 
-            href={`/admin-dashboard/${id}/update`}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Edit
-          </Link>
-          <DeleteBlogButton blogId={id} />
-        </div>
-
+    <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <img
+        src={blog.imageUrl}
+        alt={blog.title}
+        className="w-full h-96 object-cover rounded-lg mb-6"
+      />
+      <h1 className="text-3xl font-bold mb-4">{blog.title}</h1>
+      <p className="text-gray-600 mb-2">Category: {blog.category.name}</p>
+      <p className="text-gray-500 mb-6">
+        Date:In {new Date(blog.created_at).toLocaleDateString()}
+      </p>
+      <div className="prose max-w-none mb-8">{blog.content}</div>
+      <div className="flex gap-4">
+        <button
+          onClick={handleUpdate}
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+        >
+          Update Blog
+        </button>
+        <button
+          onClick={handleDelete}
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+        >
+          Delete Blog
+        </button>
       </div>
     </div>
-  )
+  );
 }
