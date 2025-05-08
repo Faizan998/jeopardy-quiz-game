@@ -2,13 +2,14 @@ import React from 'react';
 import Link from 'next/link';
 import { Product } from '@/app/type/types'; // Assuming you have a Product type defined in your types file
 
+export const dynamic = 'force-dynamic';
+
 // Fetch all products from the API
 async function getProducts(): Promise<{ products: Product[], error?: string }> {
   try {
-    // Use absolute URL for server-side fetching
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/admin/store/product`, {
-      cache: 'no-store',
+      next: { revalidate: 0 }
     });
 
     if (!res.ok) {
