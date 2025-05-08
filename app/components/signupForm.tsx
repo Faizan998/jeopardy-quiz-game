@@ -55,9 +55,14 @@ export default function Signup() {
       } else {
         toast.error(res.data.message || "Unexpected error occurred.");
       }
-    } catch (error: any) {
-      console.error("Signup Error:", error.response?.data || error);
-      toast.error(error.response?.data?.message || "Signup failed. Try again.");
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("Signup Error:", error.response?.data || error);
+        toast.error(error.response?.data?.message || "Signup failed. Try again.");
+      } else {
+        console.error("Unexpected error:", error);
+        toast.error("An unexpected error occurred");
+      }
     }
   };
 
@@ -248,26 +253,14 @@ export default function Signup() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
         >
-          <Link
-            href="/"
-            className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
-          >
-            ← Back to Home
+          Already have an account?{" "}
+          <Link href="/login" className="text-blue-400 hover:text-blue-300">
+            Login
           </Link>
         </motion.p>
       </motion.form>
 
-      
-      <ToastContainer 
-       position="top-right"  // Set position to top-right
-       autoClose={5000}  // Automatically close the toast after 5 seconds
-       hideProgressBar={false}  // Show progress bar
-       newestOnTop={false}  // Show the newest toast on the top
-       closeOnClick
-       rtl={false}  // For right-to-left languages, you can set this to true
-       pauseOnFocusLoss
-       draggable
-       pauseOnHover/>
+      <ToastContainer position="bottom-center" theme="dark" />
     </div>
   );
 }

@@ -43,7 +43,7 @@ function Page() {
         {/* Description */}
         <div className="bg-white p-8 rounded-xl shadow-lg max-w-lg mx-auto animate__animated animate__fadeIn animate__delay-2s">
           <h2 className="text-3xl font-semibold text-gray-800">
-            You're in Control
+            You are in Control
           </h2>
           <p className="mt-4 text-lg text-gray-600">
             Manage your dashboard, monitor statistics, and oversee the platform. The admin panel gives you complete control over everything.

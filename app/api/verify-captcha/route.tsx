@@ -45,13 +45,13 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("reCAPTCHA verification error:", error);
     return NextResponse.json(
       { 
         success: false, 
         message: "Error verifying reCAPTCHA",
-        error: error.message 
+        error: error instanceof Error ? error.message : "Unknown error"
       },
       { status: 500 }
     );

@@ -59,8 +59,8 @@ export default function LoginPage() {
       setTimeout(() => {
         router.push("/game");
       }, 1500);
-    } catch (error: any) {
-      toast.error(error.message || "Login failed. Please try again.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Login failed. Please try again.");
     }
   };
 
@@ -165,7 +165,7 @@ export default function LoginPage() {
         {/* Signup & Home Links */}
         <div className="text-center text-gray-400 mt-4">
           <p>
-            Don't have an account?{" "}
+            Do not have an account?{" "}
             <Link href="/signup" className="text-blue-400 hover:text-blue-300 hover:underline">
               Sign up
             </Link>

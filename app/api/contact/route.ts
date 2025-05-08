@@ -255,7 +255,7 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-  } catch (error: any) {
+  } catch (error) {
     if (error instanceof AxiosError) {
       console.error("Axios error in /api/contact:", {
         message: error.message,
@@ -278,12 +278,8 @@ export async function POST(request: Request) {
         { status: error.response?.status || 500 }
       );
     }
-    console.error("Unexpected error in /api/contact:", {
-      message: error.message,
-      stack: error.stack,
-    });
     return NextResponse.json(
-      { message: "Internal server error", details: error.message },
+      { message: "Internal server error", details: error },
       { status: 500 }
     );
   }

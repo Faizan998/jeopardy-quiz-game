@@ -5,7 +5,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/authOptions';
 
 export async function DELETE(
   request: Request,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,7 +14,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const id = context.params.id;
+    const id = (await params).id;
 
     // Delete the question (this will cascade delete related answers due to the schema)
     await prisma.question.delete({

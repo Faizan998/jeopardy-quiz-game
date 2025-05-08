@@ -19,7 +19,7 @@ export default function BlogUpdate() {
 
   useEffect(() => {
     fetchBlog();
-  }, [id]);
+  }, );
 
   const fetchBlog = async () => {
     try {

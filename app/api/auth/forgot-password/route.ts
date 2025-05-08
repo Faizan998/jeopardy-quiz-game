@@ -194,7 +194,7 @@ export async function POST(req: Request) {
     await apiInstance.sendTransacEmail(emailContent);
 
     return NextResponse.json({ message: "Password reset link sent!" }, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Brevo Error:", error);
     return NextResponse.json({ message: "Failed to send reset link." }, { status: 500 });
   }

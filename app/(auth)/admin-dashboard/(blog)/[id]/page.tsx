@@ -24,7 +24,7 @@ export default function BlogDetail() {
 
   useEffect(() => {
     fetchBlog();
-  }, [id]);
+  },);
 
   const fetchBlog = async () => {
     try {

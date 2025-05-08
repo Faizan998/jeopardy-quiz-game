@@ -9,11 +9,11 @@ interface BlogUpdateRequest {
 }
 
 // GET single blog by ID
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const blog = await prisma.blog.findUnique({
       where: {
-        id: params.id,
+        id: (await params).id,
       },
       include: {
         category: true,
@@ -32,14 +32,14 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 // UPDATE blog by ID
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const body: BlogUpdateRequest = await req.json();
     const { title, imageUrl, content, categoryId } = body;
 
     // Check if blog exists
     const existingBlog = await prisma.blog.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
     });
 
     if (!existingBlog) {
@@ -48,7 +48,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     // Update blog with provided fields
     const updatedBlog = await prisma.blog.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         title: title || existingBlog.title,
         imageUrl: imageUrl || existingBlog.imageUrl,
@@ -66,11 +66,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 // DELETE blog by ID
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Check if blog exists
     const existingBlog = await prisma.blog.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
     });
 
     if (!existingBlog) {
@@ -79,7 +79,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 
     // Delete the blog
     await prisma.blog.delete({
-      where: { id: params.id },
+      where: { id: (await params).id },
     });
 
     return NextResponse.json({ message: 'Blog deleted successfully' });

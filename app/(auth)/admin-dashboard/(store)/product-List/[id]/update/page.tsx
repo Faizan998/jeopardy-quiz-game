@@ -1,17 +1,12 @@
-import React from 'react';
-import { notFound } from 'next/navigation';
-import { Product, ProductCategory } from '@/app/type/types'; // Adjust import path as needed
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import { notFound, useParams } from 'next/navigation';
+import { Product, ProductCategory } from '@/app/type/types';
 import UpdateProductForm from './UpdateProductForm';
 import Link from 'next/link';
 
-// Define the page props type
-type PageProps = {
-  params: {
-    id: string;
-  };
-};
-
-// Fetch product data server-side
+// Fetch product data client-side
 async function getProduct(id: string): Promise<Product | null> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -52,11 +47,44 @@ async function getCategories(): Promise<ProductCategory[]> {
   }
 }
 
-export default async function UpdateProductPage({ params }: PageProps) {
-  const product = await getProduct(params.id);
-  const categories = await getCategories();
+export default function UpdateProductPage() {
+  const params = useParams();
+  const id = params?.id as string;
+  
+  const [product, setProduct] = useState<Product | null>(null);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  if (!product) {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const productData = await getProduct(id);
+        const categoriesData = await getCategories();
+        
+        setProduct(productData);
+        setCategories(categoriesData);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(true);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return notFound();
   }
 

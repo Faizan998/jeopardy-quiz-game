@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions); // Retrieve the current session
     if (!session) {
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ message: "Users found", users: users }, {
       status: 200
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json({ message: "Internal Server Error" }, {
       status: 500
@@ -79,7 +79,7 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ message: "User deleted successfully" }, {
       status: 200
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error deleting user:", error);
     return NextResponse.json({ message: "Internal Server Error" }, {
       status: 500

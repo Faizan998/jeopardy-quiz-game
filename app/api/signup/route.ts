@@ -47,7 +47,7 @@ export async function POST(req: Request) {
         role: newUser.role
       }
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Signup error:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
   }

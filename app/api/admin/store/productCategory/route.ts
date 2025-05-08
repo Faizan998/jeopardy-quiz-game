@@ -8,16 +8,6 @@ interface CategoryData {
   name: string;
 }
 
-interface CategoryResponse {
-  message?: string;
-  category?: any;
-  error?: string;
-}
-
-interface CategoryListResponse {
-  data: any[];
-  error?: string;
-}
 
 // POST - Create a new category
 export async function POST(req: NextRequest) {
@@ -44,7 +34,7 @@ export async function POST(req: NextRequest) {
 }
 
 // GET - Fetch all categories
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const allCategories = await prisma.productCategory.findMany();
     return NextResponse.json(

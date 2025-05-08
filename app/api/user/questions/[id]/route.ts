@@ -5,12 +5,12 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/authOptions';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const question = await prisma.question.findUnique({
       where: {
-        id: params.id,
+        id: (await params).id,
       },
       include: {
         category: true,
@@ -28,7 +28,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -39,7 +39,7 @@ export async function PUT(
     const body = await request.json();
     const question = await prisma.question.update({
       where: {
-        id: params.id,
+        id: (await params).id,
       },
       data: {
         value: body.question,
@@ -61,7 +61,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -71,7 +71,7 @@ export async function DELETE(
 
     await prisma.question.delete({
       where: {
-        id: params.id,
+        id: (await params).id,
       },
     });
     return NextResponse.json({ message: 'Question deleted successfully' });

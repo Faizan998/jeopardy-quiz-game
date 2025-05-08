@@ -51,6 +51,7 @@ export default function ContactPage() {
           toast.error("reCAPTCHA verification failed. Please try again.");
         }
       } catch (error) {
+        console.error("Error verifying reCAPTCHA:", error);
         setIsVerified(false);
         toast.error("Error verifying reCAPTCHA. Please try again.");
       }
@@ -93,8 +94,8 @@ export default function ContactPage() {
         setIsVerified(false);
         setFormKey((prev) => prev + 1);
       }
-    } catch (error: any) {
-      console.error("Error during submission:", error.response?.data || error.message);
+    } catch (error) {
+      console.error("Error during submission:", error);
       toast.error("Failed to send message. Please try again later.");
     } finally {
       setIsLoading(false);

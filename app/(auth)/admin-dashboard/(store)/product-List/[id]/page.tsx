@@ -1,15 +1,10 @@
-import React from 'react';
 import { Product } from '@/app/type/types'; // Assuming you have a Product type defined in your types file
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DeleteProductButton from './DeleteProductButton'; // You'll need to create this component
 
 // Define the page props type
-type PageProps = {
-  params: {
-    id: string;
-  };
-};
+
 
 // Fetch product data server-side
 async function getProduct(id: string): Promise<Product | null> {
@@ -30,8 +25,8 @@ async function getProduct(id: string): Promise<Product | null> {
   }
 }
 
-export default async function ProductDetailsPage({ params }: PageProps) {
-  const id = params.id;
+export default async function ProductDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const product = await getProduct(id);
 
   if (!product) {

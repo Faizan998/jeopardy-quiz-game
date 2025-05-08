@@ -5,16 +5,14 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/authOptions';
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } | Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  // Properly destructure the params with await
-  const params = await context.params;
-  const { id } = params;
+  const  id  = (await params).id;
   
   try {
     const question = await prisma.question.findUnique({
       where: {
-        id,
+        id
       },
       include: {
         category: true,
@@ -45,11 +43,9 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  context: { params: { id: string } | Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  // Properly destructure the params with await
-  const params = await context.params;
-  const { id } = params;
+  const  id  = (await params).id;
   
   try {
     const session = await getServerSession(authOptions);

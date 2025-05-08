@@ -22,9 +22,14 @@ export default function ForgotPassword() {
         toast.success("Password reset link sent! Check your email. 📧"); // Show success toast
         setEmail(""); // Clear the email field after successful submission
       }
-    } catch (error: any) {
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
       console.error("Error:", error.response?.data || error);
-      toast.error(error.response?.data?.message || "Failed to send reset link."); // Show error toast
+        toast.error(error.response?.data?.message || "Failed to send reset link."); // Show error toast
+      } else {
+        console.error("Error:", error);
+        toast.error("An unexpected error occurred. Please try again later."); // Show generic error toast
+      }
     } finally {
       setLoading(false);
     }

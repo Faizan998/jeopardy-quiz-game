@@ -11,7 +11,7 @@ interface JwtPayload {
   name?: string;
   iat?: number;
   exp?: number;
-  [key: string]: any;
+  [key: string]: string | number | undefined;
 }
 
 /**

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import axios from "axios";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid"; // Using Heroicons for eye icons
 import { toast, ToastContainer } from "react-toastify"; // Import toastify components
@@ -9,6 +9,16 @@ import "react-toastify/dist/ReactToastify.css"; // Import the styles for Toastif
 import { motion } from "framer-motion"; // Import motion for button animation
 
 export default function UpdatePassword() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>}>
+      <UpdatePasswordContent />
+    </Suspense>
+  );
+}
+
+function UpdatePasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token"); // Get token from query parameters
@@ -42,7 +52,12 @@ export default function UpdatePassword() {
       setNewPassword(""); // Clear password field
       toast.success(data.message || "Password updated successfully! Redirecting..."); // Show success toast
     } catch (error) {
-      toast.error("An error occurred. Please try again."); // Show error toast
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || "An error occurred. Please try again."); // Show error toast
+      } else {
+        console.error("Error:", error);
+        toast.error("An unexpected error occurred. Please try again later."); // Show generic error toast
+      }
     } finally {
       setIsLoading(false);
     }

@@ -15,7 +15,6 @@ export async function middleware(req: NextRequest) {
   const isAdminRoute = req.nextUrl.pathname.startsWith("/admin-dashboard");
   const isGameRoute = req.nextUrl.pathname.startsWith("/game");
   const isStoreRoute = req.nextUrl.pathname.startsWith("/store");
-  const isSubscribeRoute = req.nextUrl.pathname.startsWith("/store/subscribe");
   const isCategoriesRoute = req.nextUrl.pathname.startsWith("/categories"); // Added
 
   // Case 1: Protected routes without authentication - redirect to home

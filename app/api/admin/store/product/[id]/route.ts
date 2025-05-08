@@ -8,9 +8,9 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
 );
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }){
   try {
-    const { id } = params;
+    const id = (await params).id;
 
     if (!id) {
       return NextResponse.json({ message: 'Product ID is required' }, { status: 400 });

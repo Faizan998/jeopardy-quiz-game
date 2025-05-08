@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Question } from '@prisma/client';
-import QuestionModal from '@/components/QuestionModal';
+import QuestionModal from './QuestionModal';
 
 interface GameBoardProps {
   categories: string[];

@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { OrderStatus } from "@prisma/client";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         paymentReference,
         paymentDetails,
         items: {
-          create: items.map((item: any) => ({
+          create: items.map((item: { productId: string; quantity: number; price: number; discountedPrice: number }) => ({
             productId: item.productId,
             quantity: item.quantity,
             price: item.price,

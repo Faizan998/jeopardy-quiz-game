@@ -29,7 +29,7 @@ export default function DeleteProductButton({ productId }: DeleteProductButtonPr
       console.log('Attempting to delete product with ID:', productId);
 
       const response = await axios.delete(`/api/admin/store/product/${productId}`);
-
+      console.log('Response:', response);
       // Axios throws an error automatically for non-2xx responses, so if we reach here, it's successful
       toast.success('Product deleted successfully!');
       router.push('/admin-dashboard/product-List');

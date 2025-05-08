@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+
 import axios from "axios";
 import { useSession } from "next-auth/react";
-import { Edit, Trash2 } from "lucide-react"; // Importing Lucide Icons
+import {  Trash2 } from "lucide-react"; // Importing Lucide Icons
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import CSS for Toast notifications
 
@@ -23,7 +23,7 @@ export default function UserList() {
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null); // Add error state
   const { data: session, status } = useSession(); // Using session from next-auth
-  const router = useRouter();
+
   const [loading, setLoading] = useState<boolean>(true); // State to track loading
 
   // Fetch all users from the API
@@ -58,7 +58,7 @@ export default function UserList() {
 
   useEffect(() => {
     fetchUsers();
-  }, [session]); // Refetch when the session changes
+  }, ); // Refetch when the session changes
 
   // Handle delete user
   const handleDeleteUser = async (email: string) => {

@@ -17,12 +17,6 @@ interface Product {
   discountedPrice?: number;
 }
 
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
 
 interface TabPanelProps {
   children: React.ReactNode;
@@ -82,7 +76,7 @@ const WishlistSection = () => {
   const fetchWishlist = useCallback(async () => {
     try {
       const { data } = await axios.get("/api/user/wishlist");
-      const items = data.items.map((item: any) => ({
+      const items = data.items.map((item: { product: { basePrice: number } }) => ({
         ...item.product,
         basePrice: item.product.basePrice ?? 0,
         discountedPrice: calculateDiscountedPrice(
@@ -93,6 +87,7 @@ const WishlistSection = () => {
       }));
       setWishlistItems(items);
     } catch (error) {
+      console.error("Error fetching wishlist:", error);
       toast.error("Failed to fetch wishlist");
     } finally {
       setLoading(false);
@@ -128,6 +123,7 @@ const WishlistSection = () => {
       );
       toast.success("Removed from wishlist");
     } catch (error) {
+      console.error("Error removing from wishlist:", error);
       toast.error("Failed to remove from wishlist");
     }
   };
@@ -229,6 +225,7 @@ const CartSection = () => {
       const { data } = await axios.get<CartResponse>("/api/user/cart");
       setCartItems(data.items || []);
     } catch (error) {
+      console.error("Error loading cart:", error);
       toast.error("Error loading cart");
     } finally {
       setLoading(false);
@@ -249,6 +246,7 @@ const CartSection = () => {
       setCartItems(data.items);
       toast.success("Cart updated");
     } catch (error) {
+      console.error("Error updating cart:", error);
       toast.error("Failed to update cart");
     }
   };
@@ -261,6 +259,7 @@ const CartSection = () => {
       setCartItems(data.items);
       toast.success("Removed from cart");
     } catch (error) {
+      console.error("Error removing from cart:", error);
       toast.error("Failed to remove from cart");
     }
   };
@@ -395,6 +394,7 @@ const CartSection = () => {
                   toast.success("Order placed successfully");
                   setCartItems([]);
                 } catch (error) {
+                  console.error("Error placing order:", error);
                   toast.error("Failed to place order");
                 }
               }}
@@ -414,19 +414,19 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("profile");
 
   if (!session?.user) {
-    return <p className="text-center text-gray-500">No user data available</p>;
+    return <p className="text-center text-gray-100">No user data available</p>;
   }
 
-  const user: UserProfile = {
-    id: session.user.id,
-    name: session.user.name || "Unknown User",
-    email: session.user.email || "No Email",
-    role: session.user.role,
-  };
+  // const user: UserProfile = {
+  //   id: session.user.id,
+  //   name: session.user.name || "Unknown User",
+  //   email: session.user.email || "No Email",
+  //   role: session.user.role,
+  // };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-gray-100 rounded-lg shadow-md p-6">
         <div className="flex gap-4 border-b mb-4">
           <button
             className={`px-4 py-2 ${
@@ -473,16 +473,16 @@ export default function ProfilePage() {
         <TabPanel isActive={activeTab === "profile"}>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-black">
                 Name
               </label>
-              <p className="mt-1 text-lg">{session?.user?.name || "N/A"}</p>
+              <p className="mt-1 text-black text-lg">{session?.user?.name || "N/A"}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-black">
                 Email
               </label>
-              <p className="mt-1 text-lg">{session?.user?.email || "N/A"}</p>
+              <p className="mt-1 text-black text-lg">{session?.user?.email || "N/A"}</p>
             </div>
           </div>
         </TabPanel>

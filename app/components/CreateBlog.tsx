@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -180,22 +180,21 @@ export default function CreateBlog() {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error creating blog:", error);
       
       // Get detailed error message
       let errorMessage = "Failed to create blog.";
       
-      if (error.response) {
+      if (error instanceof AxiosError && error.response) {
         // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
         errorMessage = error.response.data?.message || `Error ${error.response.status}: ${error.response.statusText}`;
-      } else if (error.request) {
+      } else if (error instanceof AxiosError && error.request) {
         // The request was made but no response was received
         errorMessage = "No response from server. Please check your network connection.";
       } else {
         // Something happened in setting up the request that triggered an Error
-        errorMessage = error.message || "An unknown error occurred";
+        errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
       }
       
       toast.error(errorMessage);

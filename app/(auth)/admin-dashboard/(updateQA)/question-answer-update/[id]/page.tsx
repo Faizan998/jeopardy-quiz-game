@@ -43,7 +43,7 @@ interface Question {
   Answer: Answer[];
 }
 
-export default function QuestionDetail({ params }: { params: { id: string } | Promise<{ id: string }> }) {
+export default function QuestionDetail({ params }: { params: Promise<{ id: string }> }) {
   // Unwrap params using React.use() if it's a Promise
   const unwrappedParams = params instanceof Promise ? React.use(params) : params;
   const questionId = unwrappedParams.id;
@@ -113,7 +113,7 @@ export default function QuestionDetail({ params }: { params: { id: string } | Pr
 
   useEffect(() => {
     fetchQuestionData();
-  }, [questionId, session, status]);
+  },);
 
   // Handle option change
   const handleOptionChange = (index: number, value: string) => {

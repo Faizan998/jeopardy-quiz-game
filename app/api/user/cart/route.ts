@@ -7,21 +7,7 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 // Define types for the API response
-interface CartItemResponse {
-  id: string;
-  title: string;
-  price: number;
-  imageUrl: string;
-  quantity: number;
-  discountedPrice: number;
-}
 
-interface CartResponse {
-  items: CartItemResponse[];
-  totalPrice: number;
-  baseTotal: number;
-  discountTotal: number;
-}
 
 const calculateDiscountedPrice = (basePrice: number, subscriptionType?: string, subscriptionEnd?: string): number => {
   if (!subscriptionType || !subscriptionEnd) return basePrice;
@@ -75,6 +61,7 @@ export async function GET() {
     // If user doesn't have a cart, create one
     if (!user.Cart) {
       const newCart = await prisma.cart.create({
+
         data: {
           userId: user.id,
         },
@@ -86,6 +73,7 @@ export async function GET() {
           },
         },
       });
+      console.log("New cart created:", newCart);
       return NextResponse.json({ items: [], totalPrice: 0, baseTotal: 0, discountTotal: 0 });
     }
 
@@ -139,7 +127,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id, title, price, imageUrl, quantity = 1 } = await req.json();
+    const { id, title, price, quantity = 1 } = await req.json();
 
     // Validate required fields
     if (!id || !title || typeof price !== "number") {
@@ -153,6 +141,8 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       include: cartInclude,
+      
+      
     });
 
     if (!user) {

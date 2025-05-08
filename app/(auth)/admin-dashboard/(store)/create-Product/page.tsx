@@ -93,6 +93,7 @@ export default function SubscriptionForm() {
         basePrice: '',
       });
     } catch (error) {
+      console.error("Error adding product:", error);
       toast.error('Failed to add product');
     } finally {
       setLoading(false);

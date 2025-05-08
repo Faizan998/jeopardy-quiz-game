@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useSession } from "next-auth/react";
-import { Edit, Trash2, ExternalLink, Plus } from "lucide-react"; 
+import { Edit, Trash2, Plus } from "lucide-react"; 
 import { motion } from "framer-motion";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -96,7 +96,7 @@ export default function QuestionAnswerUpdate() {
 
   useEffect(() => {
     fetchQuestionsWithAnswers();
-  }, [session, status]);
+  }, );
 
   // Navigate to update page for a specific question
   const handleEditQuestion = (id: string) => {

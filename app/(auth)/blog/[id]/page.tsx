@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { Blog } from '@/app/types'
 import { motion } from 'framer-motion'
 import { useParams, useRouter } from 'next/navigation'
-import { Category } from '../../../type/types';
+
 
 // Function to fetch a single blog by ID
 async function getBlogById(id: string): Promise<Blog | null> {
@@ -130,7 +130,7 @@ export default function BlogDetailPage() {
         {!blog && !loading && !error && (
           <div className="text-center py-12">
             <h2 className="text-2xl font-semibold text-gray-700">Blog post not found</h2>
-            <p className="text-gray-500 mt-2">The blog post you're looking for doesn't exist or has been removed</p>
+            <p className="text-gray-500 mt-2">The blog post you are looking for does not exist or has been removed</p>
             <Link href="/blog">
               <button className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                 View All Blogs

@@ -11,8 +11,8 @@ interface CategoryFormData {
 }
 
 function CategoryForm() {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null); // For error handling
-  const [successMessage, setSuccessMessage] = useState<string | null>(null); // For success message
+  const [errorMessage] = useState<string | null>(null); // For error handling
+  const [successMessage] = useState<string | null>(null); // For success message
   const {
     register,
     handleSubmit,
